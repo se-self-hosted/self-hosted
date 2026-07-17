@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rooms     Room[]
+}
+
+model Room {
+  id             String    @id @default(cuid())
+  slug           String    @unique // Non-guessable URL
+  name           String
+  maxParticipants Int      @default(40)
+  hostId         String
+  host           User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  meetings       Meeting[]
+}
+
+model Meeting {
+  id           String    @id @default(cuid())
+  roomId       String
+  room         Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  startTime    DateTime  @default(now())
+  endTime      DateTime?
+  duration     Int?      // Duration in seconds
+
+  participants Participant[]
+  transcripts  Transcript[]
+  summary      Summary?
+  recordingUrl String?   // Path to file in MinIO
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Participant {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  name        String   // Display name entered by user
+  role        String   // "HOST" or "MEMBER"
+  
+  joinTime    DateTime @default(now())
+  leaveTime   DateTime?
+  duration    Int?     // Duration in seconds
+
+  createdAt   DateTime @default(now())
+}
+
+model Transcript {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  speakerName String
+  text        String
+  timestamp   DateTime @default(now())
+}
+
+model Summary {
+  id          String   @id @default(cuid())
+  meetingId   String   @unique
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  content     String   // AI generated or manually edited summary
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
