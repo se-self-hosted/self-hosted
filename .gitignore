@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# docker volumes
+postgres_data/
+redis_data/
+minio_data/
+
+# AI ignore files
+.claudeignore
+.geminiignore
+.codexignore
