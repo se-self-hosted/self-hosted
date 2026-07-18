@@ -52,4 +52,3 @@ minio_data/
 
 # Local test artifacts
 cookies.txt
-src/generated/
