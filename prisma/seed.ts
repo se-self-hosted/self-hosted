@@ -2,7 +2,7 @@ import { prisma } from '../src/lib/db';
 import bcrypt from 'bcryptjs';
 
 async function main() {
-  const email = 'team@example.com';
+  const email = 'z@mail.com';
   
   // Check if user already exists to avoid crashing if ran multiple times
   const existingUser = await prisma.user.findUnique({
@@ -14,12 +14,12 @@ async function main() {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash('team2026', 10);
+  const hashedPassword = await bcrypt.hash('z11111', 10);
 
   const user = await prisma.user.create({
     data: {
       email,
-      name: 'Team Admin',
+      name: 'self-hosted owner',
       password: hashedPassword,
     },
   });
@@ -35,3 +35,6 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+  

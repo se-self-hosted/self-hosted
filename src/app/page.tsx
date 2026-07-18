@@ -10,19 +10,13 @@ export default function HomePage() {
         <p className="text-lg md:text-xl max-w-3xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
           The Web-based Real-time Voice Meeting Platform. Members can join instantly through shared links without registering. Hosts can log in to create rooms, manage meetings, and access AI-generated summaries.
         </p>
-
+        
         <div className="flex flex-col sm:flex-row gap-4">
           <Link 
             href="/login" 
             className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200"
           >
             Host Login
-          </Link>
-          <Link 
-            href="/register" 
-            className="px-8 py-3 bg-white hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm transition-colors duration-200"
-          >
-            Create Account
           </Link>
         </div>
       </main>
