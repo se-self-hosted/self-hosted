@@ -49,3 +49,7 @@ minio_data/
 .claudeignore
 .geminiignore
 .codexignore
+
+# Local test artifacts
+cookies.txt
+src/generated/
