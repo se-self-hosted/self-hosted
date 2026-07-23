@@ -1,29 +1,150 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
+import { Video } from "lucide-react";
 
-export default function HomePage() {
+export default function LoginPage() {
+  const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to login");
+      }
+
+      setUser(data.user);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <main className="flex-grow flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 text-blue-600 dark:text-blue-400 tracking-tight">
-          ระบบประชุมทางไกลด้วยเสียงแบบ self-hosted
-        </h1>
-        <p className="text-lg md:text-xl max-w-3xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
-          The Web-based Real-time Voice Meeting Platform. Members can join instantly through shared links without registering. Hosts can log in to create rooms, manage meetings, and access AI-generated summaries.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
-            href="/login" 
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200"
-          >
-            Host Login
-          </Link>
+    <div className="flex min-h-screen bg-white">
+      {/* Left Pane - Hidden on Mobile */}
+      <div className="hidden lg:flex lg:flex-col lg:w-[55%] bg-[#211E52] p-12 lg:p-16 text-white justify-between relative overflow-hidden">
+        {/* Logo */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="bg-[#5B4EFA] p-2 rounded-xl">
+            <Video className="w-6 h-6 text-white" fill="currentColor" />
+          </div>
+          <span className="text-2xl font-bold tracking-tight">MeetSync</span>
         </div>
-      </main>
 
-      <footer className="py-6 text-center text-sm text-gray-500 dark:text-gray-500">
-        &copy; {new Date().getFullYear()} ระบบประชุมทางไกลด้วยเสียงแบบ self-hosted. All rights reserved.
-      </footer>
+        {/* Hero Content */}
+        <div className="relative z-10 -mt-16">
+          <p className="text-[#8B82FF] font-medium mb-4 text-lg">ระบบประชุมออนไลน์</p>
+          <h1 className="text-5xl lg:text-7xl font-bold leading-[1.1] mb-6">
+            ประชุมได้<br />ทุกที่ทุกเวลา
+          </h1>
+          <p className="text-gray-300 text-lg leading-relaxed max-w-md">
+            แพลตฟอร์มประชุมออนไลน์สำหรับทีมงานยุคใหม่ พร้อม
+            ระบบ transcript และ AI summary อัตโนมัติ
+          </p>
+        </div>
+
+        {/* Feature List */}
+        <div className="relative z-10 flex flex-col gap-5 text-sm text-gray-300">
+          <div className="flex items-center gap-4">
+            <span className="text-2xl">🎙️</span>
+            <span className="text-base font-medium">Real-time transcript อัตโนมัติ</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-2xl">🤖</span>
+            <span className="text-base font-medium">AI สรุปประชุมทุกครั้ง</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-2xl">📊</span>
+            <span className="text-base font-medium">ประวัติและ export รายงาน</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Pane */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12 relative">
+        {/* Simple logo for mobile visible only on small screens */}
+        <div className="flex lg:hidden items-center gap-2 mb-8 absolute top-6 left-6">
+          <div className="bg-[#5B4EFA] p-1.5 rounded-lg">
+            <Video className="w-5 h-5 text-white" fill="currentColor" />
+          </div>
+          <span className="text-xl font-bold text-gray-900">MeetSync</span>
+        </div>
+
+        <div className="w-full max-w-[420px]">
+          <h2 className="text-[2rem] font-bold text-gray-900 mb-2">ยินดีต้อนรับ</h2>
+          <p className="text-gray-500 mb-10 text-[15px]">เข้าสู่ระบบเพื่อจัดการห้องประชุมของคุณ</p>
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-700 mb-2">อีเมล</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#5B4EFA] focus:border-[#5B4EFA] outline-none transition"
+                placeholder="you@company.com"
+              />
+            </div>
+            <div>
+              <label className="block text-[15px] font-semibold text-gray-700 mb-2">รหัสผ่าน</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#5B4EFA] focus:border-[#5B4EFA] outline-none transition"
+                placeholder="••••••••"
+              />
+              {/* <div className="flex justify-end mt-3">
+                <Link href="#" className="text-[14px] text-[#5B4EFA] hover:underline">
+                  ลืมรหัสผ่าน?
+                </Link>
+              </div> */}
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 py-3.5 px-4 bg-[#5B4EFA] text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 disabled:opacity-70 transition flex justify-center items-center text-[15px]"
+            >
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+            </button>
+          </form>
+          
+          {/* <p className="mt-10 text-center text-[15px] text-gray-500">
+            ยังไม่มีบัญชี? <Link href="/register" className="text-[#5B4EFA] font-semibold hover:underline">สมัครสมาชิก</Link>
+          </p> */}
+        </div>
+      </div>
     </div>
   );
 }
