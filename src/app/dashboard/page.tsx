@@ -174,8 +174,8 @@ export default function DashboardPage() {
 
   if (isChecking || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0d172b]">
-        <p className="text-sm text-slate-400">Loading dashboard...</p>
+      <div className="dashboard-loading">
+        <p className="dashboard-loading__text">Loading dashboard...</p>
       </div>
     );
   }
@@ -187,139 +187,117 @@ export default function DashboardPage() {
   const activeRoomCount = rooms.filter((room) => room.status === "active").length;
 
   return (
-    <div className="min-h-screen bg-[#0d172b] text-slate-100 lg:flex">
-      <aside className="border-b border-[#202c42] bg-[#0e182c] lg:fixed lg:inset-y-0 lg:left-0 lg:w-[236px] lg:border-r lg:border-b-0">
-        <div className="flex h-full flex-col">
-          <div className="flex h-20 items-center justify-between px-5 lg:justify-start lg:gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-[#5447e9] shadow-[0_8px_24px_rgba(84,71,233,0.25)]">
-                <Video aria-hidden="true" className="size-[18px]" strokeWidth={2.2} />
+    <div className="dashboard">
+      <aside className="sidebar">
+        <div className="sidebar__inner">
+          <div className="sidebar__header">
+            <div className="sidebar__brand">
+              <span className="sidebar__brand-icon">
+                <Video aria-hidden="true" className="icon-18" strokeWidth={2.2} />
               </span>
-              <span className="text-base font-bold tracking-tight text-white">MeetSync</span>
+              <span className="sidebar__brand-name">MeetSync</span>
             </div>
             <button
               type="button"
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
-              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-[#18243a] hover:text-white lg:hidden"
+              className="sidebar__logout-mobile"
             >
-              <LogOut aria-hidden="true" className="size-5" />
+              <LogOut aria-hidden="true" className="icon-20" />
             </button>
           </div>
 
-          <nav aria-label="เมนูหลัก" className="px-2 pb-4 lg:pt-0">
-            <p className="mb-3 hidden px-3 text-[10px] font-medium text-[#52627e] lg:block">เมนู</p>
-            <div className="grid grid-cols-2 gap-2 lg:block lg:space-y-1">
-              <a
-                href="#rooms"
-                aria-current="page"
-                className="flex h-10 items-center gap-3 rounded-lg bg-[#5145e5] px-3 text-sm font-semibold text-white"
-              >
-                <LayoutGrid aria-hidden="true" className="size-4" />
+          <nav aria-label="เมนูหลัก" className="sidebar__nav">
+            <p className="sidebar__nav-label">เมนู</p>
+            <div className="sidebar__nav-grid">
+              <a href="#rooms" aria-current="page" className="sidebar__nav-link--active">
+                <LayoutGrid aria-hidden="true" className="icon-16" />
                 แดชบอร์ด
               </a>
-              <a
-                href="#history"
-                className="flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-[#8493ac] transition-colors hover:bg-[#18243a] hover:text-white"
-              >
-                <Clock3 aria-hidden="true" className="size-4" />
+              <a href="#history" className="sidebar__nav-link">
+                <Clock3 aria-hidden="true" className="icon-16" />
                 ประวัติการประชุม
               </a>
             </div>
           </nav>
 
-          <div className="mt-auto hidden border-t border-[#202c42] p-3 lg:block">
-            <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#5145e5] text-sm font-bold text-white">
+          <div className="sidebar__footer">
+            <div className="sidebar__user-row">
+              <span className="sidebar__avatar">
                 {(user.name || user.email).charAt(0).toUpperCase()}
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-semibold text-white">
-                  {user.name || "Host"}
-                </span>
-                <span className="block truncate text-[10px] text-slate-500">{user.email}</span>
+              <span className="sidebar__user-info">
+                <span className="sidebar__user-name">{user.name || "Host"}</span>
+                <span className="sidebar__user-email">{user.email}</span>
               </span>
               <button
                 type="button"
                 onClick={() => logout()}
                 aria-label="ออกจากระบบ"
-                className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-[#202d44] hover:text-white"
+                className="sidebar__logout-desktop"
               >
-                <LogOut aria-hidden="true" className="size-4" />
+                <LogOut aria-hidden="true" className="icon-16" />
               </button>
             </div>
           </div>
         </div>
       </aside>
 
-      <main id="rooms" className="w-full px-5 py-7 sm:px-8 lg:ml-[236px] lg:px-8 lg:py-8">
-        <div className="mx-auto max-w-[1574px]">
-          <header className="mb-9 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <main id="rooms" className="dashboard__main">
+        <div className="dashboard__container">
+          <header className="dashboard__header">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">ห้องประชุม</h1>
-              <p className="mt-1.5 text-sm text-[#7183a2]">
+              <h1 className="dashboard__title">ห้องประชุม</h1>
+              <p className="dashboard__subtitle">
                 {activeRoomCount} ห้องใช้งานอยู่ · {rooms.length} ทั้งหมด
               </p>
             </div>
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="inline-flex h-[42px] w-fit items-center justify-center gap-2 rounded-lg bg-[#5145e5] px-5 text-sm font-semibold text-white shadow-[0_8px_25px_rgba(81,69,229,0.2)] transition-colors hover:bg-[#6054ef] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
-            >
-              <Plus aria-hidden="true" className="size-[18px]" />
+            <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
+              <Plus aria-hidden="true" className="icon-18" />
               สร้างห้องประชุม
             </button>
           </header>
 
-          <section aria-label="รายการห้องประชุม" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <section aria-label="รายการห้องประชุม" className="rooms-grid">
             {rooms.map((room) => {
               const isActive = room.status === "active";
               const wasCopied = copiedRoomId === room.id;
 
               return (
-                <article
-                  key={room.id}
-                  className="flex min-h-[207px] flex-col rounded-xl border border-[#32415a] bg-[#1c293d] p-6 shadow-[0_10px_30px_rgba(2,8,23,0.08)]"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="flex size-10 items-center justify-center rounded-[10px] bg-[#0f1930] text-[#685cff]">
-                      <Video aria-hidden="true" className="size-[18px]" strokeWidth={1.9} />
+                <article key={room.id} className="room-card">
+                  <div className="room-card__top">
+                    <span className="room-card__icon">
+                      <Video aria-hidden="true" className="icon-18" strokeWidth={1.9} />
                     </span>
-                    <span
-                      className={
-                        isActive
-                          ? "inline-flex items-center gap-1.5 rounded-full bg-[#12433e] px-2.5 py-1 text-[11px] font-semibold leading-none text-[#14e29b]"
-                          : "rounded-full bg-[#293850] px-2.5 py-1 text-[11px] font-semibold leading-none text-[#8495af]"
-                      }
-                    >
-                      {isActive && <span aria-hidden="true" className="size-2 rounded-full bg-[#0ee391]" />}
+                    <span className={isActive ? "room-card__badge--active" : "room-card__badge"}>
+                      {isActive && <span aria-hidden="true" className="icon-8 room-card__badge-dot" />}
                       {isActive ? "Active" : "Ended"}
                     </span>
                   </div>
 
-                  <div className="mt-3.5">
-                    <h2 className="text-base font-bold tracking-[-0.02em] text-white">{room.name}</h2>
-                    <p className="mt-1.5 text-xs text-[#6f83a5]">
+                  <div className="room-card__body">
+                    <h2 className="room-card__title">{room.name}</h2>
+                    <p className="room-card__subtitle">
                       {isActive ? `${room.participants} / ${room.capacity} คน` : `สูงสุด ${room.capacity} คน`}
                     </p>
                   </div>
 
-                  <div className="mt-auto flex gap-2 pt-5">
+                  <div className="room-card__actions">
                     <button
                       type="button"
                       onClick={() => copyRoomLink(room.id)}
-                      className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-[#35465f] text-xs font-medium text-[#b6c4d9] transition-colors hover:border-[#526581] hover:bg-[#223149] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
+                      className="room-card__copy-btn focus-ring"
                     >
-                      {wasCopied && <Check aria-hidden="true" className="size-3.5 text-[#14e29b]" />}
+                      {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
                       {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
                     </button>
                     <button
                       type="button"
                       onClick={() => openEditModal(room)}
                       aria-label={`แก้ไขห้อง ${room.name}`}
-                      className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#35465f] text-[#8fa0b9] transition-colors hover:border-[#526581] hover:bg-[#223149] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
+                      className="room-card__edit-btn focus-ring"
                     >
-                      <Pencil aria-hidden="true" className="size-4" />
+                      <Pencil aria-hidden="true" className="icon-16" />
                     </button>
                   </div>
                 </article>
@@ -337,20 +315,15 @@ export default function DashboardPage() {
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeModal();
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#050b17]/75 p-4 backdrop-blur-[2px]"
+          className="modal-overlay"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="room-modal-title"
-            className="w-full max-w-md rounded-xl border border-[#35445d] bg-[#1c293d] shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
-          >
-            <div className="flex items-start justify-between border-b border-[#304057] px-6 py-5">
+          <div role="dialog" aria-modal="true" aria-labelledby="room-modal-title" className="modal">
+            <div className="modal__header">
               <div>
-                <h2 id="room-modal-title" className="text-lg font-bold text-white">
+                <h2 id="room-modal-title" className="modal__title">
                   {modalMode === "create" ? "สร้างห้องประชุม" : "แก้ไขห้องประชุม"}
                 </h2>
-                <p className="mt-1 text-xs text-[#8191aa]">
+                <p className="modal__subtitle">
                   {modalMode === "create"
                     ? "กรอกรายละเอียดสำหรับห้องประชุมใหม่"
                     : "แก้ไขชื่อหรือจำนวนผู้เข้าร่วมสูงสุด"}
@@ -360,15 +333,15 @@ export default function DashboardPage() {
                 type="button"
                 onClick={closeModal}
                 aria-label="ปิดหน้าต่าง"
-                className="rounded-lg p-2 text-[#8191aa] transition-colors hover:bg-[#26354c] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
+                className="modal__close-btn focus-ring"
               >
-                <X aria-hidden="true" className="size-5" />
+                <X aria-hidden="true" className="icon-20" />
               </button>
             </div>
 
-            <form onSubmit={saveRoom} className="space-y-5 p-6">
+            <form onSubmit={saveRoom} className="modal__form">
               <div>
-                <label htmlFor="room-name" className="mb-2 block text-sm font-medium text-[#d6deeb]">
+                <label htmlFor="room-name" className="modal__label">
                   ชื่อห้องประชุม
                 </label>
                 <input
@@ -381,12 +354,12 @@ export default function DashboardPage() {
                   }}
                   autoFocus
                   placeholder="เช่น Weekly Team Sync"
-                  className="h-11 w-full rounded-lg border border-[#3a4b65] bg-[#111c30] px-3.5 text-sm text-white outline-none transition placeholder:text-[#596b88] focus:border-[#675cf0] focus:ring-2 focus:ring-[#5145e5]/25"
+                  className="modal__input"
                 />
               </div>
 
               <div>
-                <label htmlFor="room-capacity" className="mb-2 block text-sm font-medium text-[#d6deeb]">
+                <label htmlFor="room-capacity" className="modal__label">
                   จำนวนผู้เข้าร่วมสูงสุด
                 </label>
                 <input
@@ -399,38 +372,31 @@ export default function DashboardPage() {
                     setCapacity(event.target.value);
                     setFormError("");
                   }}
-                  className="h-11 w-full rounded-lg border border-[#3a4b65] bg-[#111c30] px-3.5 text-sm text-white outline-none transition placeholder:text-[#596b88] focus:border-[#675cf0] focus:ring-2 focus:ring-[#5145e5]/25"
+                  className="modal__input"
                 />
               </div>
 
               {formError && (
-                <p role="alert" className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                <p role="alert" className="modal__error">
                   {formError}
                 </p>
               )}
 
-              <div className="flex flex-col-reverse gap-3 border-t border-[#304057] pt-5 sm:flex-row sm:items-center">
+              <div className="modal__actions">
                 {modalMode === "edit" && (
                   <button
                     type="button"
                     onClick={deleteSelectedRoom}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-500/35 px-4 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 sm:mr-auto"
+                    className="modal__delete-btn focus-ring-danger"
                   >
-                    <Trash2 aria-hidden="true" className="size-4" />
+                    <Trash2 aria-hidden="true" className="icon-16" />
                     ลบห้อง
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="h-10 rounded-lg border border-[#3a4b65] px-4 text-sm font-semibold text-[#b9c5d8] transition-colors hover:bg-[#26354c] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
-                >
+                <button type="button" onClick={closeModal} className="modal__cancel-btn focus-ring">
                   ยกเลิก
                 </button>
-                <button
-                  type="submit"
-                  className="h-10 rounded-lg bg-[#5145e5] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#6054ef] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8078ff]"
-                >
+                <button type="submit" className="modal__submit-btn focus-ring">
                   {modalMode === "create" ? "สร้างห้อง" : "บันทึก"}
                 </button>
               </div>
