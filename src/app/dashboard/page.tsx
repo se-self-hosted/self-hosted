@@ -15,8 +15,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 
+
 type Room = {
   id: string;
+  slug: string;
   name: string;
   status: "active" | "ended";
   participants?: number;
@@ -26,6 +28,7 @@ type Room = {
 const initialRooms: Room[] = [
   {
     id: "product-strategy-q3",
+    slug:"product-strategy-q3",
     name: "Product Strategy Q3",
     status: "active",
     participants: 7,
@@ -33,6 +36,7 @@ const initialRooms: Room[] = [
   },
   {
     id: "design-review-sprint-42",
+    slug:"design-review-sprint-42",
     name: "Design Review – Sprint 42",
     status: "active",
     participants: 4,
@@ -40,12 +44,14 @@ const initialRooms: Room[] = [
   },
   {
     id: "engineering-stand-up",
+    slug:"engineering-stand-up",
     name: "Engineering Stand-up",
     status: "ended",
     capacity: 15,
   },
   {
     id: "investor-pitch-prep",
+    slug:"investor-pitch-prep",
     name: "Investor Pitch Prep",
     status: "active",
     participants: 3,
@@ -53,12 +59,14 @@ const initialRooms: Room[] = [
   },
   {
     id: "customer-success-sync",
+    slug:"customer-success-sync",
     name: "Customer Success Sync",
     status: "ended",
     capacity: 12,
   },
   {
     id: "marketing-campaign-review",
+    slug:"marketing-campaign-review",
     name: "Marketing Campaign Review",
     status: "ended",
     capacity: 10,
@@ -113,7 +121,7 @@ export default function DashboardPage() {
     setModalMode("edit");
   };
 
-  const saveRoom = (event: FormEvent<HTMLFormElement>) => {
+  const saveRoom = async(event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedName = roomName.trim();
@@ -130,16 +138,44 @@ export default function DashboardPage() {
     }
 
     if (modalMode === "create") {
-      setRooms((currentRooms) => [
-        ...currentRooms,
-        {
-          id: `room-${Date.now()}`,
-          name: trimmedName,
-          capacity: parsedCapacity,
+      try {
+        const response = await fetch("/api/rooms", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: trimmedName,
+            maxParticipants: parsedCapacity,
+          }),
+        });
+    
+        const data = await response.json();
+    
+        if (!response.ok) {
+          setFormError(data.error || "ไม่สามารถสร้างห้องได้");
+          return;
+        }
+    
+        const newRoom: Room = {
+          id: data.room.id,
+          slug: data.room.slug,
+          name: data.room.name,
+          capacity: data.room.maxParticipants,
           participants: 0,
           status: "active",
-        },
-      ]);
+        };
+    
+        setRooms((currentRooms) => [
+          ...currentRooms,
+          newRoom,
+        ]);
+      } catch (error) {
+        console.error("Create room error:", error);
+        setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+        return;
+      }
+
     } else if (selectedRoomId) {
       setRooms((currentRooms) =>
         currentRooms.map((room) =>
@@ -160,12 +196,12 @@ export default function DashboardPage() {
     closeModal();
   };
 
-  const copyRoomLink = async (roomId: string) => {
-    const meetingUrl = `${window.location.origin}/meet/${roomId}`;
+  const copyRoomLink = async (slug: string) => {
+    const meetingUrl = `${window.location.origin}/meet/${slug}`;
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
-      setCopiedRoomId(roomId);
+      setCopiedRoomId(slug);
       window.setTimeout(() => setCopiedRoomId(null), 1800);
     } catch {
       setCopiedRoomId(null);
@@ -261,7 +297,7 @@ export default function DashboardPage() {
           <section aria-label="รายการห้องประชุม" className="rooms-grid">
             {rooms.map((room) => {
               const isActive = room.status === "active";
-              const wasCopied = copiedRoomId === room.id;
+              const wasCopied = copiedRoomId === room.slug;
 
               return (
                 <article key={room.id} className="room-card">
@@ -285,7 +321,7 @@ export default function DashboardPage() {
                   <div className="room-card__actions">
                     <button
                       type="button"
-                      onClick={() => copyRoomLink(room.id)}
+                      onClick={() => copyRoomLink(room.slug)}
                       className="room-card__copy-btn focus-ring"
                     >
                       {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
