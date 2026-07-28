@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const { user, isLoading, checkAuth, logout } = useAuthStore();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -92,10 +92,34 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Redirect if completely finished checking and no user is found
-    if (!isChecking && !isLoading && !user) {
-      router.push("/");
+    if (!isChecking && !isLoading && user) {
+      fetchRooms();
     }
   }, [isChecking, isLoading, user, router]);
+
+  async function fetchRooms() {
+    try {
+      const response = await fetch("/api/rooms");
+      const data = await response.json();
+
+      console.log("fetchRooms response:", response.status, data);
+  
+      if (!response.ok) return;
+  
+      const loadedRooms: Room[] = data.rooms.map((room: any) => ({
+        id: room.id,
+        slug: room.roomHash,
+        name: room.roomName,
+        capacity: room.maxParticipants,
+        participants: 0,
+        status: room.status,
+      }));
+
+        setRooms(loadedRooms);
+    } catch (error) {
+      console.error("Fetch rooms error:", error);
+    }
+  }
 
   const closeModal = () => {
     setModalMode(null);
@@ -201,7 +225,7 @@ export default function DashboardPage() {
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
-      setCopiedRoomId(slug);
+      setCopiedRoomId(roomSlug);
       window.setTimeout(() => setCopiedRoomId(null), 1800);
     } catch {
       setCopiedRoomId(null);
