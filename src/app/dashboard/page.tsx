@@ -93,7 +93,7 @@ export default function DashboardPage() {
   useEffect(() => {
     // Redirect if completely finished checking and no user is found
     if (!isChecking && !isLoading && !user) {
-      router.push("/login");
+      router.push("/");
     }
   }, [isChecking, isLoading, user, router]);
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: trimmedName,
+            roomName: trimmedName,        // ← แก้ name → roomName
             maxParticipants: parsedCapacity,
           }),
         });
@@ -159,8 +159,8 @@ export default function DashboardPage() {
     
         const newRoom: Room = {
           id: data.room.id,
-          slug: data.room.slug,
-          name: data.room.name,
+          slug: data.room.roomHash,      // ← แก้ data.room.slug → data.room.roomHash
+          name: data.room.roomName,      // ← แก้ data.room.name → data.room.roomName
           capacity: data.room.maxParticipants,
           participants: 0,
           status: "active",
@@ -196,8 +196,8 @@ export default function DashboardPage() {
     closeModal();
   };
 
-  const copyRoomLink = async (slug: string) => {
-    const meetingUrl = `${window.location.origin}/meet/${slug}`;
+  const copyRoomLink = async (roomId: string, roomSlug: string) => {
+    const meetingUrl = `${window.location.origin}/meet/${roomSlug}`;
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
@@ -321,7 +321,7 @@ export default function DashboardPage() {
                   <div className="room-card__actions">
                     <button
                       type="button"
-                      onClick={() => copyRoomLink(room.slug)}
+                      onClick={() => copyRoomLink(room.id, room.slug)}
                       className="room-card__copy-btn focus-ring"
                     >
                       {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
