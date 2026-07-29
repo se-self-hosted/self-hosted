@@ -159,8 +159,8 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
-      setFormError("จำนวนผู้เข้าร่วมต้องมีอย่างน้อย 1 คน");
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 2) {
+      setFormError("จำนวนผู้เข้าร่วมต้องมีอย่างน้อย 2 คน");
       return;
     }
 
@@ -466,7 +466,7 @@ export default function DashboardPage() {
                 <input
                   id="room-capacity"
                   type="number"
-                  min="1"
+                  min="2"
                   step="1"
                   value={capacity}
                   onChange={(event) => {

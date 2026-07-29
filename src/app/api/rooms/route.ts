@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const createRoomSchema = z.object({
   roomName: z.string().min(1, "Room name is required"),
-  maxParticipants: z.number().int().min(1),
+  maxParticipants: z.number().int().min(2, "Room must allow at least 2 participants")
 });
 
 async function generateUniqueRoomHash() {

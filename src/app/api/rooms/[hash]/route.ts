@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const updateRoomSchema = z.object({
   roomName: z.string().min(1, "Room name is required").optional(),
-  maxParticipants: z.number().int().min(1).optional(),
+  maxParticipants: z.number().int().min(2, "Room must allow at least 2 participants").optional(),
   status: z.enum(["active", "ended"]).optional(),
 });
 
