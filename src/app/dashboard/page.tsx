@@ -81,6 +81,7 @@ export default function DashboardPage() {
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomSlug, setSelectedRoomSlug] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("");
   const [capacity, setCapacity] = useState("1");
   const [formError, setFormError] = useState("");
@@ -124,6 +125,7 @@ export default function DashboardPage() {
   const closeModal = () => {
     setModalMode(null);
     setSelectedRoomId(null);
+    setSelectedRoomSlug(null);
     setRoomName("");
     setCapacity("1");
     setFormError("");
@@ -139,6 +141,7 @@ export default function DashboardPage() {
 
   const openEditModal = (room: Room) => {
     setSelectedRoomId(room.id);
+    setSelectedRoomSlug(room.slug);
     setRoomName(room.name);
     setCapacity(String(room.capacity));
     setFormError("");
@@ -201,23 +204,61 @@ export default function DashboardPage() {
       }
 
     } else if (selectedRoomId) {
-      setRooms((currentRooms) =>
-        currentRooms.map((room) =>
-          room.id === selectedRoomId
-            ? { ...room, name: trimmedName, capacity: parsedCapacity }
-            : room,
-        ),
-      );
+      try {
+        const response = await fetch(`/api/rooms/${selectedRoomSlug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName: trimmedName,
+            maxParticipants: parsedCapacity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setFormError(data.error || "ไม่สามารถแก้ไขห้องได้");
+          return;
+        }
+
+        setRooms((currentRooms) =>
+          currentRooms.map((room) =>
+            room.id === selectedRoomId
+              ? { ...room, name: data.room.roomName, capacity: data.room.maxParticipants }
+              : room,
+          ),
+        );
+    } catch (error) {
+      console.error("Update room error:", error);
+      setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+      return;
     }
+  }
+  
 
     closeModal();
   };
 
-  const deleteSelectedRoom = () => {
-    if (!selectedRoomId) return;
-
-    setRooms((currentRooms) => currentRooms.filter((room) => room.id !== selectedRoomId));
-    closeModal();
+  const deleteSelectedRoom = async () => {
+    if (!selectedRoomId || !selectedRoomSlug) return;
+  
+    try {
+      const response = await fetch(`/api/rooms/${selectedRoomSlug}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        setFormError(data.error || "ไม่สามารถลบห้องได้");
+        return;
+      }
+  
+      setRooms((currentRooms) => currentRooms.filter((room) => room.id !== selectedRoomId));
+      closeModal();
+    } catch (error) {
+      console.error("Delete room error:", error);
+      setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+    }
   };
 
   const copyRoomLink = async (roomId: string, roomSlug: string) => {
