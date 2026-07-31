@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   Check,
   Clock3,
+  DoorOpen,
   LayoutGrid,
   LogOut,
   Pencil,
@@ -262,7 +263,7 @@ export default function DashboardPage() {
   };
 
   const copyRoomLink = async (roomId: string, roomSlug: string) => {
-    const meetingUrl = `${window.location.origin}/meet/${roomSlug}`;
+    const meetingUrl = `${window.location.origin}/meeting/${roomSlug}`;
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
@@ -391,6 +392,15 @@ export default function DashboardPage() {
                     >
                       {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
                       {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/meeting/${room.slug}`)}
+                      disabled={!isActive}
+                      className="room-card__join-btn focus-ring"
+                    >
+                      <DoorOpen aria-hidden="true" className="icon-16" />
+                      เข้าห้อง
                     </button>
                     <button
                       type="button"
