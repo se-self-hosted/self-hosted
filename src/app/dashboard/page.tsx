@@ -2,82 +2,25 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  Check,
   Clock3,
   LayoutGrid,
   LogOut,
-  Pencil,
   Plus,
   Trash2,
   Video,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { MeetingRoomList } from "@/features/rooms/components/MeetingRoomList";
+import { listMeetingRooms } from "@/features/rooms/data";
+import type { MeetingRoom } from "@/features/rooms/types";
 import { useAuthStore } from "@/store/useAuthStore";
-
-
-type Room = {
-  id: string;
-  slug: string;
-  name: string;
-  status: "active" | "ended";
-  participants?: number;
-  capacity: number;
-};
-
-const initialRooms: Room[] = [
-  {
-    id: "product-strategy-q3",
-    slug:"product-strategy-q3",
-    name: "Product Strategy Q3",
-    status: "active",
-    participants: 7,
-    capacity: 20,
-  },
-  {
-    id: "design-review-sprint-42",
-    slug:"design-review-sprint-42",
-    name: "Design Review – Sprint 42",
-    status: "active",
-    participants: 4,
-    capacity: 10,
-  },
-  {
-    id: "engineering-stand-up",
-    slug:"engineering-stand-up",
-    name: "Engineering Stand-up",
-    status: "ended",
-    capacity: 15,
-  },
-  {
-    id: "investor-pitch-prep",
-    slug:"investor-pitch-prep",
-    name: "Investor Pitch Prep",
-    status: "active",
-    participants: 3,
-    capacity: 8,
-  },
-  {
-    id: "customer-success-sync",
-    slug:"customer-success-sync",
-    name: "Customer Success Sync",
-    status: "ended",
-    capacity: 12,
-  },
-  {
-    id: "marketing-campaign-review",
-    slug:"marketing-campaign-review",
-    name: "Marketing Campaign Review",
-    status: "ended",
-    capacity: 10,
-  },
-];
 
 export default function DashboardPage() {
   const { user, isLoading, checkAuth, logout } = useAuthStore();
-  const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<MeetingRoom[]>([]);
+  const [areRoomsLoading, setAreRoomsLoading] = useState(true);
+  const [roomsError, setRoomsError] = useState<string | null>(null);
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -93,32 +36,38 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Redirect if completely finished checking and no user is found
-    if (!isChecking && !isLoading && user) {
-      fetchRooms();
-    }
-  }, [isChecking, isLoading, user, router]);
+    if (isChecking || isLoading || !user) return;
+
+    let isCancelled = false;
+
+    listMeetingRooms()
+      .then((loadedRooms) => {
+        if (!isCancelled) setRooms(loadedRooms);
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setRoomsError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setAreRoomsLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isChecking, isLoading, user]);
 
   async function fetchRooms() {
+    setAreRoomsLoading(true);
+    setRoomsError(null);
+
     try {
-      const response = await fetch("/api/rooms");
-      const data = await response.json();
-
-      console.log("fetchRooms response:", response.status, data);
-  
-      if (!response.ok) return;
-  
-      const loadedRooms: Room[] = data.rooms.map((room: any) => ({
-        id: room.id,
-        slug: room.roomHash,
-        name: room.roomName,
-        capacity: room.maxParticipants,
-        participants: 0,
-        status: room.status,
-      }));
-
-        setRooms(loadedRooms);
-    } catch (error) {
-      console.error("Fetch rooms error:", error);
+      setRooms(await listMeetingRooms());
+    } catch {
+      setRoomsError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setAreRoomsLoading(false);
     }
   }
 
@@ -139,11 +88,11 @@ export default function DashboardPage() {
     setModalMode("create");
   };
 
-  const openEditModal = (room: Room) => {
+  const openEditModal = (room: MeetingRoom) => {
     setSelectedRoomId(room.id);
     setSelectedRoomSlug(room.slug);
     setRoomName(room.name);
-    setCapacity(String(room.capacity));
+    setCapacity(String(room.maxParticipants));
     setFormError("");
     setModalMode("edit");
   };
@@ -172,7 +121,7 @@ export default function DashboardPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            roomName: trimmedName,        // ← แก้ name → roomName
+            roomName: trimmedName,
             maxParticipants: parsedCapacity,
           }),
         });
@@ -184,12 +133,11 @@ export default function DashboardPage() {
           return;
         }
     
-        const newRoom: Room = {
+        const newRoom: MeetingRoom = {
           id: data.room.id,
-          slug: data.room.roomHash,      // ← แก้ data.room.slug → data.room.roomHash
-          name: data.room.roomName,      // ← แก้ data.room.name → data.room.roomName
-          capacity: data.room.maxParticipants,
-          participants: 0,
+          slug: data.room.roomHash,
+          name: data.room.roomName,
+          maxParticipants: data.room.maxParticipants,
           status: "active",
         };
     
@@ -224,17 +172,21 @@ export default function DashboardPage() {
         setRooms((currentRooms) =>
           currentRooms.map((room) =>
             room.id === selectedRoomId
-              ? { ...room, name: data.room.roomName, capacity: data.room.maxParticipants }
+              ? {
+                  ...room,
+                  name: data.room.roomName,
+                  maxParticipants: data.room.maxParticipants,
+                  status: data.room.status === "ended" ? "ended" : "active",
+                }
               : room,
           ),
         );
-    } catch (error) {
-      console.error("Update room error:", error);
-      setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
-      return;
+      } catch (error) {
+        console.error("Update room error:", error);
+        setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+        return;
+      }
     }
-  }
-  
 
     closeModal();
   };
@@ -261,12 +213,12 @@ export default function DashboardPage() {
     }
   };
 
-  const copyRoomLink = async (roomId: string, roomSlug: string) => {
-    const meetingUrl = `${window.location.origin}/meet/${roomSlug}`;
+  const copyRoomLink = async (room: MeetingRoom) => {
+    const meetingUrl = `${window.location.origin}/meeting/${room.slug}`;
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
-      setCopiedRoomId(roomSlug);
+      setCopiedRoomId(room.id);
       window.setTimeout(() => setCopiedRoomId(null), 1800);
     } catch {
       setCopiedRoomId(null);
@@ -350,7 +302,9 @@ export default function DashboardPage() {
             <div>
               <h1 className="dashboard__title">ห้องประชุม</h1>
               <p className="dashboard__subtitle">
-                {activeRoomCount} ห้องใช้งานอยู่ · {rooms.length} ทั้งหมด
+                {areRoomsLoading
+                  ? "กำลังโหลดรายการห้องประชุม..."
+                  : `${activeRoomCount} ห้องใช้งานอยู่ · ${rooms.length} ทั้งหมด`}
               </p>
             </div>
             <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
@@ -359,52 +313,15 @@ export default function DashboardPage() {
             </button>
           </header>
 
-          <section aria-label="รายการห้องประชุม" className="rooms-grid">
-            {rooms.map((room) => {
-              const isActive = room.status === "active";
-              const wasCopied = copiedRoomId === room.slug;
-
-              return (
-                <article key={room.id} className="room-card">
-                  <div className="room-card__top">
-                    <span className="room-card__icon">
-                      <Video aria-hidden="true" className="icon-18" strokeWidth={1.9} />
-                    </span>
-                    <span className={isActive ? "room-card__badge--active" : "room-card__badge"}>
-                      {isActive && <span aria-hidden="true" className="icon-8 room-card__badge-dot" />}
-                      {isActive ? "Active" : "Ended"}
-                    </span>
-                  </div>
-
-                  <div className="room-card__body">
-                    <h2 className="room-card__title">{room.name}</h2>
-                    <p className="room-card__subtitle">
-                      {isActive ? `${room.participants} / ${room.capacity} คน` : `สูงสุด ${room.capacity} คน`}
-                    </p>
-                  </div>
-
-                  <div className="room-card__actions">
-                    <button
-                      type="button"
-                      onClick={() => copyRoomLink(room.id, room.slug)}
-                      className="room-card__copy-btn focus-ring"
-                    >
-                      {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
-                      {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(room)}
-                      aria-label={`แก้ไขห้อง ${room.name}`}
-                      className="room-card__edit-btn focus-ring"
-                    >
-                      <Pencil aria-hidden="true" className="icon-16" />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
+          <MeetingRoomList
+            rooms={rooms}
+            isLoading={areRoomsLoading}
+            error={roomsError}
+            copiedRoomId={copiedRoomId}
+            onCopyLink={copyRoomLink}
+            onEdit={openEditModal}
+            onRetry={() => void fetchRooms()}
+          />
 
           <span id="history" className="sr-only">ประวัติการประชุม</span>
         </div>
