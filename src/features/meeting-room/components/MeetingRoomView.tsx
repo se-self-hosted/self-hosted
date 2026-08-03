@@ -24,6 +24,8 @@ type Room = {
 type MeetingRoomViewProps = {
   room: Room | null;
   requestedSlug: string;
+  isHost?: boolean;
+  hostName?: string;
 };
 
 type ParticipantTile = {
@@ -39,10 +41,15 @@ const otherParticipants: ParticipantTile[] = [
   { name: "เฟิร์", initials: "เฟ", isMuted: false },
 ];
 
-export function MeetingRoomView({ room, requestedSlug }: MeetingRoomViewProps) {
-  const [displayName, setDisplayName] = useState("");
+export function MeetingRoomView({
+  room,
+  requestedSlug,
+  isHost = false,
+  hostName,
+}: MeetingRoomViewProps) {
+  const [displayName, setDisplayName] = useState(isHost ? hostName ?? "" : "");
   const [nameError, setNameError] = useState("");
-  const [hasJoined, setHasJoined] = useState(false);
+  const [hasJoined, setHasJoined] = useState(isHost && Boolean(hostName));
   const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(false);
 
   if (!room || room.status !== "active") {
@@ -129,7 +136,7 @@ export function MeetingRoomView({ room, requestedSlug }: MeetingRoomViewProps) {
     {
       name: displayName,
       initials: displayName.slice(0, 2),
-      isHost: true,
+      isHost,
       isSpeaking: !isMicrophoneMuted,
       isMuted: isMicrophoneMuted,
     },

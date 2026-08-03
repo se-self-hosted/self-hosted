@@ -395,7 +395,7 @@ export default function DashboardPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/meeting/${room.slug}`)}
+                      onClick={() => router.push(`/meeting/${room.slug}?role=host`)}
                       disabled={!isActive}
                       className="room-card__join-btn focus-ring"
                     >

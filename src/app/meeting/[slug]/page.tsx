@@ -1,6 +1,8 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useAuthStore } from "@/store/useAuthStore";
 import { MeetingRoomView } from "@/features/meeting-room/components/MeetingRoomView";
 
 type Room = {
@@ -17,6 +19,10 @@ type MeetingRoomPageProps = {
 
 export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
   const { slug } = use(params);
+  const searchParams = useSearchParams();
+  const isHost = searchParams.get("role") === "host";
+  const { user } = useAuthStore();
+
   const [room, setRoom] = useState<Room | null>();
   const [error, setError] = useState<string | null>(null);
 
@@ -72,5 +78,12 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
     );
   }
 
-  return <MeetingRoomView room={room} requestedSlug={slug} />;
+  return (
+    <MeetingRoomView
+      room={room}
+      requestedSlug={slug}
+      isHost={isHost}
+      hostName={user?.name || user?.email}
+    />
+  );
 }
