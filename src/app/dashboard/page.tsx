@@ -165,6 +165,11 @@ export default function DashboardPage() {
       return;
     }
 
+    if (parsedCapacity > 50) {
+      setFormError("จำนวนผู้เข้าร่วมต้องไม่เกิน 50 คน");
+      return;
+    }
+
     if (modalMode === "create") {
       try {
         const response = await fetch("/api/rooms", {
@@ -477,6 +482,7 @@ export default function DashboardPage() {
                   id="room-capacity"
                   type="number"
                   min="2"
+                  max="40"
                   step="1"
                   value={capacity}
                   onChange={(event) => {

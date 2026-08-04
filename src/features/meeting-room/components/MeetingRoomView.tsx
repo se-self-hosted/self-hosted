@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -9,7 +9,6 @@ import {
   MicOff,
   Phone,
   Radio,
-  RotateCcw,
   Users,
   Video,
 } from "lucide-react";
@@ -36,10 +35,10 @@ type ParticipantTile = {
   isMuted?: boolean;
 };
 
-const otherParticipants: ParticipantTile[] = [
-  { name: "กิม", initials: "กิม", isMuted: true },
-  { name: "เฟิร์", initials: "เฟ", isMuted: false },
-];
+type RemoteParticipant = {
+  id: string;
+  displayName: string;
+};
 
 export function MeetingRoomView({
   room,
@@ -51,6 +50,97 @@ export function MeetingRoomView({
   const [nameError, setNameError] = useState("");
   const [hasJoined, setHasJoined] = useState(isHost && Boolean(hostName));
   const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(false);
+
+  const [connectionId, setConnectionId] = useState<string | null>(null);
+  const [participantId, setParticipantId] = useState<string | null>(null);
+  const [otherParticipants, setOtherParticipants] = useState<RemoteParticipant[]>([]);
+
+  // Register this browser tab as a real participant once it has joined.
+  useEffect(() => {
+    if (!hasJoined || !room || connectionId) return;
+
+    let cancelled = false;
+
+    async function registerJoin() {
+      try {
+        const response = await fetch(`/api/rooms/${room!.roomHash}/join`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName }),
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok) {
+          setConnectionId(data.connectionId);
+          setParticipantId(data.participantId);
+        }
+      } catch (error) {
+        console.error("Join meeting error:", error);
+      }
+    }
+
+    void registerJoin();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasJoined, room]);
+
+  // Poll the real participant list so the grid reflects who has actually joined.
+  useEffect(() => {
+    if (!hasJoined || !room) return;
+
+    let cancelled = false;
+
+    async function fetchParticipants() {
+      try {
+        const response = await fetch(`/api/rooms/${room!.roomHash}/participants`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+
+        const others: RemoteParticipant[] = data.participants
+          .filter((participant: RemoteParticipant) => participant.id !== participantId)
+          .map((participant: RemoteParticipant) => ({
+            id: participant.id,
+            displayName: participant.displayName,
+          }));
+
+        setOtherParticipants(others);
+      } catch (error) {
+        console.error("Fetch participants error:", error);
+      }
+    }
+
+    void fetchParticipants();
+    const interval = setInterval(fetchParticipants, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [hasJoined, room, participantId]);
+
+  // Tell the server we've left, whether by closing the tab or navigating away in-app.
+  useEffect(() => {
+    if (!room) return;
+
+    function notifyLeave() {
+      if (!connectionId) return;
+      const payload = JSON.stringify({ connectionId });
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon?.(`/api/rooms/${room!.roomHash}/leave`, blob);
+    }
+
+    window.addEventListener("beforeunload", notifyLeave);
+
+    return () => {
+      window.removeEventListener("beforeunload", notifyLeave);
+      notifyLeave();
+    };
+  }, [connectionId, room]);
 
   if (!room || room.status !== "active") {
     return (
@@ -140,7 +230,13 @@ export function MeetingRoomView({
       isSpeaking: !isMicrophoneMuted,
       isMuted: isMicrophoneMuted,
     },
-    ...otherParticipants,
+    ...otherParticipants.map((participant) => ({
+      name: participant.displayName,
+      initials: participant.displayName.slice(0, 2),
+      // Mic/speaking state isn't known yet without a real audio connection (LiveKit).
+      isMuted: false,
+      isSpeaking: false,
+    })),
   ];
 
   const toggleMicrophone = () => {
@@ -200,11 +296,6 @@ export function MeetingRoomView({
                 )}
               </article>
             ))}
-          </div>
-
-          <div role="status" className="meeting-room__notice">
-            <RotateCcw aria-hidden="true" className="icon-16" />
-            กิม หลุดการเชื่อมต่อ · กำลังเชื่อมต่อใหม่...
           </div>
         </section>
 

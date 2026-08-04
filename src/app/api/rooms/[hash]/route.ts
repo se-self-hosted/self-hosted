@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
+import { MIN_ROOM_PARTICIPANTS, MAX_ROOM_PARTICIPANTS } from "@/lib/constants";
 import { z } from "zod";
 
 const updateRoomSchema = z.object({
   roomName: z.string().min(1, "Room name is required").optional(),
-  maxParticipants: z.number().int().min(2, "Room must allow at least 2 participants").optional(),
+  maxParticipants: z
+    .number()
+    .int()
+    .min(MIN_ROOM_PARTICIPANTS, `Room must allow at least ${MIN_ROOM_PARTICIPANTS} participants`)
+    .max(MAX_ROOM_PARTICIPANTS, `Room cannot allow more than ${MAX_ROOM_PARTICIPANTS} participants`)
+    .optional(),
   status: z.enum(["active", "ended"]).optional(),
 });
 

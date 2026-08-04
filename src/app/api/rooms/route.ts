@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateSlug } from "@/lib/slug";
+import { MIN_ROOM_PARTICIPANTS, MAX_ROOM_PARTICIPANTS } from "@/lib/constants";
 import { z } from "zod";
 
 const createRoomSchema = z.object({
   roomName: z.string().min(1, "Room name is required"),
-  maxParticipants: z.number().int().min(2, "Room must allow at least 2 participants")
+  maxParticipants: z
+    .number()
+    .int()
+    .min(MIN_ROOM_PARTICIPANTS, `Room must allow at least ${MIN_ROOM_PARTICIPANTS} participants`)
+    .max(MAX_ROOM_PARTICIPANTS, `Room cannot allow more than ${MAX_ROOM_PARTICIPANTS} participants`),
 });
 
 async function generateUniqueRoomHash() {
@@ -60,11 +65,38 @@ export async function GET(req: Request) {
     }
 
     const rooms = await prisma.meetingRoom.findMany({
-      where: { hostId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
+  where: { hostId: user.id },
+  orderBy: { createdAt: "desc" },
+  include: {
+    meetings: {
+      where: { endedAt: null },
+      orderBy: { startedAt: "desc" },
+      take: 1,
+      include: {
+        participants: {
+          include: {
+            sessions: {
+              where: { leftAt: null },
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
-    return NextResponse.json({ rooms });
+const roomsWithCounts = rooms.map((room) => {
+  const ongoingMeeting = room.meetings[0];
+
+  const activeParticipantCount = ongoingMeeting
+    ? ongoingMeeting.participants.filter((participant) => participant.sessions.length > 0).length
+    : 0;
+
+  const { meetings, ...roomFields } = room;
+  return { ...roomFields, activeParticipantCount };
+});
+
+    return NextResponse.json({ rooms: roomsWithCounts });
   } catch (error) {
     console.error("List Rooms Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
