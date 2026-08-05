@@ -28,9 +28,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await fetch('/api/auth/me');
-      const contentType = res.headers.get("content-type");
-      if (res.ok && contentType?.includes("application/json")) {
-        const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (res.ok && data.user) {
         set({ user: data.user, isLoading: false });
       } else {
         set({ user: null, isLoading: false });
@@ -45,8 +45,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       set({ user: null, isLoading: false, error: null });
-      // In a real app, you might want to redirect to the login page here
-      window.location.href = '/login';
+      // Redirect to login page at root /
+      window.location.href = '/';
     } catch (err) {
       set({ isLoading: false, error: 'Failed to logout' });
     }

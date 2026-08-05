@@ -94,38 +94,55 @@ export default function DashboardPage() {
   }, [checkAuth]);
 
   useEffect(() => {
-    // Redirect if completely finished checking and no user is found
-    if (!isChecking && !isLoading && user) {
-      fetchRooms();
-      const interval = setInterval(fetchRooms, 3000);
-      return () => clearInterval(interval);
+    if (!isChecking && !isLoading && !user) {
+      router.push("/");
     }
   }, [isChecking, isLoading, user, router]);
 
-  async function fetchRooms() {
-    try {
-      const response = await fetch("/api/rooms");
-      const contentType = response.headers.get("content-type");
+  useEffect(() => {
+    // Fetch rooms if completely finished checking and user is authenticated
+    if (!isChecking && !isLoading && user) {
+      let isMounted = true;
+      const controller = new AbortController();
 
-      if (!response.ok || !contentType?.includes("application/json")) return;
+      async function loadRooms() {
+        try {
+          const response = await fetch("/api/rooms", { signal: controller.signal });
+          const contentType = response.headers.get("content-type");
 
-      const data = await response.json();
+          if (!response.ok || !contentType?.includes("application/json")) return;
 
-      const loadedRooms: Room[] = data.rooms.map((room: any) => ({
-        id: room.id,
-        slug: room.roomHash,
-        name: room.roomName,
-        capacity: room.maxParticipants,
-        participants: room.activeParticipantCount ?? 0,
-        status: room.status,
-        isHostInRoom: room.isHostInRoom ?? false,
-      }));
+          const data = await response.json();
+          if (!isMounted) return;
 
-      setRooms(loadedRooms);
-    } catch (error) {
-      console.error("Fetch rooms error:", error);
+          const loadedRooms: Room[] = data.rooms.map((room: any) => ({
+            id: room.id,
+            slug: room.roomHash,
+            name: room.roomName,
+            capacity: room.maxParticipants,
+            participants: room.activeParticipantCount ?? 0,
+            status: room.status,
+            isHostInRoom: room.isHostInRoom ?? false,
+          }));
+
+          setRooms(loadedRooms);
+        } catch (error: any) {
+          if (error.name !== "AbortError") {
+            // Silently handle temporary network failures during polling
+          }
+        }
+      }
+
+      loadRooms();
+      const interval = setInterval(loadRooms, 3000);
+
+      return () => {
+        isMounted = false;
+        controller.abort();
+        clearInterval(interval);
+      };
     }
-  }
+  }, [isChecking, isLoading, user]);
 
   const closeModal = () => {
     setModalMode(null);

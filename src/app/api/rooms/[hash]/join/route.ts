@@ -52,50 +52,32 @@ export async function POST(
 
     const isHost = Boolean(user && room.hostId === user.id);
 
-    // If host, check if already actively in this room
-    if (isHost && user) {
-      const hostNames = Array.from(
-        new Set([displayName, user.fullname, user.email].filter(Boolean) as string[]),
-      );
+    // Close out any previous active session under the same name or host identity in this meeting
+    const searchNames = Array.from(
+      new Set([displayName, user?.fullname, user?.email].filter(Boolean) as string[]),
+    );
 
-      const hostParticipants = await prisma.participant.findMany({
-        where: {
-          meetingId: meeting.id,
-          displayName: { in: hostNames },
-        },
-        include: { sessions: true },
-      });
-
-      const activeHostSessions = hostParticipants.flatMap((participant) =>
-        participant.sessions.filter((session) => isSessionActive(session)),
-      );
-
-      if (activeHostSessions.length > 0) {
-        return NextResponse.json(
-          { error: "คุณอยู่ในห้องประชุมนี้แล้ว" },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Close out any stale/previous session under the same name in this meeting
-    const sameNameParticipants = await prisma.participant.findMany({
-      where: { meetingId: meeting.id, displayName },
+    const existingParticipants = await prisma.participant.findMany({
+      where: {
+        meetingId: meeting.id,
+        displayName: { in: searchNames },
+      },
       include: { sessions: true },
     });
 
-    const staleSessions = sameNameParticipants.flatMap((participant) =>
+    const activePreviousSessions = existingParticipants.flatMap((participant) =>
       participant.sessions.filter((session) => isSessionActive(session)),
     );
 
-    if (staleSessions.length > 0) {
+    if (activePreviousSessions.length > 0) {
       const now = new Date();
       await Promise.all(
-        staleSessions.map((session) =>
+        activePreviousSessions.map((session) =>
           prisma.participantSession.update({
             where: { id: session.id },
             data: {
               leftAt: now,
+              lastSeenAt: new Date(0),
               durationSeconds: Math.round(
                 (now.getTime() - session.joinedAt.getTime()) / 1000,
               ),
@@ -122,22 +104,39 @@ export async function POST(
     const connectionId = randomUUID();
     const now = new Date();
 
-    const participant = await prisma.participant.create({
-      data: {
-        meetingId: meeting.id,
-        displayName,
-        sessions: {
-          create: {
-            joinedAt: now,
-            lastSeenAt: now,
-            connectionId,
+    // Reuse existing participant for this user/host if present, avoiding duplicate participant rows
+    const existingParticipant = existingParticipants.find((p) => p.displayName === displayName) || existingParticipants[0];
+    let targetParticipantId: string;
+
+    if (existingParticipant) {
+      targetParticipantId = existingParticipant.id;
+      await prisma.participantSession.create({
+        data: {
+          participantId: existingParticipant.id,
+          joinedAt: now,
+          lastSeenAt: now,
+          connectionId,
+        },
+      });
+    } else {
+      const newParticipant = await prisma.participant.create({
+        data: {
+          meetingId: meeting.id,
+          displayName,
+          sessions: {
+            create: {
+              joinedAt: now,
+              lastSeenAt: now,
+              connectionId,
+            },
           },
         },
-      },
-    });
+      });
+      targetParticipantId = newParticipant.id;
+    }
 
     return NextResponse.json(
-      { participantId: participant.id, meetingId: meeting.id, connectionId },
+      { participantId: targetParticipantId, meetingId: meeting.id, connectionId },
       { status: 201 },
     );
   } catch (error) {

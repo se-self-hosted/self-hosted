@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
@@ -8,12 +8,22 @@ import { Video } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const setUser = useAuthStore((state) => state.setUser);
+  const { user, isLoading, checkAuth, setUser } = useAuthStore();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      window.location.href = "/dashboard";
+    }
+  }, [user, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,18 +37,22 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const contentType = res.headers.get("content-type");
-      const data = contentType?.includes("application/json") ? await res.json() : {};
+      let data: any = {};
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to login");
       }
 
       setUser(data.user);
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
