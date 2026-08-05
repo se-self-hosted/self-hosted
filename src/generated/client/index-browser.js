@@ -160,6 +160,7 @@ exports.Prisma.ParticipantSessionScalarFieldEnum = {
   id: 'id',
   participantId: 'participantId',
   joinedAt: 'joinedAt',
+  lastSeenAt: 'lastSeenAt',
   leftAt: 'leftAt',
   durationSeconds: 'durationSeconds',
   connectionId: 'connectionId'

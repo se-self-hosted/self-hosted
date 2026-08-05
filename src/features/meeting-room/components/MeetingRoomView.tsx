@@ -1,5 +1,5 @@
 "use client";
-
+import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -12,6 +12,7 @@ import {
   Users,
   Video,
 } from "lucide-react";
+
 
 type Room = {
   roomHash: string;
@@ -122,6 +123,36 @@ export function MeetingRoomView({
       clearInterval(interval);
     };
   }, [hasJoined, room, participantId]);
+
+  // Keep proving we're still connected. If the tab closes or the connection
+  // drops without a clean /leave call, the server stops seeing these and
+  // treats the session as gone once it goes stale.
+  useEffect(() => {
+    if (!hasJoined || !room || !connectionId) return;
+
+    let cancelled = false;
+
+    async function sendHeartbeat() {
+      try {
+        await fetch(`/api/rooms/${room!.roomHash}/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ connectionId }),
+        });
+      } catch (error) {
+        console.error("Heartbeat error:", error);
+      }
+    }
+
+    const interval = setInterval(() => {
+      if (!cancelled) void sendHeartbeat();
+    }, HEARTBEAT_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [hasJoined, room, connectionId]);
 
   // Tell the server we've left, whether by closing the tab or navigating away in-app.
   useEffect(() => {

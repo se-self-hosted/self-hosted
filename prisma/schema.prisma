@@ -71,6 +71,7 @@ model ParticipantSession {
   participantId     String
 
   joinedAt          DateTime
+  lastSeenAt        DateTime @default(now())
   leftAt            DateTime?
   durationSeconds   Int?
   connectionId      String

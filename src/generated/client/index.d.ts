@@ -6522,6 +6522,7 @@ export namespace Prisma {
     id: string | null
     participantId: string | null
     joinedAt: Date | null
+    lastSeenAt: Date | null
     leftAt: Date | null
     durationSeconds: number | null
     connectionId: string | null
@@ -6531,6 +6532,7 @@ export namespace Prisma {
     id: string | null
     participantId: string | null
     joinedAt: Date | null
+    lastSeenAt: Date | null
     leftAt: Date | null
     durationSeconds: number | null
     connectionId: string | null
@@ -6540,6 +6542,7 @@ export namespace Prisma {
     id: number
     participantId: number
     joinedAt: number
+    lastSeenAt: number
     leftAt: number
     durationSeconds: number
     connectionId: number
@@ -6559,6 +6562,7 @@ export namespace Prisma {
     id?: true
     participantId?: true
     joinedAt?: true
+    lastSeenAt?: true
     leftAt?: true
     durationSeconds?: true
     connectionId?: true
@@ -6568,6 +6572,7 @@ export namespace Prisma {
     id?: true
     participantId?: true
     joinedAt?: true
+    lastSeenAt?: true
     leftAt?: true
     durationSeconds?: true
     connectionId?: true
@@ -6577,6 +6582,7 @@ export namespace Prisma {
     id?: true
     participantId?: true
     joinedAt?: true
+    lastSeenAt?: true
     leftAt?: true
     durationSeconds?: true
     connectionId?: true
@@ -6673,6 +6679,7 @@ export namespace Prisma {
     id: string
     participantId: string
     joinedAt: Date
+    lastSeenAt: Date
     leftAt: Date | null
     durationSeconds: number | null
     connectionId: string
@@ -6701,6 +6708,7 @@ export namespace Prisma {
     id?: boolean
     participantId?: boolean
     joinedAt?: boolean
+    lastSeenAt?: boolean
     leftAt?: boolean
     durationSeconds?: boolean
     connectionId?: boolean
@@ -6711,6 +6719,7 @@ export namespace Prisma {
     id?: boolean
     participantId?: boolean
     joinedAt?: boolean
+    lastSeenAt?: boolean
     leftAt?: boolean
     durationSeconds?: boolean
     connectionId?: boolean
@@ -6721,6 +6730,7 @@ export namespace Prisma {
     id?: boolean
     participantId?: boolean
     joinedAt?: boolean
+    lastSeenAt?: boolean
     leftAt?: boolean
     durationSeconds?: boolean
     connectionId?: boolean
@@ -6731,12 +6741,13 @@ export namespace Prisma {
     id?: boolean
     participantId?: boolean
     joinedAt?: boolean
+    lastSeenAt?: boolean
     leftAt?: boolean
     durationSeconds?: boolean
     connectionId?: boolean
   }
 
-  export type ParticipantSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "participantId" | "joinedAt" | "leftAt" | "durationSeconds" | "connectionId", ExtArgs["result"]["participantSession"]>
+  export type ParticipantSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "participantId" | "joinedAt" | "lastSeenAt" | "leftAt" | "durationSeconds" | "connectionId", ExtArgs["result"]["participantSession"]>
   export type ParticipantSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
@@ -6756,6 +6767,7 @@ export namespace Prisma {
       id: string
       participantId: string
       joinedAt: Date
+      lastSeenAt: Date
       leftAt: Date | null
       durationSeconds: number | null
       connectionId: string
@@ -7186,6 +7198,7 @@ export namespace Prisma {
     readonly id: FieldRef<"ParticipantSession", 'String'>
     readonly participantId: FieldRef<"ParticipantSession", 'String'>
     readonly joinedAt: FieldRef<"ParticipantSession", 'DateTime'>
+    readonly lastSeenAt: FieldRef<"ParticipantSession", 'DateTime'>
     readonly leftAt: FieldRef<"ParticipantSession", 'DateTime'>
     readonly durationSeconds: FieldRef<"ParticipantSession", 'Int'>
     readonly connectionId: FieldRef<"ParticipantSession", 'String'>
@@ -13211,6 +13224,7 @@ export namespace Prisma {
     id: 'id',
     participantId: 'participantId',
     joinedAt: 'joinedAt',
+    lastSeenAt: 'lastSeenAt',
     leftAt: 'leftAt',
     durationSeconds: 'durationSeconds',
     connectionId: 'connectionId'
@@ -13659,6 +13673,7 @@ export namespace Prisma {
     id?: StringFilter<"ParticipantSession"> | string
     participantId?: StringFilter<"ParticipantSession"> | string
     joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
     leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
     durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
     connectionId?: StringFilter<"ParticipantSession"> | string
@@ -13669,6 +13684,7 @@ export namespace Prisma {
     id?: SortOrder
     participantId?: SortOrder
     joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
     leftAt?: SortOrderInput | SortOrder
     durationSeconds?: SortOrderInput | SortOrder
     connectionId?: SortOrder
@@ -13682,6 +13698,7 @@ export namespace Prisma {
     NOT?: ParticipantSessionWhereInput | ParticipantSessionWhereInput[]
     participantId?: StringFilter<"ParticipantSession"> | string
     joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
     leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
     durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
     connectionId?: StringFilter<"ParticipantSession"> | string
@@ -13692,6 +13709,7 @@ export namespace Prisma {
     id?: SortOrder
     participantId?: SortOrder
     joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
     leftAt?: SortOrderInput | SortOrder
     durationSeconds?: SortOrderInput | SortOrder
     connectionId?: SortOrder
@@ -13709,6 +13727,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"ParticipantSession"> | string
     participantId?: StringWithAggregatesFilter<"ParticipantSession"> | string
     joinedAt?: DateTimeWithAggregatesFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeWithAggregatesFilter<"ParticipantSession"> | Date | string
     leftAt?: DateTimeNullableWithAggregatesFilter<"ParticipantSession"> | Date | string | null
     durationSeconds?: IntNullableWithAggregatesFilter<"ParticipantSession"> | number | null
     connectionId?: StringWithAggregatesFilter<"ParticipantSession"> | string
@@ -14327,6 +14346,7 @@ export namespace Prisma {
   export type ParticipantSessionCreateInput = {
     id?: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -14337,6 +14357,7 @@ export namespace Prisma {
     id?: string
     participantId: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -14345,6 +14366,7 @@ export namespace Prisma {
   export type ParticipantSessionUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -14355,6 +14377,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     participantId?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -14364,6 +14387,7 @@ export namespace Prisma {
     id?: string
     participantId: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -14372,6 +14396,7 @@ export namespace Prisma {
   export type ParticipantSessionUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -14381,6 +14406,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     participantId?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -15090,6 +15116,7 @@ export namespace Prisma {
     id?: SortOrder
     participantId?: SortOrder
     joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
     leftAt?: SortOrder
     durationSeconds?: SortOrder
     connectionId?: SortOrder
@@ -15103,6 +15130,7 @@ export namespace Prisma {
     id?: SortOrder
     participantId?: SortOrder
     joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
     leftAt?: SortOrder
     durationSeconds?: SortOrder
     connectionId?: SortOrder
@@ -15112,6 +15140,7 @@ export namespace Prisma {
     id?: SortOrder
     participantId?: SortOrder
     joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
     leftAt?: SortOrder
     durationSeconds?: SortOrder
     connectionId?: SortOrder
@@ -16733,6 +16762,7 @@ export namespace Prisma {
   export type ParticipantSessionCreateWithoutParticipantInput = {
     id?: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -16741,6 +16771,7 @@ export namespace Prisma {
   export type ParticipantSessionUncheckedCreateWithoutParticipantInput = {
     id?: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -16846,6 +16877,7 @@ export namespace Prisma {
     id?: StringFilter<"ParticipantSession"> | string
     participantId?: StringFilter<"ParticipantSession"> | string
     joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
     leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
     durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
     connectionId?: StringFilter<"ParticipantSession"> | string
@@ -17526,6 +17558,7 @@ export namespace Prisma {
   export type ParticipantSessionCreateManyParticipantInput = {
     id?: string
     joinedAt: Date | string
+    lastSeenAt?: Date | string
     leftAt?: Date | string | null
     durationSeconds?: number | null
     connectionId: string
@@ -17544,6 +17577,7 @@ export namespace Prisma {
   export type ParticipantSessionUpdateWithoutParticipantInput = {
     id?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -17552,6 +17586,7 @@ export namespace Prisma {
   export type ParticipantSessionUncheckedUpdateWithoutParticipantInput = {
     id?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
@@ -17560,6 +17595,7 @@ export namespace Prisma {
   export type ParticipantSessionUncheckedUpdateManyWithoutParticipantInput = {
     id?: StringFieldUpdateOperationsInput | string
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     connectionId?: StringFieldUpdateOperationsInput | string
