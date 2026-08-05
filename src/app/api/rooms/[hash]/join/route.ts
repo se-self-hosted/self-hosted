@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { isSessionActive } from "@/lib/presence";
 
 const joinSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
@@ -47,7 +48,37 @@ export async function POST(
       });
     }
 
+    // Close out any stale/duplicate session under the same name in this
+    // meeting — e.g. the host rejoining after a refresh, a dropped
+    // connection, or opening the room again from the dashboard.
+    const sameNameParticipants = await prisma.participant.findMany({
+      where: { meetingId: meeting.id, displayName },
+      include: { sessions: true },
+    });
+
+    const staleSessions = sameNameParticipants.flatMap((participant) =>
+      participant.sessions.filter((session) => isSessionActive(session)),
+    );
+
+    if (staleSessions.length > 0) {
+      const now = new Date();
+      await Promise.all(
+        staleSessions.map((session) =>
+          prisma.participantSession.update({
+            where: { id: session.id },
+            data: {
+              leftAt: now,
+              durationSeconds: Math.round(
+                (now.getTime() - session.joinedAt.getTime()) / 1000,
+              ),
+            },
+          }),
+        ),
+      );
+    }
+
     const connectionId = randomUUID();
+    const now = new Date();
 
     const participant = await prisma.participant.create({
       data: {
@@ -55,7 +86,8 @@ export async function POST(
         displayName,
         sessions: {
           create: {
-            joinedAt: new Date(),
+            joinedAt: now,
+            lastSeenAt: now,
             connectionId,
           },
         },

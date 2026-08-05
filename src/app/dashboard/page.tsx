@@ -165,8 +165,8 @@ export default function DashboardPage() {
       return;
     }
 
-    if (parsedCapacity > 50) {
-      setFormError("จำนวนผู้เข้าร่วมต้องไม่เกิน 50 คน");
+    if (parsedCapacity > 40) {
+      setFormError("จำนวนผู้เข้าร่วมต้องไม่เกิน 40 คน");
       return;
     }
 
@@ -178,7 +178,7 @@ export default function DashboardPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            roomName: trimmedName,        // ← แก้ name → roomName
+            roomName: trimmedName,       
             maxParticipants: parsedCapacity,
           }),
         });

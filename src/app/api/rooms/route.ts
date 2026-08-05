@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateSlug } from "@/lib/slug";
+import { isSessionActive } from "@/lib/presence";
 import { MIN_ROOM_PARTICIPANTS, MAX_ROOM_PARTICIPANTS } from "@/lib/constants";
 import { z } from "zod";
 
@@ -65,36 +66,38 @@ export async function GET(req: Request) {
     }
 
     const rooms = await prisma.meetingRoom.findMany({
-  where: { hostId: user.id },
-  orderBy: { createdAt: "desc" },
-  include: {
-    meetings: {
-      where: { endedAt: null },
-      orderBy: { startedAt: "desc" },
-      take: 1,
+      where: { hostId: user.id },
+      orderBy: { createdAt: "desc" },
       include: {
-        participants: {
+        // Only the meeting currently in progress for this room, if any.
+        meetings: {
+          where: { endedAt: null },
+          orderBy: { startedAt: "desc" },
+          take: 1,
           include: {
-            sessions: {
-              where: { leftAt: null },
+            participants: {
+              include: { sessions: true },
             },
           },
         },
       },
-    },
-  },
-});
+    });
 
-const roomsWithCounts = rooms.map((room) => {
-  const ongoingMeeting = room.meetings[0];
+    const roomsWithCounts = rooms.map((room) => {
+      const ongoingMeeting = room.meetings[0];
 
-  const activeParticipantCount = ongoingMeeting
-    ? ongoingMeeting.participants.filter((participant) => participant.sessions.length > 0).length
-    : 0;
+      // A participant counts as "in the room" only if they have a session
+      // that hasn't ended AND hasn't gone stale (missed its heartbeats) —
+      // see lib/presence.ts.
+      const activeParticipantCount = ongoingMeeting
+        ? ongoingMeeting.participants.filter((participant) =>
+            participant.sessions.some((session) => isSessionActive(session)),
+          ).length
+        : 0;
 
-  const { meetings, ...roomFields } = room;
-  return { ...roomFields, activeParticipantCount };
-});
+      const { meetings, ...roomFields } = room;
+      return { ...roomFields, activeParticipantCount };
+    });
 
     return NextResponse.json({ rooms: roomsWithCounts });
   } catch (error) {

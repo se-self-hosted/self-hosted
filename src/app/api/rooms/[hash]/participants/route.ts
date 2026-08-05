@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { isSessionActive } from "@/lib/presence";
 
 export async function GET(
   _req: Request,
@@ -31,9 +32,9 @@ export async function GET(
     }
 
     const activeParticipants = meeting.participants
-      .filter((participant) => participant.sessions.some((session) => session.leftAt === null))
+      .filter((participant) => participant.sessions.some((session) => isSessionActive(session)))
       .map((participant) => {
-        const activeSession = participant.sessions.find((session) => session.leftAt === null);
+        const activeSession = participant.sessions.find((session) => isSessionActive(session));
         return {
           id: participant.id,
           displayName: participant.displayName,
