@@ -95,8 +95,17 @@ export async function GET(req: Request) {
           ).length
         : 0;
 
+      const isHostInRoom = ongoingMeeting
+        ? ongoingMeeting.participants.some(
+            (participant) =>
+              (participant.displayName === user.fullname ||
+                participant.displayName === user.email) &&
+              participant.sessions.some((session) => isSessionActive(session)),
+          )
+        : false;
+
       const { meetings, ...roomFields } = room;
-      return { ...roomFields, activeParticipantCount };
+      return { ...roomFields, activeParticipantCount, isHostInRoom };
     });
 
     return NextResponse.json({ rooms: roomsWithCounts });

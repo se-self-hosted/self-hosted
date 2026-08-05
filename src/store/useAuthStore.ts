@@ -28,7 +28,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await fetch('/api/auth/me');
-      if (res.ok) {
+      const contentType = res.headers.get("content-type");
+      if (res.ok && contentType?.includes("application/json")) {
         const data = await res.json();
         set({ user: data.user, isLoading: false });
       } else {

@@ -40,11 +40,12 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
           return;
         }
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Room request failed");
+        const contentType = response.headers.get("content-type");
+        if (!response.ok || !contentType?.includes("application/json")) {
+          throw new Error("Room request failed");
         }
+
+        const data = await response.json();
 
         if (!isCancelled) setRoom(data.room);
       } catch {

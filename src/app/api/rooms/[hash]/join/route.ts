@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { isSessionActive, activeSessionWhereClause } from "@/lib/presence";
@@ -35,6 +36,7 @@ export async function POST(
     }
 
     const { displayName } = result.data;
+    const user = await getUserFromRequest();
 
     // Reuse the meeting currently in progress for this room, or start a new one.
     let meeting = await prisma.meeting.findFirst({
@@ -48,9 +50,35 @@ export async function POST(
       });
     }
 
-    // Close out any stale/duplicate session under the same name in this
-    // meeting — e.g. the host rejoining after a refresh, a dropped
-    // connection, or opening the room again from the dashboard.
+    const isHost = Boolean(user && room.hostId === user.id);
+
+    // If host, check if already actively in this room
+    if (isHost && user) {
+      const hostNames = Array.from(
+        new Set([displayName, user.fullname, user.email].filter(Boolean) as string[]),
+      );
+
+      const hostParticipants = await prisma.participant.findMany({
+        where: {
+          meetingId: meeting.id,
+          displayName: { in: hostNames },
+        },
+        include: { sessions: true },
+      });
+
+      const activeHostSessions = hostParticipants.flatMap((participant) =>
+        participant.sessions.filter((session) => isSessionActive(session)),
+      );
+
+      if (activeHostSessions.length > 0) {
+        return NextResponse.json(
+          { error: "คุณอยู่ในห้องประชุมนี้แล้ว" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Close out any stale/previous session under the same name in this meeting
     const sameNameParticipants = await prisma.participant.findMany({
       where: { meetingId: meeting.id, displayName },
       include: { sessions: true },

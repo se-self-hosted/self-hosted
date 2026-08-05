@@ -73,7 +73,8 @@ export function MeetingRoomView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName: name }),
       });
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      const data = contentType?.includes("application/json") ? await response.json() : {};
 
       if (!response.ok) {
         setJoinError(data.error || "ไม่สามารถเข้าร่วมห้องประชุมได้");
@@ -112,7 +113,8 @@ export function MeetingRoomView({
         const response = await fetch(`/api/rooms/${room!.roomHash}/participants`, {
           cache: "no-store",
         });
-        if (!response.ok) return;
+        const contentType = response.headers.get("content-type");
+        if (!response.ok || !contentType?.includes("application/json")) return;
         const data = await response.json();
         if (cancelled) return;
 
