@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { isSessionActive } from "@/lib/presence";
+import { isSessionActive, activeSessionWhereClause } from "@/lib/presence";
 
 const joinSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
@@ -74,6 +74,20 @@ export async function POST(
             },
           }),
         ),
+      );
+    }
+
+    const activeParticipantCount = await prisma.participant.count({
+      where: {
+        meetingId: meeting.id,
+        sessions: { some: activeSessionWhereClause() },
+      },
+    });
+
+    if (activeParticipantCount >= room.maxParticipants) {
+      return NextResponse.json(
+        { error: "ห้องประชุมเต็มแล้ว" },
+        { status: 403 },
       );
     }
 

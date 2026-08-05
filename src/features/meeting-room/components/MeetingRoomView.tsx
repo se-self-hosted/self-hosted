@@ -1,5 +1,5 @@
 "use client";
-import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
+
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -12,7 +12,7 @@ import {
   Users,
   Video,
 } from "lucide-react";
-
+import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 
 type Room = {
   roomHash: string;
@@ -49,43 +49,57 @@ export function MeetingRoomView({
 }: MeetingRoomViewProps) {
   const [displayName, setDisplayName] = useState(isHost ? hostName ?? "" : "");
   const [nameError, setNameError] = useState("");
-  const [hasJoined, setHasJoined] = useState(isHost && Boolean(hostName));
+  const [hasJoined, setHasJoined] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(false);
 
   const [connectionId, setConnectionId] = useState<string | null>(null);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [otherParticipants, setOtherParticipants] = useState<RemoteParticipant[]>([]);
 
-  // Register this browser tab as a real participant once it has joined.
-  useEffect(() => {
-    if (!hasJoined || !room || connectionId) return;
+  // Ask the server if there's room for us before actually entering. The
+  // server is the source of truth for capacity (room.maxParticipants) —
+  // this can fail, e.g. with "ห้องประชุมเต็มแล้ว".
+  async function attemptJoin(name: string) {
+    if (!room) return;
 
-    let cancelled = false;
+    setIsJoining(true);
+    setJoinError(null);
 
-    async function registerJoin() {
-      try {
-        const response = await fetch(`/api/rooms/${room!.roomHash}/join`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayName }),
-        });
-        const data = await response.json();
-        if (!cancelled && response.ok) {
-          setConnectionId(data.connectionId);
-          setParticipantId(data.participantId);
-        }
-      } catch (error) {
-        console.error("Join meeting error:", error);
+    try {
+      const response = await fetch(`/api/rooms/${room.roomHash}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: name }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setJoinError(data.error || "ไม่สามารถเข้าร่วมห้องประชุมได้");
+        setIsJoining(false);
+        return;
       }
+
+      setConnectionId(data.connectionId);
+      setParticipantId(data.participantId);
+      setDisplayName(name);
+      setHasJoined(true);
+      setIsJoining(false);
+    } catch (error) {
+      console.error("Join meeting error:", error);
+      setJoinError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+      setIsJoining(false);
     }
+  }
 
-    void registerJoin();
-
-    return () => {
-      cancelled = true;
-    };
+  // Hosts skip the display-name form entirely and join as soon as the room
+  // is ready — but still have to go through the same capacity check.
+  useEffect(() => {
+    if (!isHost || !hostName || !room || hasJoined || isJoining || joinError) return;
+    void attemptJoin(hostName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJoined, room]);
+  }, [isHost, hostName, room]);
 
   // Poll the real participant list so the grid reflects who has actually joined.
   useEffect(() => {
@@ -205,9 +219,33 @@ export function MeetingRoomView({
       return;
     }
 
-    setDisplayName(trimmedName);
-    setHasJoined(true);
+    void attemptJoin(trimmedName);
   };
+
+  // Host: waiting on / failed the auto-join — show status instead of a form
+  // they never need to fill in.
+  if (isHost && !hasJoined) {
+    return (
+      <main className="meeting-unavailable">
+        <div className="meeting-unavailable__card">
+          {joinError ? (
+            <>
+              <span className="meeting-unavailable__icon">
+                <AlertTriangle aria-hidden="true" className="icon-20" />
+              </span>
+              <h1 className="meeting-unavailable__title">เข้าร่วมห้องไม่สำเร็จ</h1>
+              <p className="meeting-unavailable__description">{joinError}</p>
+              <Link href="/dashboard" className="meeting-unavailable__link focus-ring">
+                กลับไปที่แดชบอร์ด
+              </Link>
+            </>
+          ) : (
+            <p className="dashboard-loading__text">กำลังเข้าร่วมห้องประชุม...</p>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   if (!hasJoined) {
     return (
@@ -236,6 +274,7 @@ export function MeetingRoomView({
               placeholder="ชื่อของคุณ"
               autoComplete="name"
               autoFocus
+              disabled={isJoining}
               className="meeting-lobby__input"
             />
             {nameError && (
@@ -243,10 +282,15 @@ export function MeetingRoomView({
                 {nameError}
               </p>
             )}
+            {joinError && (
+              <p role="alert" className="meeting-lobby__error">
+                {joinError}
+              </p>
+            )}
           </div>
 
-          <button type="submit" className="meeting-lobby__join focus-ring">
-            เข้าร่วมห้องประชุม
+          <button type="submit" disabled={isJoining} className="meeting-lobby__join focus-ring">
+            {isJoining ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องประชุม"}
           </button>
         </form>
       </main>
