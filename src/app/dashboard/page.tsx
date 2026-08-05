@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   Check,
   Clock3,
+  DoorOpen,
   LayoutGrid,
   LogOut,
   Pencil,
@@ -15,8 +16,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 
+
 type Room = {
   id: string;
+  slug: string;
   name: string;
   status: "active" | "ended";
   participants?: number;
@@ -26,6 +29,7 @@ type Room = {
 const initialRooms: Room[] = [
   {
     id: "product-strategy-q3",
+    slug:"product-strategy-q3",
     name: "Product Strategy Q3",
     status: "active",
     participants: 7,
@@ -33,6 +37,7 @@ const initialRooms: Room[] = [
   },
   {
     id: "design-review-sprint-42",
+    slug:"design-review-sprint-42",
     name: "Design Review – Sprint 42",
     status: "active",
     participants: 4,
@@ -40,12 +45,14 @@ const initialRooms: Room[] = [
   },
   {
     id: "engineering-stand-up",
+    slug:"engineering-stand-up",
     name: "Engineering Stand-up",
     status: "ended",
     capacity: 15,
   },
   {
     id: "investor-pitch-prep",
+    slug:"investor-pitch-prep",
     name: "Investor Pitch Prep",
     status: "active",
     participants: 3,
@@ -53,12 +60,14 @@ const initialRooms: Room[] = [
   },
   {
     id: "customer-success-sync",
+    slug:"customer-success-sync",
     name: "Customer Success Sync",
     status: "ended",
     capacity: 12,
   },
   {
     id: "marketing-campaign-review",
+    slug:"marketing-campaign-review",
     name: "Marketing Campaign Review",
     status: "ended",
     capacity: 10,
@@ -69,10 +78,11 @@ export default function DashboardPage() {
   const { user, isLoading, checkAuth, logout } = useAuthStore();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomSlug, setSelectedRoomSlug] = useState<string | null>(null);
   const [roomName, setRoomName] = useState("");
   const [capacity, setCapacity] = useState("1");
   const [formError, setFormError] = useState("");
@@ -84,14 +94,39 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Redirect if completely finished checking and no user is found
-    if (!isChecking && !isLoading && !user) {
-      router.push("/login");
+    if (!isChecking && !isLoading && user) {
+      fetchRooms();
     }
   }, [isChecking, isLoading, user, router]);
+
+  async function fetchRooms() {
+    try {
+      const response = await fetch("/api/rooms");
+      const data = await response.json();
+
+      console.log("fetchRooms response:", response.status, data);
+  
+      if (!response.ok) return;
+  
+      const loadedRooms: Room[] = data.rooms.map((room: any) => ({
+        id: room.id,
+        slug: room.roomHash,
+        name: room.roomName,
+        capacity: room.maxParticipants,
+        participants: 0,
+        status: room.status,
+      }));
+
+        setRooms(loadedRooms);
+    } catch (error) {
+      console.error("Fetch rooms error:", error);
+    }
+  }
 
   const closeModal = () => {
     setModalMode(null);
     setSelectedRoomId(null);
+    setSelectedRoomSlug(null);
     setRoomName("");
     setCapacity("1");
     setFormError("");
@@ -107,13 +142,14 @@ export default function DashboardPage() {
 
   const openEditModal = (room: Room) => {
     setSelectedRoomId(room.id);
+    setSelectedRoomSlug(room.slug);
     setRoomName(room.name);
     setCapacity(String(room.capacity));
     setFormError("");
     setModalMode("edit");
   };
 
-  const saveRoom = (event: FormEvent<HTMLFormElement>) => {
+  const saveRoom = async(event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedName = roomName.trim();
@@ -124,48 +160,119 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
-      setFormError("จำนวนผู้เข้าร่วมต้องมีอย่างน้อย 1 คน");
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 2) {
+      setFormError("จำนวนผู้เข้าร่วมต้องมีอย่างน้อย 2 คน");
+      return;
+    }
+
+    if (parsedCapacity > 40) {
+      setFormError("จำนวนผู้เข้าร่วมต้องไม่เกิน 40 คน");
       return;
     }
 
     if (modalMode === "create") {
-      setRooms((currentRooms) => [
-        ...currentRooms,
-        {
-          id: `room-${Date.now()}`,
-          name: trimmedName,
-          capacity: parsedCapacity,
+      try {
+        const response = await fetch("/api/rooms", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            roomName: trimmedName,       
+            maxParticipants: parsedCapacity,
+          }),
+        });
+    
+        const data = await response.json();
+    
+        if (!response.ok) {
+          setFormError(data.error || "ไม่สามารถสร้างห้องได้");
+          return;
+        }
+    
+        const newRoom: Room = {
+          id: data.room.id,
+          slug: data.room.roomHash,      // ← แก้ data.room.slug → data.room.roomHash
+          name: data.room.roomName,      // ← แก้ data.room.name → data.room.roomName
+          capacity: data.room.maxParticipants,
           participants: 0,
           status: "active",
-        },
-      ]);
+        };
+    
+        setRooms((currentRooms) => [
+          ...currentRooms,
+          newRoom,
+        ]);
+      } catch (error) {
+        console.error("Create room error:", error);
+        setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+        return;
+      }
+
     } else if (selectedRoomId) {
-      setRooms((currentRooms) =>
-        currentRooms.map((room) =>
-          room.id === selectedRoomId
-            ? { ...room, name: trimmedName, capacity: parsedCapacity }
-            : room,
-        ),
-      );
+      try {
+        const response = await fetch(`/api/rooms/${selectedRoomSlug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName: trimmedName,
+            maxParticipants: parsedCapacity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setFormError(data.error || "ไม่สามารถแก้ไขห้องได้");
+          return;
+        }
+
+        setRooms((currentRooms) =>
+          currentRooms.map((room) =>
+            room.id === selectedRoomId
+              ? { ...room, name: data.room.roomName, capacity: data.room.maxParticipants }
+              : room,
+          ),
+        );
+    } catch (error) {
+      console.error("Update room error:", error);
+      setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+      return;
     }
+  }
+  
 
     closeModal();
   };
 
-  const deleteSelectedRoom = () => {
-    if (!selectedRoomId) return;
-
-    setRooms((currentRooms) => currentRooms.filter((room) => room.id !== selectedRoomId));
-    closeModal();
+  const deleteSelectedRoom = async () => {
+    if (!selectedRoomId || !selectedRoomSlug) return;
+  
+    try {
+      const response = await fetch(`/api/rooms/${selectedRoomSlug}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        setFormError(data.error || "ไม่สามารถลบห้องได้");
+        return;
+      }
+  
+      setRooms((currentRooms) => currentRooms.filter((room) => room.id !== selectedRoomId));
+      closeModal();
+    } catch (error) {
+      console.error("Delete room error:", error);
+      setFormError("ไม่สามารถเชื่อมต่อกับ Server ได้");
+    }
   };
 
-  const copyRoomLink = async (roomId: string) => {
-    const meetingUrl = `${window.location.origin}/meet/${roomId}`;
+  const copyRoomLink = async (roomId: string, roomSlug: string) => {
+    const meetingUrl = `${window.location.origin}/meeting/${roomSlug}`;
 
     try {
       await navigator.clipboard.writeText(meetingUrl);
-      setCopiedRoomId(roomId);
+      setCopiedRoomId(roomSlug);
       window.setTimeout(() => setCopiedRoomId(null), 1800);
     } catch {
       setCopiedRoomId(null);
@@ -261,7 +368,7 @@ export default function DashboardPage() {
           <section aria-label="รายการห้องประชุม" className="rooms-grid">
             {rooms.map((room) => {
               const isActive = room.status === "active";
-              const wasCopied = copiedRoomId === room.id;
+              const wasCopied = copiedRoomId === room.slug;
 
               return (
                 <article key={room.id} className="room-card">
@@ -285,11 +392,20 @@ export default function DashboardPage() {
                   <div className="room-card__actions">
                     <button
                       type="button"
-                      onClick={() => copyRoomLink(room.id)}
+                      onClick={() => copyRoomLink(room.id, room.slug)}
                       className="room-card__copy-btn focus-ring"
                     >
                       {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
                       {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/meeting/${room.slug}?role=host`)}
+                      disabled={!isActive}
+                      className="room-card__join-btn focus-ring"
+                    >
+                      <DoorOpen aria-hidden="true" className="icon-16" />
+                      เข้าห้อง
                     </button>
                     <button
                       type="button"
@@ -365,7 +481,8 @@ export default function DashboardPage() {
                 <input
                   id="room-capacity"
                   type="number"
-                  min="1"
+                  min="2"
+                  max="40"
                   step="1"
                   value={capacity}
                   onChange={(event) => {

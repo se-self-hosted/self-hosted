@@ -1,0 +1,2 @@
+export const MIN_ROOM_PARTICIPANTS = 2;
+export const MAX_ROOM_PARTICIPANTS = 40;

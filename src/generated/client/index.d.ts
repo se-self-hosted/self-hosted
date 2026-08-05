@@ -19,10 +19,10 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
- * Model Room
+ * Model MeetingRoom
  * 
  */
-export type Room = $Result.DefaultSelection<Prisma.$RoomPayload>
+export type MeetingRoom = $Result.DefaultSelection<Prisma.$MeetingRoomPayload>
 /**
  * Model Meeting
  * 
@@ -34,15 +34,35 @@ export type Meeting = $Result.DefaultSelection<Prisma.$MeetingPayload>
  */
 export type Participant = $Result.DefaultSelection<Prisma.$ParticipantPayload>
 /**
+ * Model ParticipantSession
+ * 
+ */
+export type ParticipantSession = $Result.DefaultSelection<Prisma.$ParticipantSessionPayload>
+/**
  * Model Transcript
  * 
  */
 export type Transcript = $Result.DefaultSelection<Prisma.$TranscriptPayload>
 /**
- * Model Summary
+ * Model TranscriptSegment
  * 
  */
-export type Summary = $Result.DefaultSelection<Prisma.$SummaryPayload>
+export type TranscriptSegment = $Result.DefaultSelection<Prisma.$TranscriptSegmentPayload>
+/**
+ * Model MeetingSummary
+ * 
+ */
+export type MeetingSummary = $Result.DefaultSelection<Prisma.$MeetingSummaryPayload>
+/**
+ * Model Recording
+ * 
+ */
+export type Recording = $Result.DefaultSelection<Prisma.$RecordingPayload>
+/**
+ * Model Export
+ * 
+ */
+export type Export = $Result.DefaultSelection<Prisma.$ExportPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -84,7 +104,7 @@ export class PrismaClient<
    * Read more in our [docs](https://pris.ly/d/client).
    */
 
-  constructor(optionsArg ?: Prisma.Subset<ClientOptions, Prisma.PrismaClientOptions>);
+  constructor(optionsArg ?: Prisma.PrismaClientConstructorArgs<ClientOptions>);
   $on<V extends U>(eventType: V, callback: (event: V extends 'query' ? Prisma.QueryEvent : Prisma.LogEvent) => void): PrismaClient;
 
   /**
@@ -176,14 +196,14 @@ export class PrismaClient<
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.room`: Exposes CRUD operations for the **Room** model.
+   * `prisma.meetingRoom`: Exposes CRUD operations for the **MeetingRoom** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Rooms
-    * const rooms = await prisma.room.findMany()
+    * // Fetch zero or more MeetingRooms
+    * const meetingRooms = await prisma.meetingRoom.findMany()
     * ```
     */
-  get room(): Prisma.RoomDelegate<ExtArgs, ClientOptions>;
+  get meetingRoom(): Prisma.MeetingRoomDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.meeting`: Exposes CRUD operations for the **Meeting** model.
@@ -206,6 +226,16 @@ export class PrismaClient<
   get participant(): Prisma.ParticipantDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.participantSession`: Exposes CRUD operations for the **ParticipantSession** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ParticipantSessions
+    * const participantSessions = await prisma.participantSession.findMany()
+    * ```
+    */
+  get participantSession(): Prisma.ParticipantSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.transcript`: Exposes CRUD operations for the **Transcript** model.
     * Example usage:
     * ```ts
@@ -216,14 +246,44 @@ export class PrismaClient<
   get transcript(): Prisma.TranscriptDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.summary`: Exposes CRUD operations for the **Summary** model.
+   * `prisma.transcriptSegment`: Exposes CRUD operations for the **TranscriptSegment** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Summaries
-    * const summaries = await prisma.summary.findMany()
+    * // Fetch zero or more TranscriptSegments
+    * const transcriptSegments = await prisma.transcriptSegment.findMany()
     * ```
     */
-  get summary(): Prisma.SummaryDelegate<ExtArgs, ClientOptions>;
+  get transcriptSegment(): Prisma.TranscriptSegmentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.meetingSummary`: Exposes CRUD operations for the **MeetingSummary** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MeetingSummaries
+    * const meetingSummaries = await prisma.meetingSummary.findMany()
+    * ```
+    */
+  get meetingSummary(): Prisma.MeetingSummaryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.recording`: Exposes CRUD operations for the **Recording** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Recordings
+    * const recordings = await prisma.recording.findMany()
+    * ```
+    */
+  get recording(): Prisma.RecordingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.export`: Exposes CRUD operations for the **Export** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Exports
+    * const exports = await prisma.export.findMany()
+    * ```
+    */
+  get export(): Prisma.ExportDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -274,8 +334,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.8.0
-   * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
+   * Prisma Client JS version: 7.9.1
+   * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
    */
   export type PrismaVersion = {
     client: string
@@ -410,6 +470,19 @@ export namespace Prisma {
   };
 
   /**
+   * Resolved type of the argument passed to the `PrismaClient` constructor.
+   *
+   * When called without a narrower options type (the common case), this resolves
+   * to `PrismaClientOptions` directly, which produces a clear TypeScript error
+   * message (`not assignable to parameter of type 'PrismaClientOptions'`) when
+   * the argument is missing or incomplete. When the user supplies a narrower
+   * options type (e.g. via a literal), it falls back to `Subset` to keep
+   * filtering out unknown properties.
+   */
+  export type PrismaClientConstructorArgs<Options extends PrismaClientOptions> =
+    [PrismaClientOptions] extends [Options] ? PrismaClientOptions : Subset<Options, PrismaClientOptions>;
+
+  /**
    * SelectSubset
    * @desc From `T` pick properties that exist in `U`. Simple version of Intersection.
    * Additionally, it validates, if both select and include are present. If the case, it errors.
@@ -441,7 +514,7 @@ export namespace Prisma {
   type XOR<T, U> =
     T extends object ?
     U extends object ?
-      (Without<T, U> & U) | (Without<U, T> & T)
+      ((Without<T, U> & U) | (Without<U, T> & T)) & object
     : U : T
 
 
@@ -659,11 +732,15 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
-    Room: 'Room',
+    MeetingRoom: 'MeetingRoom',
     Meeting: 'Meeting',
     Participant: 'Participant',
+    ParticipantSession: 'ParticipantSession',
     Transcript: 'Transcript',
-    Summary: 'Summary'
+    TranscriptSegment: 'TranscriptSegment',
+    MeetingSummary: 'MeetingSummary',
+    Recording: 'Recording',
+    Export: 'Export'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -679,7 +756,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "room" | "meeting" | "participant" | "transcript" | "summary"
+      modelProps: "user" | "meetingRoom" | "meeting" | "participant" | "participantSession" | "transcript" | "transcriptSegment" | "meetingSummary" | "recording" | "export"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -757,77 +834,77 @@ export namespace Prisma {
           }
         }
       }
-      Room: {
-        payload: Prisma.$RoomPayload<ExtArgs>
-        fields: Prisma.RoomFieldRefs
+      MeetingRoom: {
+        payload: Prisma.$MeetingRoomPayload<ExtArgs>
+        fields: Prisma.MeetingRoomFieldRefs
         operations: {
           findUnique: {
-            args: Prisma.RoomFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload> | null
+            args: Prisma.MeetingRoomFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload> | null
           }
           findUniqueOrThrow: {
-            args: Prisma.RoomFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           findFirst: {
-            args: Prisma.RoomFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload> | null
+            args: Prisma.MeetingRoomFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload> | null
           }
           findFirstOrThrow: {
-            args: Prisma.RoomFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           findMany: {
-            args: Prisma.RoomFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>[]
+            args: Prisma.MeetingRoomFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>[]
           }
           create: {
-            args: Prisma.RoomCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           createMany: {
-            args: Prisma.RoomCreateManyArgs<ExtArgs>
+            args: Prisma.MeetingRoomCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
           createManyAndReturn: {
-            args: Prisma.RoomCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>[]
+            args: Prisma.MeetingRoomCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>[]
           }
           delete: {
-            args: Prisma.RoomDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           update: {
-            args: Prisma.RoomUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           deleteMany: {
-            args: Prisma.RoomDeleteManyArgs<ExtArgs>
+            args: Prisma.MeetingRoomDeleteManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateMany: {
-            args: Prisma.RoomUpdateManyArgs<ExtArgs>
+            args: Prisma.MeetingRoomUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateManyAndReturn: {
-            args: Prisma.RoomUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>[]
+            args: Prisma.MeetingRoomUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>[]
           }
           upsert: {
-            args: Prisma.RoomUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$RoomPayload>
+            args: Prisma.MeetingRoomUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingRoomPayload>
           }
           aggregate: {
-            args: Prisma.RoomAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateRoom>
+            args: Prisma.MeetingRoomAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMeetingRoom>
           }
           groupBy: {
-            args: Prisma.RoomGroupByArgs<ExtArgs>
-            result: $Utils.Optional<RoomGroupByOutputType>[]
+            args: Prisma.MeetingRoomGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MeetingRoomGroupByOutputType>[]
           }
           count: {
-            args: Prisma.RoomCountArgs<ExtArgs>
-            result: $Utils.Optional<RoomCountAggregateOutputType> | number
+            args: Prisma.MeetingRoomCountArgs<ExtArgs>
+            result: $Utils.Optional<MeetingRoomCountAggregateOutputType> | number
           }
         }
       }
@@ -979,6 +1056,80 @@ export namespace Prisma {
           }
         }
       }
+      ParticipantSession: {
+        payload: Prisma.$ParticipantSessionPayload<ExtArgs>
+        fields: Prisma.ParticipantSessionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ParticipantSessionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ParticipantSessionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          findFirst: {
+            args: Prisma.ParticipantSessionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ParticipantSessionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          findMany: {
+            args: Prisma.ParticipantSessionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>[]
+          }
+          create: {
+            args: Prisma.ParticipantSessionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          createMany: {
+            args: Prisma.ParticipantSessionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ParticipantSessionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>[]
+          }
+          delete: {
+            args: Prisma.ParticipantSessionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          update: {
+            args: Prisma.ParticipantSessionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.ParticipantSessionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ParticipantSessionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ParticipantSessionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>[]
+          }
+          upsert: {
+            args: Prisma.ParticipantSessionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParticipantSessionPayload>
+          }
+          aggregate: {
+            args: Prisma.ParticipantSessionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateParticipantSession>
+          }
+          groupBy: {
+            args: Prisma.ParticipantSessionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ParticipantSessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ParticipantSessionCountArgs<ExtArgs>
+            result: $Utils.Optional<ParticipantSessionCountAggregateOutputType> | number
+          }
+        }
+      }
       Transcript: {
         payload: Prisma.$TranscriptPayload<ExtArgs>
         fields: Prisma.TranscriptFieldRefs
@@ -1053,77 +1204,299 @@ export namespace Prisma {
           }
         }
       }
-      Summary: {
-        payload: Prisma.$SummaryPayload<ExtArgs>
-        fields: Prisma.SummaryFieldRefs
+      TranscriptSegment: {
+        payload: Prisma.$TranscriptSegmentPayload<ExtArgs>
+        fields: Prisma.TranscriptSegmentFieldRefs
         operations: {
           findUnique: {
-            args: Prisma.SummaryFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload> | null
+            args: Prisma.TranscriptSegmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload> | null
           }
           findUniqueOrThrow: {
-            args: Prisma.SummaryFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           findFirst: {
-            args: Prisma.SummaryFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload> | null
+            args: Prisma.TranscriptSegmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload> | null
           }
           findFirstOrThrow: {
-            args: Prisma.SummaryFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           findMany: {
-            args: Prisma.SummaryFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>[]
+            args: Prisma.TranscriptSegmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
           }
           create: {
-            args: Prisma.SummaryCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           createMany: {
-            args: Prisma.SummaryCreateManyArgs<ExtArgs>
+            args: Prisma.TranscriptSegmentCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
           createManyAndReturn: {
-            args: Prisma.SummaryCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>[]
+            args: Prisma.TranscriptSegmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
           }
           delete: {
-            args: Prisma.SummaryDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           update: {
-            args: Prisma.SummaryUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           deleteMany: {
-            args: Prisma.SummaryDeleteManyArgs<ExtArgs>
+            args: Prisma.TranscriptSegmentDeleteManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateMany: {
-            args: Prisma.SummaryUpdateManyArgs<ExtArgs>
+            args: Prisma.TranscriptSegmentUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateManyAndReturn: {
-            args: Prisma.SummaryUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>[]
+            args: Prisma.TranscriptSegmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
           }
           upsert: {
-            args: Prisma.SummaryUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SummaryPayload>
+            args: Prisma.TranscriptSegmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
           }
           aggregate: {
-            args: Prisma.SummaryAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateSummary>
+            args: Prisma.TranscriptSegmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTranscriptSegment>
           }
           groupBy: {
-            args: Prisma.SummaryGroupByArgs<ExtArgs>
-            result: $Utils.Optional<SummaryGroupByOutputType>[]
+            args: Prisma.TranscriptSegmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TranscriptSegmentGroupByOutputType>[]
           }
           count: {
-            args: Prisma.SummaryCountArgs<ExtArgs>
-            result: $Utils.Optional<SummaryCountAggregateOutputType> | number
+            args: Prisma.TranscriptSegmentCountArgs<ExtArgs>
+            result: $Utils.Optional<TranscriptSegmentCountAggregateOutputType> | number
+          }
+        }
+      }
+      MeetingSummary: {
+        payload: Prisma.$MeetingSummaryPayload<ExtArgs>
+        fields: Prisma.MeetingSummaryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MeetingSummaryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MeetingSummaryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          findFirst: {
+            args: Prisma.MeetingSummaryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MeetingSummaryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          findMany: {
+            args: Prisma.MeetingSummaryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>[]
+          }
+          create: {
+            args: Prisma.MeetingSummaryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          createMany: {
+            args: Prisma.MeetingSummaryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MeetingSummaryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>[]
+          }
+          delete: {
+            args: Prisma.MeetingSummaryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          update: {
+            args: Prisma.MeetingSummaryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          deleteMany: {
+            args: Prisma.MeetingSummaryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MeetingSummaryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MeetingSummaryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>[]
+          }
+          upsert: {
+            args: Prisma.MeetingSummaryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MeetingSummaryPayload>
+          }
+          aggregate: {
+            args: Prisma.MeetingSummaryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMeetingSummary>
+          }
+          groupBy: {
+            args: Prisma.MeetingSummaryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MeetingSummaryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MeetingSummaryCountArgs<ExtArgs>
+            result: $Utils.Optional<MeetingSummaryCountAggregateOutputType> | number
+          }
+        }
+      }
+      Recording: {
+        payload: Prisma.$RecordingPayload<ExtArgs>
+        fields: Prisma.RecordingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecordingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecordingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          findFirst: {
+            args: Prisma.RecordingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecordingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          findMany: {
+            args: Prisma.RecordingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>[]
+          }
+          create: {
+            args: Prisma.RecordingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          createMany: {
+            args: Prisma.RecordingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecordingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>[]
+          }
+          delete: {
+            args: Prisma.RecordingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          update: {
+            args: Prisma.RecordingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          deleteMany: {
+            args: Prisma.RecordingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecordingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RecordingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>[]
+          }
+          upsert: {
+            args: Prisma.RecordingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecordingPayload>
+          }
+          aggregate: {
+            args: Prisma.RecordingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRecording>
+          }
+          groupBy: {
+            args: Prisma.RecordingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecordingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecordingCountArgs<ExtArgs>
+            result: $Utils.Optional<RecordingCountAggregateOutputType> | number
+          }
+        }
+      }
+      Export: {
+        payload: Prisma.$ExportPayload<ExtArgs>
+        fields: Prisma.ExportFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ExportFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ExportFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          findFirst: {
+            args: Prisma.ExportFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ExportFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          findMany: {
+            args: Prisma.ExportFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>[]
+          }
+          create: {
+            args: Prisma.ExportCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          createMany: {
+            args: Prisma.ExportCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ExportCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>[]
+          }
+          delete: {
+            args: Prisma.ExportDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          update: {
+            args: Prisma.ExportUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          deleteMany: {
+            args: Prisma.ExportDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ExportUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ExportUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>[]
+          }
+          upsert: {
+            args: Prisma.ExportUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExportPayload>
+          }
+          aggregate: {
+            args: Prisma.ExportAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateExport>
+          }
+          groupBy: {
+            args: Prisma.ExportGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ExportGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ExportCountArgs<ExtArgs>
+            result: $Utils.Optional<ExportCountAggregateOutputType> | number
           }
         }
       }
@@ -1195,11 +1568,26 @@ export namespace Prisma {
       isolationLevel?: Prisma.TransactionIsolationLevel
     }
     /**
-     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     * A driver adapter that PrismaClient uses to connect to your database, such as the ones provided by `@prisma/adapter-pg`, `@prisma/adapter-libsql`, `@prisma/adapter-planetscale`, etc.
+     * 
+     * A driver adapter is **required** unless you connect to your database through Prisma Accelerate (in which case use `accelerateUrl` instead).
+     * 
+     * Learn more: https://pris.ly/d/driver-adapters
+     * 
+     * @example
+     * ```ts
+     * import { PrismaPg } from '@prisma/adapter-pg'
+     * import { PrismaClient } from './generated/prisma/client'
+     * 
+     * const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+     * const prisma = new PrismaClient({ adapter })
+     * ```
      */
     adapter?: runtime.SqlDriverAdapterFactory
     /**
-     * Prisma Accelerate URL allowing the client to connect through Accelerate instead of a direct database.
+     * The Prisma Accelerate connection URL. Use this option to connect to your database through Prisma Accelerate instead of using a driver adapter to connect directly.
+     * 
+     * Learn more: https://pris.ly/d/accelerate
      */
     accelerateUrl?: string
     /**
@@ -1236,11 +1624,15 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
-    room?: RoomOmit
+    meetingRoom?: MeetingRoomOmit
     meeting?: MeetingOmit
     participant?: ParticipantOmit
+    participantSession?: ParticipantSessionOmit
     transcript?: TranscriptOmit
-    summary?: SummaryOmit
+    transcriptSegment?: TranscriptSegmentOmit
+    meetingSummary?: MeetingSummaryOmit
+    recording?: RecordingOmit
+    export?: ExportOmit
   }
 
   /* Types for Logging */
@@ -1343,37 +1735,37 @@ export namespace Prisma {
    * UserCountOutputType without action
    */
   export type UserCountOutputTypeCountRoomsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
   }
 
 
   /**
-   * Count Type RoomCountOutputType
+   * Count Type MeetingRoomCountOutputType
    */
 
-  export type RoomCountOutputType = {
+  export type MeetingRoomCountOutputType = {
     meetings: number
   }
 
-  export type RoomCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    meetings?: boolean | RoomCountOutputTypeCountMeetingsArgs
+  export type MeetingRoomCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meetings?: boolean | MeetingRoomCountOutputTypeCountMeetingsArgs
   }
 
   // Custom InputTypes
   /**
-   * RoomCountOutputType without action
+   * MeetingRoomCountOutputType without action
    */
-  export type RoomCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the RoomCountOutputType
+     * Select specific fields to fetch from the MeetingRoomCountOutputType
      */
-    select?: RoomCountOutputTypeSelect<ExtArgs> | null
+    select?: MeetingRoomCountOutputTypeSelect<ExtArgs> | null
   }
 
   /**
-   * RoomCountOutputType without action
+   * MeetingRoomCountOutputType without action
    */
-  export type RoomCountOutputTypeCountMeetingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomCountOutputTypeCountMeetingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MeetingWhereInput
   }
 
@@ -1384,12 +1776,14 @@ export namespace Prisma {
 
   export type MeetingCountOutputType = {
     participants: number
-    transcripts: number
+    recordings: number
+    exports: number
   }
 
   export type MeetingCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     participants?: boolean | MeetingCountOutputTypeCountParticipantsArgs
-    transcripts?: boolean | MeetingCountOutputTypeCountTranscriptsArgs
+    recordings?: boolean | MeetingCountOutputTypeCountRecordingsArgs
+    exports?: boolean | MeetingCountOutputTypeCountExportsArgs
   }
 
   // Custom InputTypes
@@ -1413,8 +1807,86 @@ export namespace Prisma {
   /**
    * MeetingCountOutputType without action
    */
-  export type MeetingCountOutputTypeCountTranscriptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: TranscriptWhereInput
+  export type MeetingCountOutputTypeCountRecordingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecordingWhereInput
+  }
+
+  /**
+   * MeetingCountOutputType without action
+   */
+  export type MeetingCountOutputTypeCountExportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ExportWhereInput
+  }
+
+
+  /**
+   * Count Type ParticipantCountOutputType
+   */
+
+  export type ParticipantCountOutputType = {
+    sessions: number
+    segments: number
+  }
+
+  export type ParticipantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sessions?: boolean | ParticipantCountOutputTypeCountSessionsArgs
+    segments?: boolean | ParticipantCountOutputTypeCountSegmentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantCountOutputType
+     */
+    select?: ParticipantCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParticipantSessionWhereInput
+  }
+
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeCountSegmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TranscriptSegmentWhereInput
+  }
+
+
+  /**
+   * Count Type TranscriptCountOutputType
+   */
+
+  export type TranscriptCountOutputType = {
+    segments: number
+  }
+
+  export type TranscriptCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    segments?: boolean | TranscriptCountOutputTypeCountSegmentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TranscriptCountOutputType without action
+   */
+  export type TranscriptCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptCountOutputType
+     */
+    select?: TranscriptCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TranscriptCountOutputType without action
+   */
+  export type TranscriptCountOutputTypeCountSegmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TranscriptSegmentWhereInput
   }
 
 
@@ -1436,7 +1908,7 @@ export namespace Prisma {
     id: string | null
     email: string | null
     password: string | null
-    name: string | null
+    fullname: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1445,7 +1917,7 @@ export namespace Prisma {
     id: string | null
     email: string | null
     password: string | null
-    name: string | null
+    fullname: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1454,7 +1926,7 @@ export namespace Prisma {
     id: number
     email: number
     password: number
-    name: number
+    fullname: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1465,7 +1937,7 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
-    name?: true
+    fullname?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1474,7 +1946,7 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
-    name?: true
+    fullname?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1483,7 +1955,7 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
-    name?: true
+    fullname?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1565,7 +2037,7 @@ export namespace Prisma {
     id: string
     email: string
     password: string
-    name: string | null
+    fullname: string
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1591,7 +2063,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     password?: boolean
-    name?: boolean
+    fullname?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     rooms?: boolean | User$roomsArgs<ExtArgs>
@@ -1602,7 +2074,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     password?: boolean
-    name?: boolean
+    fullname?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1611,7 +2083,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     password?: boolean
-    name?: boolean
+    fullname?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1620,12 +2092,12 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     password?: boolean
-    name?: boolean
+    fullname?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "fullname" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     rooms?: boolean | User$roomsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1636,13 +2108,13 @@ export namespace Prisma {
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
-      rooms: Prisma.$RoomPayload<ExtArgs>[]
+      rooms: Prisma.$MeetingRoomPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       email: string
       password: string
-      name: string | null
+      fullname: string
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -2039,7 +2511,7 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    rooms<T extends User$roomsArgs<ExtArgs> = {}>(args?: Subset<T, User$roomsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    rooms<T extends User$roomsArgs<ExtArgs> = {}>(args?: Subset<T, User$roomsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2072,7 +2544,7 @@ export namespace Prisma {
     readonly id: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
-    readonly name: FieldRef<"User", 'String'>
+    readonly fullname: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -2472,23 +2944,23 @@ export namespace Prisma {
    */
   export type User$roomsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
-    where?: RoomWhereInput
-    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
-    cursor?: RoomWhereUniqueInput
+    include?: MeetingRoomInclude<ExtArgs> | null
+    where?: MeetingRoomWhereInput
+    orderBy?: MeetingRoomOrderByWithRelationInput | MeetingRoomOrderByWithRelationInput[]
+    cursor?: MeetingRoomWhereUniqueInput
     take?: number
     skip?: number
-    distinct?: RoomScalarFieldEnum | RoomScalarFieldEnum[]
+    distinct?: MeetingRoomScalarFieldEnum | MeetingRoomScalarFieldEnum[]
   }
 
   /**
@@ -2511,413 +2983,425 @@ export namespace Prisma {
 
 
   /**
-   * Model Room
+   * Model MeetingRoom
    */
 
-  export type AggregateRoom = {
-    _count: RoomCountAggregateOutputType | null
-    _avg: RoomAvgAggregateOutputType | null
-    _sum: RoomSumAggregateOutputType | null
-    _min: RoomMinAggregateOutputType | null
-    _max: RoomMaxAggregateOutputType | null
+  export type AggregateMeetingRoom = {
+    _count: MeetingRoomCountAggregateOutputType | null
+    _avg: MeetingRoomAvgAggregateOutputType | null
+    _sum: MeetingRoomSumAggregateOutputType | null
+    _min: MeetingRoomMinAggregateOutputType | null
+    _max: MeetingRoomMaxAggregateOutputType | null
   }
 
-  export type RoomAvgAggregateOutputType = {
+  export type MeetingRoomAvgAggregateOutputType = {
     maxParticipants: number | null
   }
 
-  export type RoomSumAggregateOutputType = {
+  export type MeetingRoomSumAggregateOutputType = {
     maxParticipants: number | null
   }
 
-  export type RoomMinAggregateOutputType = {
+  export type MeetingRoomMinAggregateOutputType = {
     id: string | null
-    slug: string | null
-    name: string | null
-    maxParticipants: number | null
     hostId: string | null
+    roomName: string | null
+    roomHash: string | null
+    maxParticipants: number | null
+    status: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
-  export type RoomMaxAggregateOutputType = {
+  export type MeetingRoomMaxAggregateOutputType = {
     id: string | null
-    slug: string | null
-    name: string | null
-    maxParticipants: number | null
     hostId: string | null
+    roomName: string | null
+    roomHash: string | null
+    maxParticipants: number | null
+    status: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
-  export type RoomCountAggregateOutputType = {
+  export type MeetingRoomCountAggregateOutputType = {
     id: number
-    slug: number
-    name: number
-    maxParticipants: number
     hostId: number
+    roomName: number
+    roomHash: number
+    maxParticipants: number
+    status: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
 
-  export type RoomAvgAggregateInputType = {
+  export type MeetingRoomAvgAggregateInputType = {
     maxParticipants?: true
   }
 
-  export type RoomSumAggregateInputType = {
+  export type MeetingRoomSumAggregateInputType = {
     maxParticipants?: true
   }
 
-  export type RoomMinAggregateInputType = {
+  export type MeetingRoomMinAggregateInputType = {
     id?: true
-    slug?: true
-    name?: true
-    maxParticipants?: true
     hostId?: true
+    roomName?: true
+    roomHash?: true
+    maxParticipants?: true
+    status?: true
     createdAt?: true
     updatedAt?: true
   }
 
-  export type RoomMaxAggregateInputType = {
+  export type MeetingRoomMaxAggregateInputType = {
     id?: true
-    slug?: true
-    name?: true
-    maxParticipants?: true
     hostId?: true
+    roomName?: true
+    roomHash?: true
+    maxParticipants?: true
+    status?: true
     createdAt?: true
     updatedAt?: true
   }
 
-  export type RoomCountAggregateInputType = {
+  export type MeetingRoomCountAggregateInputType = {
     id?: true
-    slug?: true
-    name?: true
-    maxParticipants?: true
     hostId?: true
+    roomName?: true
+    roomHash?: true
+    maxParticipants?: true
+    status?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
   }
 
-  export type RoomAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Room to aggregate.
+     * Filter which MeetingRoom to aggregate.
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Rooms to fetch.
+     * Determine the order of MeetingRooms to fetch.
      */
-    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
+    orderBy?: MeetingRoomOrderByWithRelationInput | MeetingRoomOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      */
-    cursor?: RoomWhereUniqueInput
+    cursor?: MeetingRoomWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Rooms from the position of the cursor.
+     * Take `±n` MeetingRooms from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Rooms.
+     * Skip the first `n` MeetingRooms.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Count returned Rooms
+     * Count returned MeetingRooms
     **/
-    _count?: true | RoomCountAggregateInputType
+    _count?: true | MeetingRoomCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to average
     **/
-    _avg?: RoomAvgAggregateInputType
+    _avg?: MeetingRoomAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to sum
     **/
-    _sum?: RoomSumAggregateInputType
+    _sum?: MeetingRoomSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: RoomMinAggregateInputType
+    _min?: MeetingRoomMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: RoomMaxAggregateInputType
+    _max?: MeetingRoomMaxAggregateInputType
   }
 
-  export type GetRoomAggregateType<T extends RoomAggregateArgs> = {
-        [P in keyof T & keyof AggregateRoom]: P extends '_count' | 'count'
+  export type GetMeetingRoomAggregateType<T extends MeetingRoomAggregateArgs> = {
+        [P in keyof T & keyof AggregateMeetingRoom]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateRoom[P]>
-      : GetScalarType<T[P], AggregateRoom[P]>
+        : GetScalarType<T[P], AggregateMeetingRoom[P]>
+      : GetScalarType<T[P], AggregateMeetingRoom[P]>
   }
 
 
 
 
-  export type RoomGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RoomWhereInput
-    orderBy?: RoomOrderByWithAggregationInput | RoomOrderByWithAggregationInput[]
-    by: RoomScalarFieldEnum[] | RoomScalarFieldEnum
-    having?: RoomScalarWhereWithAggregatesInput
+  export type MeetingRoomGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MeetingRoomWhereInput
+    orderBy?: MeetingRoomOrderByWithAggregationInput | MeetingRoomOrderByWithAggregationInput[]
+    by: MeetingRoomScalarFieldEnum[] | MeetingRoomScalarFieldEnum
+    having?: MeetingRoomScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: RoomCountAggregateInputType | true
-    _avg?: RoomAvgAggregateInputType
-    _sum?: RoomSumAggregateInputType
-    _min?: RoomMinAggregateInputType
-    _max?: RoomMaxAggregateInputType
+    _count?: MeetingRoomCountAggregateInputType | true
+    _avg?: MeetingRoomAvgAggregateInputType
+    _sum?: MeetingRoomSumAggregateInputType
+    _min?: MeetingRoomMinAggregateInputType
+    _max?: MeetingRoomMaxAggregateInputType
   }
 
-  export type RoomGroupByOutputType = {
+  export type MeetingRoomGroupByOutputType = {
     id: string
-    slug: string
-    name: string
-    maxParticipants: number
     hostId: string
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt: Date
     updatedAt: Date
-    _count: RoomCountAggregateOutputType | null
-    _avg: RoomAvgAggregateOutputType | null
-    _sum: RoomSumAggregateOutputType | null
-    _min: RoomMinAggregateOutputType | null
-    _max: RoomMaxAggregateOutputType | null
+    _count: MeetingRoomCountAggregateOutputType | null
+    _avg: MeetingRoomAvgAggregateOutputType | null
+    _sum: MeetingRoomSumAggregateOutputType | null
+    _min: MeetingRoomMinAggregateOutputType | null
+    _max: MeetingRoomMaxAggregateOutputType | null
   }
 
-  type GetRoomGroupByPayload<T extends RoomGroupByArgs> = Prisma.PrismaPromise<
+  type GetMeetingRoomGroupByPayload<T extends MeetingRoomGroupByArgs> = Prisma.PrismaPromise<
     Array<
-      PickEnumerable<RoomGroupByOutputType, T['by']> &
+      PickEnumerable<MeetingRoomGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof RoomGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof MeetingRoomGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], RoomGroupByOutputType[P]>
-            : GetScalarType<T[P], RoomGroupByOutputType[P]>
+              : GetScalarType<T[P], MeetingRoomGroupByOutputType[P]>
+            : GetScalarType<T[P], MeetingRoomGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type RoomSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type MeetingRoomSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    slug?: boolean
-    name?: boolean
-    maxParticipants?: boolean
     hostId?: boolean
+    roomName?: boolean
+    roomHash?: boolean
+    maxParticipants?: boolean
+    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     host?: boolean | UserDefaultArgs<ExtArgs>
-    meetings?: boolean | Room$meetingsArgs<ExtArgs>
-    _count?: boolean | RoomCountOutputTypeDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["room"]>
+    meetings?: boolean | MeetingRoom$meetingsArgs<ExtArgs>
+    _count?: boolean | MeetingRoomCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["meetingRoom"]>
 
-  export type RoomSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type MeetingRoomSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    slug?: boolean
-    name?: boolean
-    maxParticipants?: boolean
     hostId?: boolean
+    roomName?: boolean
+    roomHash?: boolean
+    maxParticipants?: boolean
+    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     host?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["room"]>
+  }, ExtArgs["result"]["meetingRoom"]>
 
-  export type RoomSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type MeetingRoomSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    slug?: boolean
-    name?: boolean
-    maxParticipants?: boolean
     hostId?: boolean
+    roomName?: boolean
+    roomHash?: boolean
+    maxParticipants?: boolean
+    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     host?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["room"]>
+  }, ExtArgs["result"]["meetingRoom"]>
 
-  export type RoomSelectScalar = {
+  export type MeetingRoomSelectScalar = {
     id?: boolean
-    slug?: boolean
-    name?: boolean
-    maxParticipants?: boolean
     hostId?: boolean
+    roomName?: boolean
+    roomHash?: boolean
+    maxParticipants?: boolean
+    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type RoomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "name" | "maxParticipants" | "hostId" | "createdAt" | "updatedAt", ExtArgs["result"]["room"]>
-  export type RoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "hostId" | "roomName" | "roomHash" | "maxParticipants" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["meetingRoom"]>
+  export type MeetingRoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     host?: boolean | UserDefaultArgs<ExtArgs>
-    meetings?: boolean | Room$meetingsArgs<ExtArgs>
-    _count?: boolean | RoomCountOutputTypeDefaultArgs<ExtArgs>
+    meetings?: boolean | MeetingRoom$meetingsArgs<ExtArgs>
+    _count?: boolean | MeetingRoomCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type RoomIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     host?: boolean | UserDefaultArgs<ExtArgs>
   }
-  export type RoomIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     host?: boolean | UserDefaultArgs<ExtArgs>
   }
 
-  export type $RoomPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Room"
+  export type $MeetingRoomPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MeetingRoom"
     objects: {
       host: Prisma.$UserPayload<ExtArgs>
       meetings: Prisma.$MeetingPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      slug: string
-      name: string
-      maxParticipants: number
       hostId: string
+      roomName: string
+      roomHash: string
+      maxParticipants: number
+      status: string
       createdAt: Date
       updatedAt: Date
-    }, ExtArgs["result"]["room"]>
+    }, ExtArgs["result"]["meetingRoom"]>
     composites: {}
   }
 
-  type RoomGetPayload<S extends boolean | null | undefined | RoomDefaultArgs> = $Result.GetResult<Prisma.$RoomPayload, S>
+  type MeetingRoomGetPayload<S extends boolean | null | undefined | MeetingRoomDefaultArgs> = $Result.GetResult<Prisma.$MeetingRoomPayload, S>
 
-  type RoomCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<RoomFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: RoomCountAggregateInputType | true
+  type MeetingRoomCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MeetingRoomFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MeetingRoomCountAggregateInputType | true
     }
 
-  export interface RoomDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Room'], meta: { name: 'Room' } }
+  export interface MeetingRoomDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MeetingRoom'], meta: { name: 'MeetingRoom' } }
     /**
-     * Find zero or one Room that matches the filter.
-     * @param {RoomFindUniqueArgs} args - Arguments to find a Room
+     * Find zero or one MeetingRoom that matches the filter.
+     * @param {MeetingRoomFindUniqueArgs} args - Arguments to find a MeetingRoom
      * @example
-     * // Get one Room
-     * const room = await prisma.room.findUnique({
+     * // Get one MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUnique<T extends RoomFindUniqueArgs>(args: SelectSubset<T, RoomFindUniqueArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findUnique<T extends MeetingRoomFindUniqueArgs>(args: SelectSubset<T, MeetingRoomFindUniqueArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find one Room that matches the filter or throw an error with `error.code='P2025'`
+     * Find one MeetingRoom that matches the filter or throw an error with `error.code='P2025'`
      * if no matches were found.
-     * @param {RoomFindUniqueOrThrowArgs} args - Arguments to find a Room
+     * @param {MeetingRoomFindUniqueOrThrowArgs} args - Arguments to find a MeetingRoom
      * @example
-     * // Get one Room
-     * const room = await prisma.room.findUniqueOrThrow({
+     * // Get one MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUniqueOrThrow<T extends RoomFindUniqueOrThrowArgs>(args: SelectSubset<T, RoomFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findUniqueOrThrow<T extends MeetingRoomFindUniqueOrThrowArgs>(args: SelectSubset<T, MeetingRoomFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Room that matches the filter.
+     * Find the first MeetingRoom that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomFindFirstArgs} args - Arguments to find a Room
+     * @param {MeetingRoomFindFirstArgs} args - Arguments to find a MeetingRoom
      * @example
-     * // Get one Room
-     * const room = await prisma.room.findFirst({
+     * // Get one MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirst<T extends RoomFindFirstArgs>(args?: SelectSubset<T, RoomFindFirstArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findFirst<T extends MeetingRoomFindFirstArgs>(args?: SelectSubset<T, MeetingRoomFindFirstArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Room that matches the filter or
+     * Find the first MeetingRoom that matches the filter or
      * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomFindFirstOrThrowArgs} args - Arguments to find a Room
+     * @param {MeetingRoomFindFirstOrThrowArgs} args - Arguments to find a MeetingRoom
      * @example
-     * // Get one Room
-     * const room = await prisma.room.findFirstOrThrow({
+     * // Get one MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirstOrThrow<T extends RoomFindFirstOrThrowArgs>(args?: SelectSubset<T, RoomFindFirstOrThrowArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findFirstOrThrow<T extends MeetingRoomFindFirstOrThrowArgs>(args?: SelectSubset<T, MeetingRoomFindFirstOrThrowArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find zero or more Rooms that matches the filter.
+     * Find zero or more MeetingRooms that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @param {MeetingRoomFindManyArgs} args - Arguments to filter and select certain fields only.
      * @example
-     * // Get all Rooms
-     * const rooms = await prisma.room.findMany()
+     * // Get all MeetingRooms
+     * const meetingRooms = await prisma.meetingRoom.findMany()
      * 
-     * // Get first 10 Rooms
-     * const rooms = await prisma.room.findMany({ take: 10 })
+     * // Get first 10 MeetingRooms
+     * const meetingRooms = await prisma.meetingRoom.findMany({ take: 10 })
      * 
      * // Only select the `id`
-     * const roomWithIdOnly = await prisma.room.findMany({ select: { id: true } })
+     * const meetingRoomWithIdOnly = await prisma.meetingRoom.findMany({ select: { id: true } })
      * 
      */
-    findMany<T extends RoomFindManyArgs>(args?: SelectSubset<T, RoomFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+    findMany<T extends MeetingRoomFindManyArgs>(args?: SelectSubset<T, MeetingRoomFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
 
     /**
-     * Create a Room.
-     * @param {RoomCreateArgs} args - Arguments to create a Room.
+     * Create a MeetingRoom.
+     * @param {MeetingRoomCreateArgs} args - Arguments to create a MeetingRoom.
      * @example
-     * // Create one Room
-     * const Room = await prisma.room.create({
+     * // Create one MeetingRoom
+     * const MeetingRoom = await prisma.meetingRoom.create({
      *   data: {
-     *     // ... data to create a Room
+     *     // ... data to create a MeetingRoom
      *   }
      * })
      * 
      */
-    create<T extends RoomCreateArgs>(args: SelectSubset<T, RoomCreateArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    create<T extends MeetingRoomCreateArgs>(args: SelectSubset<T, MeetingRoomCreateArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Create many Rooms.
-     * @param {RoomCreateManyArgs} args - Arguments to create many Rooms.
+     * Create many MeetingRooms.
+     * @param {MeetingRoomCreateManyArgs} args - Arguments to create many MeetingRooms.
      * @example
-     * // Create many Rooms
-     * const room = await prisma.room.createMany({
+     * // Create many MeetingRooms
+     * const meetingRoom = await prisma.meetingRoom.createMany({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      *     
      */
-    createMany<T extends RoomCreateManyArgs>(args?: SelectSubset<T, RoomCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    createMany<T extends MeetingRoomCreateManyArgs>(args?: SelectSubset<T, MeetingRoomCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Create many Rooms and returns the data saved in the database.
-     * @param {RoomCreateManyAndReturnArgs} args - Arguments to create many Rooms.
+     * Create many MeetingRooms and returns the data saved in the database.
+     * @param {MeetingRoomCreateManyAndReturnArgs} args - Arguments to create many MeetingRooms.
      * @example
-     * // Create many Rooms
-     * const room = await prisma.room.createManyAndReturn({
+     * // Create many MeetingRooms
+     * const meetingRoom = await prisma.meetingRoom.createManyAndReturn({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      * 
-     * // Create many Rooms and only return the `id`
-     * const roomWithIdOnly = await prisma.room.createManyAndReturn({
+     * // Create many MeetingRooms and only return the `id`
+     * const meetingRoomWithIdOnly = await prisma.meetingRoom.createManyAndReturn({
      *   select: { id: true },
      *   data: [
      *     // ... provide data here
@@ -2927,28 +3411,28 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    createManyAndReturn<T extends RoomCreateManyAndReturnArgs>(args?: SelectSubset<T, RoomCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+    createManyAndReturn<T extends MeetingRoomCreateManyAndReturnArgs>(args?: SelectSubset<T, MeetingRoomCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Delete a Room.
-     * @param {RoomDeleteArgs} args - Arguments to delete one Room.
+     * Delete a MeetingRoom.
+     * @param {MeetingRoomDeleteArgs} args - Arguments to delete one MeetingRoom.
      * @example
-     * // Delete one Room
-     * const Room = await prisma.room.delete({
+     * // Delete one MeetingRoom
+     * const MeetingRoom = await prisma.meetingRoom.delete({
      *   where: {
-     *     // ... filter to delete one Room
+     *     // ... filter to delete one MeetingRoom
      *   }
      * })
      * 
      */
-    delete<T extends RoomDeleteArgs>(args: SelectSubset<T, RoomDeleteArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    delete<T extends MeetingRoomDeleteArgs>(args: SelectSubset<T, MeetingRoomDeleteArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Update one Room.
-     * @param {RoomUpdateArgs} args - Arguments to update one Room.
+     * Update one MeetingRoom.
+     * @param {MeetingRoomUpdateArgs} args - Arguments to update one MeetingRoom.
      * @example
-     * // Update one Room
-     * const room = await prisma.room.update({
+     * // Update one MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -2958,30 +3442,30 @@ export namespace Prisma {
      * })
      * 
      */
-    update<T extends RoomUpdateArgs>(args: SelectSubset<T, RoomUpdateArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    update<T extends MeetingRoomUpdateArgs>(args: SelectSubset<T, MeetingRoomUpdateArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Delete zero or more Rooms.
-     * @param {RoomDeleteManyArgs} args - Arguments to filter Rooms to delete.
+     * Delete zero or more MeetingRooms.
+     * @param {MeetingRoomDeleteManyArgs} args - Arguments to filter MeetingRooms to delete.
      * @example
-     * // Delete a few Rooms
-     * const { count } = await prisma.room.deleteMany({
+     * // Delete a few MeetingRooms
+     * const { count } = await prisma.meetingRoom.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
      */
-    deleteMany<T extends RoomDeleteManyArgs>(args?: SelectSubset<T, RoomDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    deleteMany<T extends MeetingRoomDeleteManyArgs>(args?: SelectSubset<T, MeetingRoomDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Rooms.
+     * Update zero or more MeetingRooms.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {MeetingRoomUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
-     * // Update many Rooms
-     * const room = await prisma.room.updateMany({
+     * // Update many MeetingRooms
+     * const meetingRoom = await prisma.meetingRoom.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -2991,14 +3475,14 @@ export namespace Prisma {
      * })
      * 
      */
-    updateMany<T extends RoomUpdateManyArgs>(args: SelectSubset<T, RoomUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    updateMany<T extends MeetingRoomUpdateManyArgs>(args: SelectSubset<T, MeetingRoomUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Rooms and returns the data updated in the database.
-     * @param {RoomUpdateManyAndReturnArgs} args - Arguments to update many Rooms.
+     * Update zero or more MeetingRooms and returns the data updated in the database.
+     * @param {MeetingRoomUpdateManyAndReturnArgs} args - Arguments to update many MeetingRooms.
      * @example
-     * // Update many Rooms
-     * const room = await prisma.room.updateManyAndReturn({
+     * // Update many MeetingRooms
+     * const meetingRoom = await prisma.meetingRoom.updateManyAndReturn({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -3007,8 +3491,8 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Rooms and only return the `id`
-     * const roomWithIdOnly = await prisma.room.updateManyAndReturn({
+     * // Update zero or more MeetingRooms and only return the `id`
+     * const meetingRoomWithIdOnly = await prisma.meetingRoom.updateManyAndReturn({
      *   select: { id: true },
      *   where: {
      *     // ... provide filter here
@@ -3021,56 +3505,56 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    updateManyAndReturn<T extends RoomUpdateManyAndReturnArgs>(args: SelectSubset<T, RoomUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+    updateManyAndReturn<T extends MeetingRoomUpdateManyAndReturnArgs>(args: SelectSubset<T, MeetingRoomUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Create or update one Room.
-     * @param {RoomUpsertArgs} args - Arguments to update or create a Room.
+     * Create or update one MeetingRoom.
+     * @param {MeetingRoomUpsertArgs} args - Arguments to update or create a MeetingRoom.
      * @example
-     * // Update or create a Room
-     * const room = await prisma.room.upsert({
+     * // Update or create a MeetingRoom
+     * const meetingRoom = await prisma.meetingRoom.upsert({
      *   create: {
-     *     // ... data to create a Room
+     *     // ... data to create a MeetingRoom
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Room we want to update
+     *     // ... the filter for the MeetingRoom we want to update
      *   }
      * })
      */
-    upsert<T extends RoomUpsertArgs>(args: SelectSubset<T, RoomUpsertArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    upsert<T extends MeetingRoomUpsertArgs>(args: SelectSubset<T, MeetingRoomUpsertArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
 
     /**
-     * Count the number of Rooms.
+     * Count the number of MeetingRooms.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomCountArgs} args - Arguments to filter Rooms to count.
+     * @param {MeetingRoomCountArgs} args - Arguments to filter MeetingRooms to count.
      * @example
-     * // Count the number of Rooms
-     * const count = await prisma.room.count({
+     * // Count the number of MeetingRooms
+     * const count = await prisma.meetingRoom.count({
      *   where: {
-     *     // ... the filter for the Rooms we want to count
+     *     // ... the filter for the MeetingRooms we want to count
      *   }
      * })
     **/
-    count<T extends RoomCountArgs>(
-      args?: Subset<T, RoomCountArgs>,
+    count<T extends MeetingRoomCountArgs>(
+      args?: Subset<T, MeetingRoomCountArgs>,
     ): Prisma.PrismaPromise<
       T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], RoomCountAggregateOutputType>
+          : GetScalarType<T['select'], MeetingRoomCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Room.
+     * Allows you to perform aggregations operations on a MeetingRoom.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {MeetingRoomAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -3090,13 +3574,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends RoomAggregateArgs>(args: Subset<T, RoomAggregateArgs>): Prisma.PrismaPromise<GetRoomAggregateType<T>>
+    aggregate<T extends MeetingRoomAggregateArgs>(args: Subset<T, MeetingRoomAggregateArgs>): Prisma.PrismaPromise<GetMeetingRoomAggregateType<T>>
 
     /**
-     * Group by Room.
+     * Group by MeetingRoom.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {RoomGroupByArgs} args - Group by arguments.
+     * @param {MeetingRoomGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -3111,14 +3595,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends RoomGroupByArgs,
+      T extends MeetingRoomGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: RoomGroupByArgs['orderBy'] }
-        : { orderBy?: RoomGroupByArgs['orderBy'] },
+        ? { orderBy: MeetingRoomGroupByArgs['orderBy'] }
+        : { orderBy?: MeetingRoomGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends MaybeTupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -3167,23 +3651,23 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, RoomGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRoomGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, MeetingRoomGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMeetingRoomGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
   /**
-   * Fields of the Room model
+   * Fields of the MeetingRoom model
    */
-  readonly fields: RoomFieldRefs;
+  readonly fields: MeetingRoomFieldRefs;
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for Room.
+   * The delegate class that acts as a "Promise-like" for MeetingRoom.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export interface Prisma__RoomClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+  export interface Prisma__MeetingRoomClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     host<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    meetings<T extends Room$meetingsArgs<ExtArgs> = {}>(args?: Subset<T, Room$meetingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    meetings<T extends MeetingRoom$meetingsArgs<ExtArgs> = {}>(args?: Subset<T, MeetingRoom$meetingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3210,420 +3694,421 @@ export namespace Prisma {
 
 
   /**
-   * Fields of the Room model
+   * Fields of the MeetingRoom model
    */
-  interface RoomFieldRefs {
-    readonly id: FieldRef<"Room", 'String'>
-    readonly slug: FieldRef<"Room", 'String'>
-    readonly name: FieldRef<"Room", 'String'>
-    readonly maxParticipants: FieldRef<"Room", 'Int'>
-    readonly hostId: FieldRef<"Room", 'String'>
-    readonly createdAt: FieldRef<"Room", 'DateTime'>
-    readonly updatedAt: FieldRef<"Room", 'DateTime'>
+  interface MeetingRoomFieldRefs {
+    readonly id: FieldRef<"MeetingRoom", 'String'>
+    readonly hostId: FieldRef<"MeetingRoom", 'String'>
+    readonly roomName: FieldRef<"MeetingRoom", 'String'>
+    readonly roomHash: FieldRef<"MeetingRoom", 'String'>
+    readonly maxParticipants: FieldRef<"MeetingRoom", 'Int'>
+    readonly status: FieldRef<"MeetingRoom", 'String'>
+    readonly createdAt: FieldRef<"MeetingRoom", 'DateTime'>
+    readonly updatedAt: FieldRef<"MeetingRoom", 'DateTime'>
   }
     
 
   // Custom InputTypes
   /**
-   * Room findUnique
+   * MeetingRoom findUnique
    */
-  export type RoomFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter, which Room to fetch.
+     * Filter, which MeetingRoom to fetch.
      */
-    where: RoomWhereUniqueInput
+    where: MeetingRoomWhereUniqueInput
   }
 
   /**
-   * Room findUniqueOrThrow
+   * MeetingRoom findUniqueOrThrow
    */
-  export type RoomFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter, which Room to fetch.
+     * Filter, which MeetingRoom to fetch.
      */
-    where: RoomWhereUniqueInput
+    where: MeetingRoomWhereUniqueInput
   }
 
   /**
-   * Room findFirst
+   * MeetingRoom findFirst
    */
-  export type RoomFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter, which Room to fetch.
+     * Filter, which MeetingRoom to fetch.
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Rooms to fetch.
+     * Determine the order of MeetingRooms to fetch.
      */
-    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
+    orderBy?: MeetingRoomOrderByWithRelationInput | MeetingRoomOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Rooms.
+     * Sets the position for searching for MeetingRooms.
      */
-    cursor?: RoomWhereUniqueInput
+    cursor?: MeetingRoomWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Rooms from the position of the cursor.
+     * Take `±n` MeetingRooms from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Rooms.
+     * Skip the first `n` MeetingRooms.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Rooms.
+     * Filter by unique combinations of MeetingRooms.
      */
-    distinct?: RoomScalarFieldEnum | RoomScalarFieldEnum[]
+    distinct?: MeetingRoomScalarFieldEnum | MeetingRoomScalarFieldEnum[]
   }
 
   /**
-   * Room findFirstOrThrow
+   * MeetingRoom findFirstOrThrow
    */
-  export type RoomFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter, which Room to fetch.
+     * Filter, which MeetingRoom to fetch.
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Rooms to fetch.
+     * Determine the order of MeetingRooms to fetch.
      */
-    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
+    orderBy?: MeetingRoomOrderByWithRelationInput | MeetingRoomOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Rooms.
+     * Sets the position for searching for MeetingRooms.
      */
-    cursor?: RoomWhereUniqueInput
+    cursor?: MeetingRoomWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Rooms from the position of the cursor.
+     * Take `±n` MeetingRooms from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Rooms.
+     * Skip the first `n` MeetingRooms.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Rooms.
+     * Filter by unique combinations of MeetingRooms.
      */
-    distinct?: RoomScalarFieldEnum | RoomScalarFieldEnum[]
+    distinct?: MeetingRoomScalarFieldEnum | MeetingRoomScalarFieldEnum[]
   }
 
   /**
-   * Room findMany
+   * MeetingRoom findMany
    */
-  export type RoomFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter, which Rooms to fetch.
+     * Filter, which MeetingRooms to fetch.
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Rooms to fetch.
+     * Determine the order of MeetingRooms to fetch.
      */
-    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
+    orderBy?: MeetingRoomOrderByWithRelationInput | MeetingRoomOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for listing Rooms.
+     * Sets the position for listing MeetingRooms.
      */
-    cursor?: RoomWhereUniqueInput
+    cursor?: MeetingRoomWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Rooms from the position of the cursor.
+     * Take `±n` MeetingRooms from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Rooms.
+     * Skip the first `n` MeetingRooms.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Rooms.
+     * Filter by unique combinations of MeetingRooms.
      */
-    distinct?: RoomScalarFieldEnum | RoomScalarFieldEnum[]
+    distinct?: MeetingRoomScalarFieldEnum | MeetingRoomScalarFieldEnum[]
   }
 
   /**
-   * Room create
+   * MeetingRoom create
    */
-  export type RoomCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * The data needed to create a Room.
+     * The data needed to create a MeetingRoom.
      */
-    data: XOR<RoomCreateInput, RoomUncheckedCreateInput>
+    data: XOR<MeetingRoomCreateInput, MeetingRoomUncheckedCreateInput>
   }
 
   /**
-   * Room createMany
+   * MeetingRoom createMany
    */
-  export type RoomCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to create many Rooms.
+     * The data used to create many MeetingRooms.
      */
-    data: RoomCreateManyInput | RoomCreateManyInput[]
+    data: MeetingRoomCreateManyInput | MeetingRoomCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Room createManyAndReturn
+   * MeetingRoom createManyAndReturn
    */
-  export type RoomCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelectCreateManyAndReturn<ExtArgs> | null
+    select?: MeetingRoomSelectCreateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
-     * The data used to create many Rooms.
+     * The data used to create many MeetingRooms.
      */
-    data: RoomCreateManyInput | RoomCreateManyInput[]
+    data: MeetingRoomCreateManyInput | MeetingRoomCreateManyInput[]
     skipDuplicates?: boolean
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomIncludeCreateManyAndReturn<ExtArgs> | null
+    include?: MeetingRoomIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
-   * Room update
+   * MeetingRoom update
    */
-  export type RoomUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * The data needed to update a Room.
+     * The data needed to update a MeetingRoom.
      */
-    data: XOR<RoomUpdateInput, RoomUncheckedUpdateInput>
+    data: XOR<MeetingRoomUpdateInput, MeetingRoomUncheckedUpdateInput>
     /**
-     * Choose, which Room to update.
+     * Choose, which MeetingRoom to update.
      */
-    where: RoomWhereUniqueInput
+    where: MeetingRoomWhereUniqueInput
   }
 
   /**
-   * Room updateMany
+   * MeetingRoom updateMany
    */
-  export type RoomUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to update Rooms.
+     * The data used to update MeetingRooms.
      */
-    data: XOR<RoomUpdateManyMutationInput, RoomUncheckedUpdateManyInput>
+    data: XOR<MeetingRoomUpdateManyMutationInput, MeetingRoomUncheckedUpdateManyInput>
     /**
-     * Filter which Rooms to update
+     * Filter which MeetingRooms to update
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
-     * Limit how many Rooms to update.
+     * Limit how many MeetingRooms to update.
      */
     limit?: number
   }
 
   /**
-   * Room updateManyAndReturn
+   * MeetingRoom updateManyAndReturn
    */
-  export type RoomUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelectUpdateManyAndReturn<ExtArgs> | null
+    select?: MeetingRoomSelectUpdateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
-     * The data used to update Rooms.
+     * The data used to update MeetingRooms.
      */
-    data: XOR<RoomUpdateManyMutationInput, RoomUncheckedUpdateManyInput>
+    data: XOR<MeetingRoomUpdateManyMutationInput, MeetingRoomUncheckedUpdateManyInput>
     /**
-     * Filter which Rooms to update
+     * Filter which MeetingRooms to update
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
-     * Limit how many Rooms to update.
+     * Limit how many MeetingRooms to update.
      */
     limit?: number
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomIncludeUpdateManyAndReturn<ExtArgs> | null
+    include?: MeetingRoomIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
-   * Room upsert
+   * MeetingRoom upsert
    */
-  export type RoomUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * The filter to search for the Room to update in case it exists.
+     * The filter to search for the MeetingRoom to update in case it exists.
      */
-    where: RoomWhereUniqueInput
+    where: MeetingRoomWhereUniqueInput
     /**
-     * In case the Room found by the `where` argument doesn't exist, create a new Room with this data.
+     * In case the MeetingRoom found by the `where` argument doesn't exist, create a new MeetingRoom with this data.
      */
-    create: XOR<RoomCreateInput, RoomUncheckedCreateInput>
+    create: XOR<MeetingRoomCreateInput, MeetingRoomUncheckedCreateInput>
     /**
-     * In case the Room was found with the provided `where` argument, update it with this data.
+     * In case the MeetingRoom was found with the provided `where` argument, update it with this data.
      */
-    update: XOR<RoomUpdateInput, RoomUncheckedUpdateInput>
+    update: XOR<MeetingRoomUpdateInput, MeetingRoomUncheckedUpdateInput>
   }
 
   /**
-   * Room delete
+   * MeetingRoom delete
    */
-  export type RoomDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
     /**
-     * Filter which Room to delete.
+     * Filter which MeetingRoom to delete.
      */
-    where: RoomWhereUniqueInput
+    where: MeetingRoomWhereUniqueInput
   }
 
   /**
-   * Room deleteMany
+   * MeetingRoom deleteMany
    */
-  export type RoomDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Rooms to delete
+     * Filter which MeetingRooms to delete
      */
-    where?: RoomWhereInput
+    where?: MeetingRoomWhereInput
     /**
-     * Limit how many Rooms to delete.
+     * Limit how many MeetingRooms to delete.
      */
     limit?: number
   }
 
   /**
-   * Room.meetings
+   * MeetingRoom.meetings
    */
-  export type Room$meetingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoom$meetingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Meeting
      */
@@ -3645,21 +4130,21 @@ export namespace Prisma {
   }
 
   /**
-   * Room without action
+   * MeetingRoom without action
    */
-  export type RoomDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingRoomDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Room
+     * Select specific fields to fetch from the MeetingRoom
      */
-    select?: RoomSelect<ExtArgs> | null
+    select?: MeetingRoomSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Room
+     * Omit specific fields from the MeetingRoom
      */
-    omit?: RoomOmit<ExtArgs> | null
+    omit?: MeetingRoomOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RoomInclude<ExtArgs> | null
+    include?: MeetingRoomInclude<ExtArgs> | null
   }
 
 
@@ -3676,87 +4161,75 @@ export namespace Prisma {
   }
 
   export type MeetingAvgAggregateOutputType = {
-    duration: number | null
+    durationSeconds: number | null
   }
 
   export type MeetingSumAggregateOutputType = {
-    duration: number | null
+    durationSeconds: number | null
   }
 
   export type MeetingMinAggregateOutputType = {
     id: string | null
     roomId: string | null
-    startTime: Date | null
-    endTime: Date | null
-    duration: number | null
-    recordingUrl: string | null
+    startedAt: Date | null
+    endedAt: Date | null
+    durationSeconds: number | null
     createdAt: Date | null
-    updatedAt: Date | null
   }
 
   export type MeetingMaxAggregateOutputType = {
     id: string | null
     roomId: string | null
-    startTime: Date | null
-    endTime: Date | null
-    duration: number | null
-    recordingUrl: string | null
+    startedAt: Date | null
+    endedAt: Date | null
+    durationSeconds: number | null
     createdAt: Date | null
-    updatedAt: Date | null
   }
 
   export type MeetingCountAggregateOutputType = {
     id: number
     roomId: number
-    startTime: number
-    endTime: number
-    duration: number
-    recordingUrl: number
+    startedAt: number
+    endedAt: number
+    durationSeconds: number
     createdAt: number
-    updatedAt: number
     _all: number
   }
 
 
   export type MeetingAvgAggregateInputType = {
-    duration?: true
+    durationSeconds?: true
   }
 
   export type MeetingSumAggregateInputType = {
-    duration?: true
+    durationSeconds?: true
   }
 
   export type MeetingMinAggregateInputType = {
     id?: true
     roomId?: true
-    startTime?: true
-    endTime?: true
-    duration?: true
-    recordingUrl?: true
+    startedAt?: true
+    endedAt?: true
+    durationSeconds?: true
     createdAt?: true
-    updatedAt?: true
   }
 
   export type MeetingMaxAggregateInputType = {
     id?: true
     roomId?: true
-    startTime?: true
-    endTime?: true
-    duration?: true
-    recordingUrl?: true
+    startedAt?: true
+    endedAt?: true
+    durationSeconds?: true
     createdAt?: true
-    updatedAt?: true
   }
 
   export type MeetingCountAggregateInputType = {
     id?: true
     roomId?: true
-    startTime?: true
-    endTime?: true
-    duration?: true
-    recordingUrl?: true
+    startedAt?: true
+    endedAt?: true
+    durationSeconds?: true
     createdAt?: true
-    updatedAt?: true
     _all?: true
   }
 
@@ -3849,12 +4322,10 @@ export namespace Prisma {
   export type MeetingGroupByOutputType = {
     id: string
     roomId: string
-    startTime: Date
-    endTime: Date | null
-    duration: number | null
-    recordingUrl: string | null
+    startedAt: Date
+    endedAt: Date | null
+    durationSeconds: number | null
     createdAt: Date
-    updatedAt: Date
     _count: MeetingCountAggregateOutputType | null
     _avg: MeetingAvgAggregateOutputType | null
     _sum: MeetingSumAggregateOutputType | null
@@ -3879,86 +4350,82 @@ export namespace Prisma {
   export type MeetingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     roomId?: boolean
-    startTime?: boolean
-    endTime?: boolean
-    duration?: boolean
-    recordingUrl?: boolean
+    startedAt?: boolean
+    endedAt?: boolean
+    durationSeconds?: boolean
     createdAt?: boolean
-    updatedAt?: boolean
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
     participants?: boolean | Meeting$participantsArgs<ExtArgs>
-    transcripts?: boolean | Meeting$transcriptsArgs<ExtArgs>
+    transcript?: boolean | Meeting$transcriptArgs<ExtArgs>
     summary?: boolean | Meeting$summaryArgs<ExtArgs>
+    recordings?: boolean | Meeting$recordingsArgs<ExtArgs>
+    exports?: boolean | Meeting$exportsArgs<ExtArgs>
     _count?: boolean | MeetingCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["meeting"]>
 
   export type MeetingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     roomId?: boolean
-    startTime?: boolean
-    endTime?: boolean
-    duration?: boolean
-    recordingUrl?: boolean
+    startedAt?: boolean
+    endedAt?: boolean
+    durationSeconds?: boolean
     createdAt?: boolean
-    updatedAt?: boolean
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["meeting"]>
 
   export type MeetingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     roomId?: boolean
-    startTime?: boolean
-    endTime?: boolean
-    duration?: boolean
-    recordingUrl?: boolean
+    startedAt?: boolean
+    endedAt?: boolean
+    durationSeconds?: boolean
     createdAt?: boolean
-    updatedAt?: boolean
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["meeting"]>
 
   export type MeetingSelectScalar = {
     id?: boolean
     roomId?: boolean
-    startTime?: boolean
-    endTime?: boolean
-    duration?: boolean
-    recordingUrl?: boolean
+    startedAt?: boolean
+    endedAt?: boolean
+    durationSeconds?: boolean
     createdAt?: boolean
-    updatedAt?: boolean
   }
 
-  export type MeetingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "roomId" | "startTime" | "endTime" | "duration" | "recordingUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["meeting"]>
+  export type MeetingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "roomId" | "startedAt" | "endedAt" | "durationSeconds" | "createdAt", ExtArgs["result"]["meeting"]>
   export type MeetingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
     participants?: boolean | Meeting$participantsArgs<ExtArgs>
-    transcripts?: boolean | Meeting$transcriptsArgs<ExtArgs>
+    transcript?: boolean | Meeting$transcriptArgs<ExtArgs>
     summary?: boolean | Meeting$summaryArgs<ExtArgs>
+    recordings?: boolean | Meeting$recordingsArgs<ExtArgs>
+    exports?: boolean | Meeting$exportsArgs<ExtArgs>
     _count?: boolean | MeetingCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type MeetingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
   }
   export type MeetingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    room?: boolean | RoomDefaultArgs<ExtArgs>
+    room?: boolean | MeetingRoomDefaultArgs<ExtArgs>
   }
 
   export type $MeetingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Meeting"
     objects: {
-      room: Prisma.$RoomPayload<ExtArgs>
+      room: Prisma.$MeetingRoomPayload<ExtArgs>
       participants: Prisma.$ParticipantPayload<ExtArgs>[]
-      transcripts: Prisma.$TranscriptPayload<ExtArgs>[]
-      summary: Prisma.$SummaryPayload<ExtArgs> | null
+      transcript: Prisma.$TranscriptPayload<ExtArgs> | null
+      summary: Prisma.$MeetingSummaryPayload<ExtArgs> | null
+      recordings: Prisma.$RecordingPayload<ExtArgs>[]
+      exports: Prisma.$ExportPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       roomId: string
-      startTime: Date
-      endTime: Date | null
-      duration: number | null
-      recordingUrl: string | null
+      startedAt: Date
+      endedAt: Date | null
+      durationSeconds: number | null
       createdAt: Date
-      updatedAt: Date
     }, ExtArgs["result"]["meeting"]>
     composites: {}
   }
@@ -4353,10 +4820,12 @@ export namespace Prisma {
    */
   export interface Prisma__MeetingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    room<T extends RoomDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RoomDefaultArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    room<T extends MeetingRoomDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingRoomDefaultArgs<ExtArgs>>): Prisma__MeetingRoomClient<$Result.GetResult<Prisma.$MeetingRoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     participants<T extends Meeting$participantsArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    transcripts<T extends Meeting$transcriptsArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$transcriptsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    summary<T extends Meeting$summaryArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$summaryArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    transcript<T extends Meeting$transcriptArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$transcriptArgs<ExtArgs>>): Prisma__TranscriptClient<$Result.GetResult<Prisma.$TranscriptPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    summary<T extends Meeting$summaryArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$summaryArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    recordings<T extends Meeting$recordingsArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$recordingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    exports<T extends Meeting$exportsArgs<ExtArgs> = {}>(args?: Subset<T, Meeting$exportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4388,12 +4857,10 @@ export namespace Prisma {
   interface MeetingFieldRefs {
     readonly id: FieldRef<"Meeting", 'String'>
     readonly roomId: FieldRef<"Meeting", 'String'>
-    readonly startTime: FieldRef<"Meeting", 'DateTime'>
-    readonly endTime: FieldRef<"Meeting", 'DateTime'>
-    readonly duration: FieldRef<"Meeting", 'Int'>
-    readonly recordingUrl: FieldRef<"Meeting", 'String'>
+    readonly startedAt: FieldRef<"Meeting", 'DateTime'>
+    readonly endedAt: FieldRef<"Meeting", 'DateTime'>
+    readonly durationSeconds: FieldRef<"Meeting", 'Int'>
     readonly createdAt: FieldRef<"Meeting", 'DateTime'>
-    readonly updatedAt: FieldRef<"Meeting", 'DateTime'>
   }
     
 
@@ -4819,9 +5286,9 @@ export namespace Prisma {
   }
 
   /**
-   * Meeting.transcripts
+   * Meeting.transcript
    */
-  export type Meeting$transcriptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Meeting$transcriptArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Transcript
      */
@@ -4835,11 +5302,6 @@ export namespace Prisma {
      */
     include?: TranscriptInclude<ExtArgs> | null
     where?: TranscriptWhereInput
-    orderBy?: TranscriptOrderByWithRelationInput | TranscriptOrderByWithRelationInput[]
-    cursor?: TranscriptWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: TranscriptScalarFieldEnum | TranscriptScalarFieldEnum[]
   }
 
   /**
@@ -4847,18 +5309,66 @@ export namespace Prisma {
    */
   export type Meeting$summaryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
-    where?: SummaryWhereInput
+    include?: MeetingSummaryInclude<ExtArgs> | null
+    where?: MeetingSummaryWhereInput
+  }
+
+  /**
+   * Meeting.recordings
+   */
+  export type Meeting$recordingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    where?: RecordingWhereInput
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    cursor?: RecordingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecordingScalarFieldEnum | RecordingScalarFieldEnum[]
+  }
+
+  /**
+   * Meeting.exports
+   */
+  export type Meeting$exportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    where?: ExportWhereInput
+    orderBy?: ExportOrderByWithRelationInput | ExportOrderByWithRelationInput[]
+    cursor?: ExportWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ExportScalarFieldEnum | ExportScalarFieldEnum[]
   }
 
   /**
@@ -4886,93 +5396,51 @@ export namespace Prisma {
 
   export type AggregateParticipant = {
     _count: ParticipantCountAggregateOutputType | null
-    _avg: ParticipantAvgAggregateOutputType | null
-    _sum: ParticipantSumAggregateOutputType | null
     _min: ParticipantMinAggregateOutputType | null
     _max: ParticipantMaxAggregateOutputType | null
-  }
-
-  export type ParticipantAvgAggregateOutputType = {
-    duration: number | null
-  }
-
-  export type ParticipantSumAggregateOutputType = {
-    duration: number | null
   }
 
   export type ParticipantMinAggregateOutputType = {
     id: string | null
     meetingId: string | null
-    name: string | null
-    role: string | null
-    joinTime: Date | null
-    leaveTime: Date | null
-    duration: number | null
+    displayName: string | null
     createdAt: Date | null
   }
 
   export type ParticipantMaxAggregateOutputType = {
     id: string | null
     meetingId: string | null
-    name: string | null
-    role: string | null
-    joinTime: Date | null
-    leaveTime: Date | null
-    duration: number | null
+    displayName: string | null
     createdAt: Date | null
   }
 
   export type ParticipantCountAggregateOutputType = {
     id: number
     meetingId: number
-    name: number
-    role: number
-    joinTime: number
-    leaveTime: number
-    duration: number
+    displayName: number
     createdAt: number
     _all: number
   }
 
 
-  export type ParticipantAvgAggregateInputType = {
-    duration?: true
-  }
-
-  export type ParticipantSumAggregateInputType = {
-    duration?: true
-  }
-
   export type ParticipantMinAggregateInputType = {
     id?: true
     meetingId?: true
-    name?: true
-    role?: true
-    joinTime?: true
-    leaveTime?: true
-    duration?: true
+    displayName?: true
     createdAt?: true
   }
 
   export type ParticipantMaxAggregateInputType = {
     id?: true
     meetingId?: true
-    name?: true
-    role?: true
-    joinTime?: true
-    leaveTime?: true
-    duration?: true
+    displayName?: true
     createdAt?: true
   }
 
   export type ParticipantCountAggregateInputType = {
     id?: true
     meetingId?: true
-    name?: true
-    role?: true
-    joinTime?: true
-    leaveTime?: true
-    duration?: true
+    displayName?: true
     createdAt?: true
     _all?: true
   }
@@ -5015,18 +5483,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: ParticipantAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: ParticipantSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: ParticipantMinAggregateInputType
@@ -5057,8 +5513,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ParticipantCountAggregateInputType | true
-    _avg?: ParticipantAvgAggregateInputType
-    _sum?: ParticipantSumAggregateInputType
     _min?: ParticipantMinAggregateInputType
     _max?: ParticipantMaxAggregateInputType
   }
@@ -5066,15 +5520,9 @@ export namespace Prisma {
   export type ParticipantGroupByOutputType = {
     id: string
     meetingId: string
-    name: string
-    role: string
-    joinTime: Date
-    leaveTime: Date | null
-    duration: number | null
+    displayName: string
     createdAt: Date
     _count: ParticipantCountAggregateOutputType | null
-    _avg: ParticipantAvgAggregateOutputType | null
-    _sum: ParticipantSumAggregateOutputType | null
     _min: ParticipantMinAggregateOutputType | null
     _max: ParticipantMaxAggregateOutputType | null
   }
@@ -5096,23 +5544,18 @@ export namespace Prisma {
   export type ParticipantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    name?: boolean
-    role?: boolean
-    joinTime?: boolean
-    leaveTime?: boolean
-    duration?: boolean
+    displayName?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    sessions?: boolean | Participant$sessionsArgs<ExtArgs>
+    segments?: boolean | Participant$segmentsArgs<ExtArgs>
+    _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    name?: boolean
-    role?: boolean
-    joinTime?: boolean
-    leaveTime?: boolean
-    duration?: boolean
+    displayName?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
@@ -5120,11 +5563,7 @@ export namespace Prisma {
   export type ParticipantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    name?: boolean
-    role?: boolean
-    joinTime?: boolean
-    leaveTime?: boolean
-    duration?: boolean
+    displayName?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
@@ -5132,17 +5571,16 @@ export namespace Prisma {
   export type ParticipantSelectScalar = {
     id?: boolean
     meetingId?: boolean
-    name?: boolean
-    role?: boolean
-    joinTime?: boolean
-    leaveTime?: boolean
-    duration?: boolean
+    displayName?: boolean
     createdAt?: boolean
   }
 
-  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "name" | "role" | "joinTime" | "leaveTime" | "duration" | "createdAt", ExtArgs["result"]["participant"]>
+  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "displayName" | "createdAt", ExtArgs["result"]["participant"]>
   export type ParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    sessions?: boolean | Participant$sessionsArgs<ExtArgs>
+    segments?: boolean | Participant$segmentsArgs<ExtArgs>
+    _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
@@ -5155,15 +5593,13 @@ export namespace Prisma {
     name: "Participant"
     objects: {
       meeting: Prisma.$MeetingPayload<ExtArgs>
+      sessions: Prisma.$ParticipantSessionPayload<ExtArgs>[]
+      segments: Prisma.$TranscriptSegmentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       meetingId: string
-      name: string
-      role: string
-      joinTime: Date
-      leaveTime: Date | null
-      duration: number | null
+      displayName: string
       createdAt: Date
     }, ExtArgs["result"]["participant"]>
     composites: {}
@@ -5560,6 +5996,8 @@ export namespace Prisma {
   export interface Prisma__ParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    sessions<T extends Participant$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    segments<T extends Participant$segmentsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$segmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5591,11 +6029,7 @@ export namespace Prisma {
   interface ParticipantFieldRefs {
     readonly id: FieldRef<"Participant", 'String'>
     readonly meetingId: FieldRef<"Participant", 'String'>
-    readonly name: FieldRef<"Participant", 'String'>
-    readonly role: FieldRef<"Participant", 'String'>
-    readonly joinTime: FieldRef<"Participant", 'DateTime'>
-    readonly leaveTime: FieldRef<"Participant", 'DateTime'>
-    readonly duration: FieldRef<"Participant", 'Int'>
+    readonly displayName: FieldRef<"Participant", 'String'>
     readonly createdAt: FieldRef<"Participant", 'DateTime'>
   }
     
@@ -5998,6 +6432,54 @@ export namespace Prisma {
   }
 
   /**
+   * Participant.sessions
+   */
+  export type Participant$sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    where?: ParticipantSessionWhereInput
+    orderBy?: ParticipantSessionOrderByWithRelationInput | ParticipantSessionOrderByWithRelationInput[]
+    cursor?: ParticipantSessionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ParticipantSessionScalarFieldEnum | ParticipantSessionScalarFieldEnum[]
+  }
+
+  /**
+   * Participant.segments
+   */
+  export type Participant$segmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    where?: TranscriptSegmentWhereInput
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
+    cursor?: TranscriptSegmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
    * Participant without action
    */
   export type ParticipantDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6017,6 +6499,1129 @@ export namespace Prisma {
 
 
   /**
+   * Model ParticipantSession
+   */
+
+  export type AggregateParticipantSession = {
+    _count: ParticipantSessionCountAggregateOutputType | null
+    _avg: ParticipantSessionAvgAggregateOutputType | null
+    _sum: ParticipantSessionSumAggregateOutputType | null
+    _min: ParticipantSessionMinAggregateOutputType | null
+    _max: ParticipantSessionMaxAggregateOutputType | null
+  }
+
+  export type ParticipantSessionAvgAggregateOutputType = {
+    durationSeconds: number | null
+  }
+
+  export type ParticipantSessionSumAggregateOutputType = {
+    durationSeconds: number | null
+  }
+
+  export type ParticipantSessionMinAggregateOutputType = {
+    id: string | null
+    participantId: string | null
+    joinedAt: Date | null
+    lastSeenAt: Date | null
+    leftAt: Date | null
+    durationSeconds: number | null
+    connectionId: string | null
+  }
+
+  export type ParticipantSessionMaxAggregateOutputType = {
+    id: string | null
+    participantId: string | null
+    joinedAt: Date | null
+    lastSeenAt: Date | null
+    leftAt: Date | null
+    durationSeconds: number | null
+    connectionId: string | null
+  }
+
+  export type ParticipantSessionCountAggregateOutputType = {
+    id: number
+    participantId: number
+    joinedAt: number
+    lastSeenAt: number
+    leftAt: number
+    durationSeconds: number
+    connectionId: number
+    _all: number
+  }
+
+
+  export type ParticipantSessionAvgAggregateInputType = {
+    durationSeconds?: true
+  }
+
+  export type ParticipantSessionSumAggregateInputType = {
+    durationSeconds?: true
+  }
+
+  export type ParticipantSessionMinAggregateInputType = {
+    id?: true
+    participantId?: true
+    joinedAt?: true
+    lastSeenAt?: true
+    leftAt?: true
+    durationSeconds?: true
+    connectionId?: true
+  }
+
+  export type ParticipantSessionMaxAggregateInputType = {
+    id?: true
+    participantId?: true
+    joinedAt?: true
+    lastSeenAt?: true
+    leftAt?: true
+    durationSeconds?: true
+    connectionId?: true
+  }
+
+  export type ParticipantSessionCountAggregateInputType = {
+    id?: true
+    participantId?: true
+    joinedAt?: true
+    lastSeenAt?: true
+    leftAt?: true
+    durationSeconds?: true
+    connectionId?: true
+    _all?: true
+  }
+
+  export type ParticipantSessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ParticipantSession to aggregate.
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParticipantSessions to fetch.
+     */
+    orderBy?: ParticipantSessionOrderByWithRelationInput | ParticipantSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ParticipantSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParticipantSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParticipantSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ParticipantSessions
+    **/
+    _count?: true | ParticipantSessionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ParticipantSessionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ParticipantSessionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ParticipantSessionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ParticipantSessionMaxAggregateInputType
+  }
+
+  export type GetParticipantSessionAggregateType<T extends ParticipantSessionAggregateArgs> = {
+        [P in keyof T & keyof AggregateParticipantSession]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateParticipantSession[P]>
+      : GetScalarType<T[P], AggregateParticipantSession[P]>
+  }
+
+
+
+
+  export type ParticipantSessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParticipantSessionWhereInput
+    orderBy?: ParticipantSessionOrderByWithAggregationInput | ParticipantSessionOrderByWithAggregationInput[]
+    by: ParticipantSessionScalarFieldEnum[] | ParticipantSessionScalarFieldEnum
+    having?: ParticipantSessionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ParticipantSessionCountAggregateInputType | true
+    _avg?: ParticipantSessionAvgAggregateInputType
+    _sum?: ParticipantSessionSumAggregateInputType
+    _min?: ParticipantSessionMinAggregateInputType
+    _max?: ParticipantSessionMaxAggregateInputType
+  }
+
+  export type ParticipantSessionGroupByOutputType = {
+    id: string
+    participantId: string
+    joinedAt: Date
+    lastSeenAt: Date
+    leftAt: Date | null
+    durationSeconds: number | null
+    connectionId: string
+    _count: ParticipantSessionCountAggregateOutputType | null
+    _avg: ParticipantSessionAvgAggregateOutputType | null
+    _sum: ParticipantSessionSumAggregateOutputType | null
+    _min: ParticipantSessionMinAggregateOutputType | null
+    _max: ParticipantSessionMaxAggregateOutputType | null
+  }
+
+  type GetParticipantSessionGroupByPayload<T extends ParticipantSessionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ParticipantSessionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ParticipantSessionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ParticipantSessionGroupByOutputType[P]>
+            : GetScalarType<T[P], ParticipantSessionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ParticipantSessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    participantId?: boolean
+    joinedAt?: boolean
+    lastSeenAt?: boolean
+    leftAt?: boolean
+    durationSeconds?: boolean
+    connectionId?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["participantSession"]>
+
+  export type ParticipantSessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    participantId?: boolean
+    joinedAt?: boolean
+    lastSeenAt?: boolean
+    leftAt?: boolean
+    durationSeconds?: boolean
+    connectionId?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["participantSession"]>
+
+  export type ParticipantSessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    participantId?: boolean
+    joinedAt?: boolean
+    lastSeenAt?: boolean
+    leftAt?: boolean
+    durationSeconds?: boolean
+    connectionId?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["participantSession"]>
+
+  export type ParticipantSessionSelectScalar = {
+    id?: boolean
+    participantId?: boolean
+    joinedAt?: boolean
+    lastSeenAt?: boolean
+    leftAt?: boolean
+    durationSeconds?: boolean
+    connectionId?: boolean
+  }
+
+  export type ParticipantSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "participantId" | "joinedAt" | "lastSeenAt" | "leftAt" | "durationSeconds" | "connectionId", ExtArgs["result"]["participantSession"]>
+  export type ParticipantSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
+  export type ParticipantSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
+  export type ParticipantSessionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
+
+  export type $ParticipantSessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ParticipantSession"
+    objects: {
+      participant: Prisma.$ParticipantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      participantId: string
+      joinedAt: Date
+      lastSeenAt: Date
+      leftAt: Date | null
+      durationSeconds: number | null
+      connectionId: string
+    }, ExtArgs["result"]["participantSession"]>
+    composites: {}
+  }
+
+  type ParticipantSessionGetPayload<S extends boolean | null | undefined | ParticipantSessionDefaultArgs> = $Result.GetResult<Prisma.$ParticipantSessionPayload, S>
+
+  type ParticipantSessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ParticipantSessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ParticipantSessionCountAggregateInputType | true
+    }
+
+  export interface ParticipantSessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ParticipantSession'], meta: { name: 'ParticipantSession' } }
+    /**
+     * Find zero or one ParticipantSession that matches the filter.
+     * @param {ParticipantSessionFindUniqueArgs} args - Arguments to find a ParticipantSession
+     * @example
+     * // Get one ParticipantSession
+     * const participantSession = await prisma.participantSession.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ParticipantSessionFindUniqueArgs>(args: SelectSubset<T, ParticipantSessionFindUniqueArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ParticipantSession that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ParticipantSessionFindUniqueOrThrowArgs} args - Arguments to find a ParticipantSession
+     * @example
+     * // Get one ParticipantSession
+     * const participantSession = await prisma.participantSession.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ParticipantSessionFindUniqueOrThrowArgs>(args: SelectSubset<T, ParticipantSessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ParticipantSession that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionFindFirstArgs} args - Arguments to find a ParticipantSession
+     * @example
+     * // Get one ParticipantSession
+     * const participantSession = await prisma.participantSession.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ParticipantSessionFindFirstArgs>(args?: SelectSubset<T, ParticipantSessionFindFirstArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ParticipantSession that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionFindFirstOrThrowArgs} args - Arguments to find a ParticipantSession
+     * @example
+     * // Get one ParticipantSession
+     * const participantSession = await prisma.participantSession.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ParticipantSessionFindFirstOrThrowArgs>(args?: SelectSubset<T, ParticipantSessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ParticipantSessions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ParticipantSessions
+     * const participantSessions = await prisma.participantSession.findMany()
+     * 
+     * // Get first 10 ParticipantSessions
+     * const participantSessions = await prisma.participantSession.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const participantSessionWithIdOnly = await prisma.participantSession.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ParticipantSessionFindManyArgs>(args?: SelectSubset<T, ParticipantSessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ParticipantSession.
+     * @param {ParticipantSessionCreateArgs} args - Arguments to create a ParticipantSession.
+     * @example
+     * // Create one ParticipantSession
+     * const ParticipantSession = await prisma.participantSession.create({
+     *   data: {
+     *     // ... data to create a ParticipantSession
+     *   }
+     * })
+     * 
+     */
+    create<T extends ParticipantSessionCreateArgs>(args: SelectSubset<T, ParticipantSessionCreateArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ParticipantSessions.
+     * @param {ParticipantSessionCreateManyArgs} args - Arguments to create many ParticipantSessions.
+     * @example
+     * // Create many ParticipantSessions
+     * const participantSession = await prisma.participantSession.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ParticipantSessionCreateManyArgs>(args?: SelectSubset<T, ParticipantSessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ParticipantSessions and returns the data saved in the database.
+     * @param {ParticipantSessionCreateManyAndReturnArgs} args - Arguments to create many ParticipantSessions.
+     * @example
+     * // Create many ParticipantSessions
+     * const participantSession = await prisma.participantSession.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ParticipantSessions and only return the `id`
+     * const participantSessionWithIdOnly = await prisma.participantSession.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ParticipantSessionCreateManyAndReturnArgs>(args?: SelectSubset<T, ParticipantSessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ParticipantSession.
+     * @param {ParticipantSessionDeleteArgs} args - Arguments to delete one ParticipantSession.
+     * @example
+     * // Delete one ParticipantSession
+     * const ParticipantSession = await prisma.participantSession.delete({
+     *   where: {
+     *     // ... filter to delete one ParticipantSession
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ParticipantSessionDeleteArgs>(args: SelectSubset<T, ParticipantSessionDeleteArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ParticipantSession.
+     * @param {ParticipantSessionUpdateArgs} args - Arguments to update one ParticipantSession.
+     * @example
+     * // Update one ParticipantSession
+     * const participantSession = await prisma.participantSession.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ParticipantSessionUpdateArgs>(args: SelectSubset<T, ParticipantSessionUpdateArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ParticipantSessions.
+     * @param {ParticipantSessionDeleteManyArgs} args - Arguments to filter ParticipantSessions to delete.
+     * @example
+     * // Delete a few ParticipantSessions
+     * const { count } = await prisma.participantSession.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ParticipantSessionDeleteManyArgs>(args?: SelectSubset<T, ParticipantSessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ParticipantSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ParticipantSessions
+     * const participantSession = await prisma.participantSession.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ParticipantSessionUpdateManyArgs>(args: SelectSubset<T, ParticipantSessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ParticipantSessions and returns the data updated in the database.
+     * @param {ParticipantSessionUpdateManyAndReturnArgs} args - Arguments to update many ParticipantSessions.
+     * @example
+     * // Update many ParticipantSessions
+     * const participantSession = await prisma.participantSession.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ParticipantSessions and only return the `id`
+     * const participantSessionWithIdOnly = await prisma.participantSession.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ParticipantSessionUpdateManyAndReturnArgs>(args: SelectSubset<T, ParticipantSessionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ParticipantSession.
+     * @param {ParticipantSessionUpsertArgs} args - Arguments to update or create a ParticipantSession.
+     * @example
+     * // Update or create a ParticipantSession
+     * const participantSession = await prisma.participantSession.upsert({
+     *   create: {
+     *     // ... data to create a ParticipantSession
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ParticipantSession we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ParticipantSessionUpsertArgs>(args: SelectSubset<T, ParticipantSessionUpsertArgs<ExtArgs>>): Prisma__ParticipantSessionClient<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ParticipantSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionCountArgs} args - Arguments to filter ParticipantSessions to count.
+     * @example
+     * // Count the number of ParticipantSessions
+     * const count = await prisma.participantSession.count({
+     *   where: {
+     *     // ... the filter for the ParticipantSessions we want to count
+     *   }
+     * })
+    **/
+    count<T extends ParticipantSessionCountArgs>(
+      args?: Subset<T, ParticipantSessionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ParticipantSessionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ParticipantSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ParticipantSessionAggregateArgs>(args: Subset<T, ParticipantSessionAggregateArgs>): Prisma.PrismaPromise<GetParticipantSessionAggregateType<T>>
+
+    /**
+     * Group by ParticipantSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParticipantSessionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ParticipantSessionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ParticipantSessionGroupByArgs['orderBy'] }
+        : { orderBy?: ParticipantSessionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ParticipantSessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetParticipantSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ParticipantSession model
+   */
+  readonly fields: ParticipantSessionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ParticipantSession.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ParticipantSessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    participant<T extends ParticipantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ParticipantDefaultArgs<ExtArgs>>): Prisma__ParticipantClient<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ParticipantSession model
+   */
+  interface ParticipantSessionFieldRefs {
+    readonly id: FieldRef<"ParticipantSession", 'String'>
+    readonly participantId: FieldRef<"ParticipantSession", 'String'>
+    readonly joinedAt: FieldRef<"ParticipantSession", 'DateTime'>
+    readonly lastSeenAt: FieldRef<"ParticipantSession", 'DateTime'>
+    readonly leftAt: FieldRef<"ParticipantSession", 'DateTime'>
+    readonly durationSeconds: FieldRef<"ParticipantSession", 'Int'>
+    readonly connectionId: FieldRef<"ParticipantSession", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ParticipantSession findUnique
+   */
+  export type ParticipantSessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ParticipantSession to fetch.
+     */
+    where: ParticipantSessionWhereUniqueInput
+  }
+
+  /**
+   * ParticipantSession findUniqueOrThrow
+   */
+  export type ParticipantSessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ParticipantSession to fetch.
+     */
+    where: ParticipantSessionWhereUniqueInput
+  }
+
+  /**
+   * ParticipantSession findFirst
+   */
+  export type ParticipantSessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ParticipantSession to fetch.
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParticipantSessions to fetch.
+     */
+    orderBy?: ParticipantSessionOrderByWithRelationInput | ParticipantSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ParticipantSessions.
+     */
+    cursor?: ParticipantSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParticipantSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParticipantSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ParticipantSessions.
+     */
+    distinct?: ParticipantSessionScalarFieldEnum | ParticipantSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ParticipantSession findFirstOrThrow
+   */
+  export type ParticipantSessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ParticipantSession to fetch.
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParticipantSessions to fetch.
+     */
+    orderBy?: ParticipantSessionOrderByWithRelationInput | ParticipantSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ParticipantSessions.
+     */
+    cursor?: ParticipantSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParticipantSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParticipantSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ParticipantSessions.
+     */
+    distinct?: ParticipantSessionScalarFieldEnum | ParticipantSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ParticipantSession findMany
+   */
+  export type ParticipantSessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ParticipantSessions to fetch.
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParticipantSessions to fetch.
+     */
+    orderBy?: ParticipantSessionOrderByWithRelationInput | ParticipantSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ParticipantSessions.
+     */
+    cursor?: ParticipantSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParticipantSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParticipantSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ParticipantSessions.
+     */
+    distinct?: ParticipantSessionScalarFieldEnum | ParticipantSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ParticipantSession create
+   */
+  export type ParticipantSessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ParticipantSession.
+     */
+    data: XOR<ParticipantSessionCreateInput, ParticipantSessionUncheckedCreateInput>
+  }
+
+  /**
+   * ParticipantSession createMany
+   */
+  export type ParticipantSessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ParticipantSessions.
+     */
+    data: ParticipantSessionCreateManyInput | ParticipantSessionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ParticipantSession createManyAndReturn
+   */
+  export type ParticipantSessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * The data used to create many ParticipantSessions.
+     */
+    data: ParticipantSessionCreateManyInput | ParticipantSessionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ParticipantSession update
+   */
+  export type ParticipantSessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ParticipantSession.
+     */
+    data: XOR<ParticipantSessionUpdateInput, ParticipantSessionUncheckedUpdateInput>
+    /**
+     * Choose, which ParticipantSession to update.
+     */
+    where: ParticipantSessionWhereUniqueInput
+  }
+
+  /**
+   * ParticipantSession updateMany
+   */
+  export type ParticipantSessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ParticipantSessions.
+     */
+    data: XOR<ParticipantSessionUpdateManyMutationInput, ParticipantSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which ParticipantSessions to update
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * Limit how many ParticipantSessions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ParticipantSession updateManyAndReturn
+   */
+  export type ParticipantSessionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * The data used to update ParticipantSessions.
+     */
+    data: XOR<ParticipantSessionUpdateManyMutationInput, ParticipantSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which ParticipantSessions to update
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * Limit how many ParticipantSessions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ParticipantSession upsert
+   */
+  export type ParticipantSessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ParticipantSession to update in case it exists.
+     */
+    where: ParticipantSessionWhereUniqueInput
+    /**
+     * In case the ParticipantSession found by the `where` argument doesn't exist, create a new ParticipantSession with this data.
+     */
+    create: XOR<ParticipantSessionCreateInput, ParticipantSessionUncheckedCreateInput>
+    /**
+     * In case the ParticipantSession was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ParticipantSessionUpdateInput, ParticipantSessionUncheckedUpdateInput>
+  }
+
+  /**
+   * ParticipantSession delete
+   */
+  export type ParticipantSessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+    /**
+     * Filter which ParticipantSession to delete.
+     */
+    where: ParticipantSessionWhereUniqueInput
+  }
+
+  /**
+   * ParticipantSession deleteMany
+   */
+  export type ParticipantSessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ParticipantSessions to delete
+     */
+    where?: ParticipantSessionWhereInput
+    /**
+     * Limit how many ParticipantSessions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ParticipantSession without action
+   */
+  export type ParticipantSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantSession
+     */
+    select?: ParticipantSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ParticipantSession
+     */
+    omit?: ParticipantSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Transcript
    */
 
@@ -6029,25 +7634,25 @@ export namespace Prisma {
   export type TranscriptMinAggregateOutputType = {
     id: string | null
     meetingId: string | null
-    speakerName: string | null
-    text: string | null
-    timestamp: Date | null
+    fullTranscript: string | null
+    language: string | null
+    createdAt: Date | null
   }
 
   export type TranscriptMaxAggregateOutputType = {
     id: string | null
     meetingId: string | null
-    speakerName: string | null
-    text: string | null
-    timestamp: Date | null
+    fullTranscript: string | null
+    language: string | null
+    createdAt: Date | null
   }
 
   export type TranscriptCountAggregateOutputType = {
     id: number
     meetingId: number
-    speakerName: number
-    text: number
-    timestamp: number
+    fullTranscript: number
+    language: number
+    createdAt: number
     _all: number
   }
 
@@ -6055,25 +7660,25 @@ export namespace Prisma {
   export type TranscriptMinAggregateInputType = {
     id?: true
     meetingId?: true
-    speakerName?: true
-    text?: true
-    timestamp?: true
+    fullTranscript?: true
+    language?: true
+    createdAt?: true
   }
 
   export type TranscriptMaxAggregateInputType = {
     id?: true
     meetingId?: true
-    speakerName?: true
-    text?: true
-    timestamp?: true
+    fullTranscript?: true
+    language?: true
+    createdAt?: true
   }
 
   export type TranscriptCountAggregateInputType = {
     id?: true
     meetingId?: true
-    speakerName?: true
-    text?: true
-    timestamp?: true
+    fullTranscript?: true
+    language?: true
+    createdAt?: true
     _all?: true
   }
 
@@ -6152,9 +7757,9 @@ export namespace Prisma {
   export type TranscriptGroupByOutputType = {
     id: string
     meetingId: string
-    speakerName: string
-    text: string
-    timestamp: Date
+    fullTranscript: string
+    language: string
+    createdAt: Date
     _count: TranscriptCountAggregateOutputType | null
     _min: TranscriptMinAggregateOutputType | null
     _max: TranscriptMaxAggregateOutputType | null
@@ -6177,41 +7782,45 @@ export namespace Prisma {
   export type TranscriptSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    speakerName?: boolean
-    text?: boolean
-    timestamp?: boolean
+    fullTranscript?: boolean
+    language?: boolean
+    createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    segments?: boolean | Transcript$segmentsArgs<ExtArgs>
+    _count?: boolean | TranscriptCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transcript"]>
 
   export type TranscriptSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    speakerName?: boolean
-    text?: boolean
-    timestamp?: boolean
+    fullTranscript?: boolean
+    language?: boolean
+    createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transcript"]>
 
   export type TranscriptSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
-    speakerName?: boolean
-    text?: boolean
-    timestamp?: boolean
+    fullTranscript?: boolean
+    language?: boolean
+    createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["transcript"]>
 
   export type TranscriptSelectScalar = {
     id?: boolean
     meetingId?: boolean
-    speakerName?: boolean
-    text?: boolean
-    timestamp?: boolean
+    fullTranscript?: boolean
+    language?: boolean
+    createdAt?: boolean
   }
 
-  export type TranscriptOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "speakerName" | "text" | "timestamp", ExtArgs["result"]["transcript"]>
+  export type TranscriptOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "fullTranscript" | "language" | "createdAt", ExtArgs["result"]["transcript"]>
   export type TranscriptInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    segments?: boolean | Transcript$segmentsArgs<ExtArgs>
+    _count?: boolean | TranscriptCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TranscriptIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
@@ -6224,13 +7833,14 @@ export namespace Prisma {
     name: "Transcript"
     objects: {
       meeting: Prisma.$MeetingPayload<ExtArgs>
+      segments: Prisma.$TranscriptSegmentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       meetingId: string
-      speakerName: string
-      text: string
-      timestamp: Date
+      fullTranscript: string
+      language: string
+      createdAt: Date
     }, ExtArgs["result"]["transcript"]>
     composites: {}
   }
@@ -6626,6 +8236,7 @@ export namespace Prisma {
   export interface Prisma__TranscriptClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    segments<T extends Transcript$segmentsArgs<ExtArgs> = {}>(args?: Subset<T, Transcript$segmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6657,9 +8268,9 @@ export namespace Prisma {
   interface TranscriptFieldRefs {
     readonly id: FieldRef<"Transcript", 'String'>
     readonly meetingId: FieldRef<"Transcript", 'String'>
-    readonly speakerName: FieldRef<"Transcript", 'String'>
-    readonly text: FieldRef<"Transcript", 'String'>
-    readonly timestamp: FieldRef<"Transcript", 'DateTime'>
+    readonly fullTranscript: FieldRef<"Transcript", 'String'>
+    readonly language: FieldRef<"Transcript", 'String'>
+    readonly createdAt: FieldRef<"Transcript", 'DateTime'>
   }
     
 
@@ -7061,6 +8672,30 @@ export namespace Prisma {
   }
 
   /**
+   * Transcript.segments
+   */
+  export type Transcript$segmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    where?: TranscriptSegmentWhereInput
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
+    cursor?: TranscriptSegmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
    * Transcript without action
    */
   export type TranscriptDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7080,350 +8715,435 @@ export namespace Prisma {
 
 
   /**
-   * Model Summary
+   * Model TranscriptSegment
    */
 
-  export type AggregateSummary = {
-    _count: SummaryCountAggregateOutputType | null
-    _min: SummaryMinAggregateOutputType | null
-    _max: SummaryMaxAggregateOutputType | null
+  export type AggregateTranscriptSegment = {
+    _count: TranscriptSegmentCountAggregateOutputType | null
+    _avg: TranscriptSegmentAvgAggregateOutputType | null
+    _sum: TranscriptSegmentSumAggregateOutputType | null
+    _min: TranscriptSegmentMinAggregateOutputType | null
+    _max: TranscriptSegmentMaxAggregateOutputType | null
   }
 
-  export type SummaryMinAggregateOutputType = {
+  export type TranscriptSegmentAvgAggregateOutputType = {
+    startTime: number | null
+    endTime: number | null
+    confidence: number | null
+  }
+
+  export type TranscriptSegmentSumAggregateOutputType = {
+    startTime: number | null
+    endTime: number | null
+    confidence: number | null
+  }
+
+  export type TranscriptSegmentMinAggregateOutputType = {
     id: string | null
-    meetingId: string | null
-    content: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
+    transcriptId: string | null
+    participantId: string | null
+    startTime: number | null
+    endTime: number | null
+    spokenAt: Date | null
+    text: string | null
+    confidence: number | null
   }
 
-  export type SummaryMaxAggregateOutputType = {
+  export type TranscriptSegmentMaxAggregateOutputType = {
     id: string | null
-    meetingId: string | null
-    content: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
+    transcriptId: string | null
+    participantId: string | null
+    startTime: number | null
+    endTime: number | null
+    spokenAt: Date | null
+    text: string | null
+    confidence: number | null
   }
 
-  export type SummaryCountAggregateOutputType = {
+  export type TranscriptSegmentCountAggregateOutputType = {
     id: number
-    meetingId: number
-    content: number
-    createdAt: number
-    updatedAt: number
+    transcriptId: number
+    participantId: number
+    startTime: number
+    endTime: number
+    spokenAt: number
+    text: number
+    confidence: number
     _all: number
   }
 
 
-  export type SummaryMinAggregateInputType = {
-    id?: true
-    meetingId?: true
-    content?: true
-    createdAt?: true
-    updatedAt?: true
+  export type TranscriptSegmentAvgAggregateInputType = {
+    startTime?: true
+    endTime?: true
+    confidence?: true
   }
 
-  export type SummaryMaxAggregateInputType = {
-    id?: true
-    meetingId?: true
-    content?: true
-    createdAt?: true
-    updatedAt?: true
+  export type TranscriptSegmentSumAggregateInputType = {
+    startTime?: true
+    endTime?: true
+    confidence?: true
   }
 
-  export type SummaryCountAggregateInputType = {
+  export type TranscriptSegmentMinAggregateInputType = {
     id?: true
-    meetingId?: true
-    content?: true
-    createdAt?: true
-    updatedAt?: true
+    transcriptId?: true
+    participantId?: true
+    startTime?: true
+    endTime?: true
+    spokenAt?: true
+    text?: true
+    confidence?: true
+  }
+
+  export type TranscriptSegmentMaxAggregateInputType = {
+    id?: true
+    transcriptId?: true
+    participantId?: true
+    startTime?: true
+    endTime?: true
+    spokenAt?: true
+    text?: true
+    confidence?: true
+  }
+
+  export type TranscriptSegmentCountAggregateInputType = {
+    id?: true
+    transcriptId?: true
+    participantId?: true
+    startTime?: true
+    endTime?: true
+    spokenAt?: true
+    text?: true
+    confidence?: true
     _all?: true
   }
 
-  export type SummaryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type TranscriptSegmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Summary to aggregate.
+     * Filter which TranscriptSegment to aggregate.
      */
-    where?: SummaryWhereInput
+    where?: TranscriptSegmentWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Summaries to fetch.
+     * Determine the order of TranscriptSegments to fetch.
      */
-    orderBy?: SummaryOrderByWithRelationInput | SummaryOrderByWithRelationInput[]
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      */
-    cursor?: SummaryWhereUniqueInput
+    cursor?: TranscriptSegmentWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Summaries from the position of the cursor.
+     * Take `±n` TranscriptSegments from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Summaries.
+     * Skip the first `n` TranscriptSegments.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Count returned Summaries
+     * Count returned TranscriptSegments
     **/
-    _count?: true | SummaryCountAggregateInputType
+    _count?: true | TranscriptSegmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TranscriptSegmentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TranscriptSegmentSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: SummaryMinAggregateInputType
+    _min?: TranscriptSegmentMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: SummaryMaxAggregateInputType
+    _max?: TranscriptSegmentMaxAggregateInputType
   }
 
-  export type GetSummaryAggregateType<T extends SummaryAggregateArgs> = {
-        [P in keyof T & keyof AggregateSummary]: P extends '_count' | 'count'
+  export type GetTranscriptSegmentAggregateType<T extends TranscriptSegmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateTranscriptSegment]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateSummary[P]>
-      : GetScalarType<T[P], AggregateSummary[P]>
+        : GetScalarType<T[P], AggregateTranscriptSegment[P]>
+      : GetScalarType<T[P], AggregateTranscriptSegment[P]>
   }
 
 
 
 
-  export type SummaryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: SummaryWhereInput
-    orderBy?: SummaryOrderByWithAggregationInput | SummaryOrderByWithAggregationInput[]
-    by: SummaryScalarFieldEnum[] | SummaryScalarFieldEnum
-    having?: SummaryScalarWhereWithAggregatesInput
+  export type TranscriptSegmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TranscriptSegmentWhereInput
+    orderBy?: TranscriptSegmentOrderByWithAggregationInput | TranscriptSegmentOrderByWithAggregationInput[]
+    by: TranscriptSegmentScalarFieldEnum[] | TranscriptSegmentScalarFieldEnum
+    having?: TranscriptSegmentScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: SummaryCountAggregateInputType | true
-    _min?: SummaryMinAggregateInputType
-    _max?: SummaryMaxAggregateInputType
+    _count?: TranscriptSegmentCountAggregateInputType | true
+    _avg?: TranscriptSegmentAvgAggregateInputType
+    _sum?: TranscriptSegmentSumAggregateInputType
+    _min?: TranscriptSegmentMinAggregateInputType
+    _max?: TranscriptSegmentMaxAggregateInputType
   }
 
-  export type SummaryGroupByOutputType = {
+  export type TranscriptSegmentGroupByOutputType = {
     id: string
-    meetingId: string
-    content: string
-    createdAt: Date
-    updatedAt: Date
-    _count: SummaryCountAggregateOutputType | null
-    _min: SummaryMinAggregateOutputType | null
-    _max: SummaryMaxAggregateOutputType | null
+    transcriptId: string
+    participantId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date
+    text: string
+    confidence: number
+    _count: TranscriptSegmentCountAggregateOutputType | null
+    _avg: TranscriptSegmentAvgAggregateOutputType | null
+    _sum: TranscriptSegmentSumAggregateOutputType | null
+    _min: TranscriptSegmentMinAggregateOutputType | null
+    _max: TranscriptSegmentMaxAggregateOutputType | null
   }
 
-  type GetSummaryGroupByPayload<T extends SummaryGroupByArgs> = Prisma.PrismaPromise<
+  type GetTranscriptSegmentGroupByPayload<T extends TranscriptSegmentGroupByArgs> = Prisma.PrismaPromise<
     Array<
-      PickEnumerable<SummaryGroupByOutputType, T['by']> &
+      PickEnumerable<TranscriptSegmentGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof SummaryGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof TranscriptSegmentGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], SummaryGroupByOutputType[P]>
-            : GetScalarType<T[P], SummaryGroupByOutputType[P]>
+              : GetScalarType<T[P], TranscriptSegmentGroupByOutputType[P]>
+            : GetScalarType<T[P], TranscriptSegmentGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type SummarySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type TranscriptSegmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    meetingId?: boolean
-    content?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["summary"]>
+    transcriptId?: boolean
+    participantId?: boolean
+    startTime?: boolean
+    endTime?: boolean
+    spokenAt?: boolean
+    text?: boolean
+    confidence?: boolean
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptSegment"]>
 
-  export type SummarySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type TranscriptSegmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    meetingId?: boolean
-    content?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["summary"]>
+    transcriptId?: boolean
+    participantId?: boolean
+    startTime?: boolean
+    endTime?: boolean
+    spokenAt?: boolean
+    text?: boolean
+    confidence?: boolean
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptSegment"]>
 
-  export type SummarySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type TranscriptSegmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    meetingId?: boolean
-    content?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["summary"]>
+    transcriptId?: boolean
+    participantId?: boolean
+    startTime?: boolean
+    endTime?: boolean
+    spokenAt?: boolean
+    text?: boolean
+    confidence?: boolean
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptSegment"]>
 
-  export type SummarySelectScalar = {
+  export type TranscriptSegmentSelectScalar = {
     id?: boolean
-    meetingId?: boolean
-    content?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
+    transcriptId?: boolean
+    participantId?: boolean
+    startTime?: boolean
+    endTime?: boolean
+    spokenAt?: boolean
+    text?: boolean
+    confidence?: boolean
   }
 
-  export type SummaryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["summary"]>
-  export type SummaryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  export type TranscriptSegmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "transcriptId" | "participantId" | "startTime" | "endTime" | "spokenAt" | "text" | "confidence", ExtArgs["result"]["transcriptSegment"]>
+  export type TranscriptSegmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
-  export type SummaryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  export type TranscriptSegmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
-  export type SummaryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  export type TranscriptSegmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    transcript?: boolean | TranscriptDefaultArgs<ExtArgs>
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
 
-  export type $SummaryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Summary"
+  export type $TranscriptSegmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TranscriptSegment"
     objects: {
-      meeting: Prisma.$MeetingPayload<ExtArgs>
+      transcript: Prisma.$TranscriptPayload<ExtArgs>
+      participant: Prisma.$ParticipantPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      meetingId: string
-      content: string
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["summary"]>
+      transcriptId: string
+      participantId: string
+      startTime: number
+      endTime: number
+      spokenAt: Date
+      text: string
+      confidence: number
+    }, ExtArgs["result"]["transcriptSegment"]>
     composites: {}
   }
 
-  type SummaryGetPayload<S extends boolean | null | undefined | SummaryDefaultArgs> = $Result.GetResult<Prisma.$SummaryPayload, S>
+  type TranscriptSegmentGetPayload<S extends boolean | null | undefined | TranscriptSegmentDefaultArgs> = $Result.GetResult<Prisma.$TranscriptSegmentPayload, S>
 
-  type SummaryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<SummaryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: SummaryCountAggregateInputType | true
+  type TranscriptSegmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TranscriptSegmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TranscriptSegmentCountAggregateInputType | true
     }
 
-  export interface SummaryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Summary'], meta: { name: 'Summary' } }
+  export interface TranscriptSegmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TranscriptSegment'], meta: { name: 'TranscriptSegment' } }
     /**
-     * Find zero or one Summary that matches the filter.
-     * @param {SummaryFindUniqueArgs} args - Arguments to find a Summary
+     * Find zero or one TranscriptSegment that matches the filter.
+     * @param {TranscriptSegmentFindUniqueArgs} args - Arguments to find a TranscriptSegment
      * @example
-     * // Get one Summary
-     * const summary = await prisma.summary.findUnique({
+     * // Get one TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUnique<T extends SummaryFindUniqueArgs>(args: SelectSubset<T, SummaryFindUniqueArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findUnique<T extends TranscriptSegmentFindUniqueArgs>(args: SelectSubset<T, TranscriptSegmentFindUniqueArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find one Summary that matches the filter or throw an error with `error.code='P2025'`
+     * Find one TranscriptSegment that matches the filter or throw an error with `error.code='P2025'`
      * if no matches were found.
-     * @param {SummaryFindUniqueOrThrowArgs} args - Arguments to find a Summary
+     * @param {TranscriptSegmentFindUniqueOrThrowArgs} args - Arguments to find a TranscriptSegment
      * @example
-     * // Get one Summary
-     * const summary = await prisma.summary.findUniqueOrThrow({
+     * // Get one TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUniqueOrThrow<T extends SummaryFindUniqueOrThrowArgs>(args: SelectSubset<T, SummaryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findUniqueOrThrow<T extends TranscriptSegmentFindUniqueOrThrowArgs>(args: SelectSubset<T, TranscriptSegmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Summary that matches the filter.
+     * Find the first TranscriptSegment that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryFindFirstArgs} args - Arguments to find a Summary
+     * @param {TranscriptSegmentFindFirstArgs} args - Arguments to find a TranscriptSegment
      * @example
-     * // Get one Summary
-     * const summary = await prisma.summary.findFirst({
+     * // Get one TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirst<T extends SummaryFindFirstArgs>(args?: SelectSubset<T, SummaryFindFirstArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findFirst<T extends TranscriptSegmentFindFirstArgs>(args?: SelectSubset<T, TranscriptSegmentFindFirstArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Summary that matches the filter or
+     * Find the first TranscriptSegment that matches the filter or
      * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryFindFirstOrThrowArgs} args - Arguments to find a Summary
+     * @param {TranscriptSegmentFindFirstOrThrowArgs} args - Arguments to find a TranscriptSegment
      * @example
-     * // Get one Summary
-     * const summary = await prisma.summary.findFirstOrThrow({
+     * // Get one TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirstOrThrow<T extends SummaryFindFirstOrThrowArgs>(args?: SelectSubset<T, SummaryFindFirstOrThrowArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findFirstOrThrow<T extends TranscriptSegmentFindFirstOrThrowArgs>(args?: SelectSubset<T, TranscriptSegmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find zero or more Summaries that matches the filter.
+     * Find zero or more TranscriptSegments that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @param {TranscriptSegmentFindManyArgs} args - Arguments to filter and select certain fields only.
      * @example
-     * // Get all Summaries
-     * const summaries = await prisma.summary.findMany()
+     * // Get all TranscriptSegments
+     * const transcriptSegments = await prisma.transcriptSegment.findMany()
      * 
-     * // Get first 10 Summaries
-     * const summaries = await prisma.summary.findMany({ take: 10 })
+     * // Get first 10 TranscriptSegments
+     * const transcriptSegments = await prisma.transcriptSegment.findMany({ take: 10 })
      * 
      * // Only select the `id`
-     * const summaryWithIdOnly = await prisma.summary.findMany({ select: { id: true } })
+     * const transcriptSegmentWithIdOnly = await prisma.transcriptSegment.findMany({ select: { id: true } })
      * 
      */
-    findMany<T extends SummaryFindManyArgs>(args?: SelectSubset<T, SummaryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+    findMany<T extends TranscriptSegmentFindManyArgs>(args?: SelectSubset<T, TranscriptSegmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
 
     /**
-     * Create a Summary.
-     * @param {SummaryCreateArgs} args - Arguments to create a Summary.
+     * Create a TranscriptSegment.
+     * @param {TranscriptSegmentCreateArgs} args - Arguments to create a TranscriptSegment.
      * @example
-     * // Create one Summary
-     * const Summary = await prisma.summary.create({
+     * // Create one TranscriptSegment
+     * const TranscriptSegment = await prisma.transcriptSegment.create({
      *   data: {
-     *     // ... data to create a Summary
+     *     // ... data to create a TranscriptSegment
      *   }
      * })
      * 
      */
-    create<T extends SummaryCreateArgs>(args: SelectSubset<T, SummaryCreateArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    create<T extends TranscriptSegmentCreateArgs>(args: SelectSubset<T, TranscriptSegmentCreateArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Create many Summaries.
-     * @param {SummaryCreateManyArgs} args - Arguments to create many Summaries.
+     * Create many TranscriptSegments.
+     * @param {TranscriptSegmentCreateManyArgs} args - Arguments to create many TranscriptSegments.
      * @example
-     * // Create many Summaries
-     * const summary = await prisma.summary.createMany({
+     * // Create many TranscriptSegments
+     * const transcriptSegment = await prisma.transcriptSegment.createMany({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      *     
      */
-    createMany<T extends SummaryCreateManyArgs>(args?: SelectSubset<T, SummaryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    createMany<T extends TranscriptSegmentCreateManyArgs>(args?: SelectSubset<T, TranscriptSegmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Create many Summaries and returns the data saved in the database.
-     * @param {SummaryCreateManyAndReturnArgs} args - Arguments to create many Summaries.
+     * Create many TranscriptSegments and returns the data saved in the database.
+     * @param {TranscriptSegmentCreateManyAndReturnArgs} args - Arguments to create many TranscriptSegments.
      * @example
-     * // Create many Summaries
-     * const summary = await prisma.summary.createManyAndReturn({
+     * // Create many TranscriptSegments
+     * const transcriptSegment = await prisma.transcriptSegment.createManyAndReturn({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      * 
-     * // Create many Summaries and only return the `id`
-     * const summaryWithIdOnly = await prisma.summary.createManyAndReturn({
+     * // Create many TranscriptSegments and only return the `id`
+     * const transcriptSegmentWithIdOnly = await prisma.transcriptSegment.createManyAndReturn({
      *   select: { id: true },
      *   data: [
      *     // ... provide data here
@@ -7433,28 +9153,28 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    createManyAndReturn<T extends SummaryCreateManyAndReturnArgs>(args?: SelectSubset<T, SummaryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+    createManyAndReturn<T extends TranscriptSegmentCreateManyAndReturnArgs>(args?: SelectSubset<T, TranscriptSegmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Delete a Summary.
-     * @param {SummaryDeleteArgs} args - Arguments to delete one Summary.
+     * Delete a TranscriptSegment.
+     * @param {TranscriptSegmentDeleteArgs} args - Arguments to delete one TranscriptSegment.
      * @example
-     * // Delete one Summary
-     * const Summary = await prisma.summary.delete({
+     * // Delete one TranscriptSegment
+     * const TranscriptSegment = await prisma.transcriptSegment.delete({
      *   where: {
-     *     // ... filter to delete one Summary
+     *     // ... filter to delete one TranscriptSegment
      *   }
      * })
      * 
      */
-    delete<T extends SummaryDeleteArgs>(args: SelectSubset<T, SummaryDeleteArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    delete<T extends TranscriptSegmentDeleteArgs>(args: SelectSubset<T, TranscriptSegmentDeleteArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Update one Summary.
-     * @param {SummaryUpdateArgs} args - Arguments to update one Summary.
+     * Update one TranscriptSegment.
+     * @param {TranscriptSegmentUpdateArgs} args - Arguments to update one TranscriptSegment.
      * @example
-     * // Update one Summary
-     * const summary = await prisma.summary.update({
+     * // Update one TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -7464,30 +9184,30 @@ export namespace Prisma {
      * })
      * 
      */
-    update<T extends SummaryUpdateArgs>(args: SelectSubset<T, SummaryUpdateArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    update<T extends TranscriptSegmentUpdateArgs>(args: SelectSubset<T, TranscriptSegmentUpdateArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Delete zero or more Summaries.
-     * @param {SummaryDeleteManyArgs} args - Arguments to filter Summaries to delete.
+     * Delete zero or more TranscriptSegments.
+     * @param {TranscriptSegmentDeleteManyArgs} args - Arguments to filter TranscriptSegments to delete.
      * @example
-     * // Delete a few Summaries
-     * const { count } = await prisma.summary.deleteMany({
+     * // Delete a few TranscriptSegments
+     * const { count } = await prisma.transcriptSegment.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
      */
-    deleteMany<T extends SummaryDeleteManyArgs>(args?: SelectSubset<T, SummaryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    deleteMany<T extends TranscriptSegmentDeleteManyArgs>(args?: SelectSubset<T, TranscriptSegmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Summaries.
+     * Update zero or more TranscriptSegments.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {TranscriptSegmentUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
-     * // Update many Summaries
-     * const summary = await prisma.summary.updateMany({
+     * // Update many TranscriptSegments
+     * const transcriptSegment = await prisma.transcriptSegment.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -7497,14 +9217,14 @@ export namespace Prisma {
      * })
      * 
      */
-    updateMany<T extends SummaryUpdateManyArgs>(args: SelectSubset<T, SummaryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    updateMany<T extends TranscriptSegmentUpdateManyArgs>(args: SelectSubset<T, TranscriptSegmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Summaries and returns the data updated in the database.
-     * @param {SummaryUpdateManyAndReturnArgs} args - Arguments to update many Summaries.
+     * Update zero or more TranscriptSegments and returns the data updated in the database.
+     * @param {TranscriptSegmentUpdateManyAndReturnArgs} args - Arguments to update many TranscriptSegments.
      * @example
-     * // Update many Summaries
-     * const summary = await prisma.summary.updateManyAndReturn({
+     * // Update many TranscriptSegments
+     * const transcriptSegment = await prisma.transcriptSegment.updateManyAndReturn({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -7513,8 +9233,8 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Summaries and only return the `id`
-     * const summaryWithIdOnly = await prisma.summary.updateManyAndReturn({
+     * // Update zero or more TranscriptSegments and only return the `id`
+     * const transcriptSegmentWithIdOnly = await prisma.transcriptSegment.updateManyAndReturn({
      *   select: { id: true },
      *   where: {
      *     // ... provide filter here
@@ -7527,56 +9247,56 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    updateManyAndReturn<T extends SummaryUpdateManyAndReturnArgs>(args: SelectSubset<T, SummaryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+    updateManyAndReturn<T extends TranscriptSegmentUpdateManyAndReturnArgs>(args: SelectSubset<T, TranscriptSegmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Create or update one Summary.
-     * @param {SummaryUpsertArgs} args - Arguments to update or create a Summary.
+     * Create or update one TranscriptSegment.
+     * @param {TranscriptSegmentUpsertArgs} args - Arguments to update or create a TranscriptSegment.
      * @example
-     * // Update or create a Summary
-     * const summary = await prisma.summary.upsert({
+     * // Update or create a TranscriptSegment
+     * const transcriptSegment = await prisma.transcriptSegment.upsert({
      *   create: {
-     *     // ... data to create a Summary
+     *     // ... data to create a TranscriptSegment
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Summary we want to update
+     *     // ... the filter for the TranscriptSegment we want to update
      *   }
      * })
      */
-    upsert<T extends SummaryUpsertArgs>(args: SelectSubset<T, SummaryUpsertArgs<ExtArgs>>): Prisma__SummaryClient<$Result.GetResult<Prisma.$SummaryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    upsert<T extends TranscriptSegmentUpsertArgs>(args: SelectSubset<T, TranscriptSegmentUpsertArgs<ExtArgs>>): Prisma__TranscriptSegmentClient<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
 
     /**
-     * Count the number of Summaries.
+     * Count the number of TranscriptSegments.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryCountArgs} args - Arguments to filter Summaries to count.
+     * @param {TranscriptSegmentCountArgs} args - Arguments to filter TranscriptSegments to count.
      * @example
-     * // Count the number of Summaries
-     * const count = await prisma.summary.count({
+     * // Count the number of TranscriptSegments
+     * const count = await prisma.transcriptSegment.count({
      *   where: {
-     *     // ... the filter for the Summaries we want to count
+     *     // ... the filter for the TranscriptSegments we want to count
      *   }
      * })
     **/
-    count<T extends SummaryCountArgs>(
-      args?: Subset<T, SummaryCountArgs>,
+    count<T extends TranscriptSegmentCountArgs>(
+      args?: Subset<T, TranscriptSegmentCountArgs>,
     ): Prisma.PrismaPromise<
       T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], SummaryCountAggregateOutputType>
+          : GetScalarType<T['select'], TranscriptSegmentCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Summary.
+     * Allows you to perform aggregations operations on a TranscriptSegment.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {TranscriptSegmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -7596,13 +9316,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends SummaryAggregateArgs>(args: Subset<T, SummaryAggregateArgs>): Prisma.PrismaPromise<GetSummaryAggregateType<T>>
+    aggregate<T extends TranscriptSegmentAggregateArgs>(args: Subset<T, TranscriptSegmentAggregateArgs>): Prisma.PrismaPromise<GetTranscriptSegmentAggregateType<T>>
 
     /**
-     * Group by Summary.
+     * Group by TranscriptSegment.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {SummaryGroupByArgs} args - Group by arguments.
+     * @param {TranscriptSegmentGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -7617,14 +9337,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends SummaryGroupByArgs,
+      T extends TranscriptSegmentGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: SummaryGroupByArgs['orderBy'] }
-        : { orderBy?: SummaryGroupByArgs['orderBy'] },
+        ? { orderBy: TranscriptSegmentGroupByArgs['orderBy'] }
+        : { orderBy?: TranscriptSegmentGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends MaybeTupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -7673,20 +9393,1111 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, SummaryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSummaryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, TranscriptSegmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTranscriptSegmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
   /**
-   * Fields of the Summary model
+   * Fields of the TranscriptSegment model
    */
-  readonly fields: SummaryFieldRefs;
+  readonly fields: TranscriptSegmentFieldRefs;
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for Summary.
+   * The delegate class that acts as a "Promise-like" for TranscriptSegment.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export interface Prisma__SummaryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+  export interface Prisma__TranscriptSegmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    transcript<T extends TranscriptDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TranscriptDefaultArgs<ExtArgs>>): Prisma__TranscriptClient<$Result.GetResult<Prisma.$TranscriptPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    participant<T extends ParticipantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ParticipantDefaultArgs<ExtArgs>>): Prisma__ParticipantClient<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TranscriptSegment model
+   */
+  interface TranscriptSegmentFieldRefs {
+    readonly id: FieldRef<"TranscriptSegment", 'String'>
+    readonly transcriptId: FieldRef<"TranscriptSegment", 'String'>
+    readonly participantId: FieldRef<"TranscriptSegment", 'String'>
+    readonly startTime: FieldRef<"TranscriptSegment", 'Float'>
+    readonly endTime: FieldRef<"TranscriptSegment", 'Float'>
+    readonly spokenAt: FieldRef<"TranscriptSegment", 'DateTime'>
+    readonly text: FieldRef<"TranscriptSegment", 'String'>
+    readonly confidence: FieldRef<"TranscriptSegment", 'Float'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TranscriptSegment findUnique
+   */
+  export type TranscriptSegmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptSegment to fetch.
+     */
+    where: TranscriptSegmentWhereUniqueInput
+  }
+
+  /**
+   * TranscriptSegment findUniqueOrThrow
+   */
+  export type TranscriptSegmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptSegment to fetch.
+     */
+    where: TranscriptSegmentWhereUniqueInput
+  }
+
+  /**
+   * TranscriptSegment findFirst
+   */
+  export type TranscriptSegmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptSegment to fetch.
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptSegments to fetch.
+     */
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TranscriptSegments.
+     */
+    cursor?: TranscriptSegmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptSegments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptSegments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TranscriptSegments.
+     */
+    distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptSegment findFirstOrThrow
+   */
+  export type TranscriptSegmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptSegment to fetch.
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptSegments to fetch.
+     */
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TranscriptSegments.
+     */
+    cursor?: TranscriptSegmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptSegments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptSegments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TranscriptSegments.
+     */
+    distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptSegment findMany
+   */
+  export type TranscriptSegmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptSegments to fetch.
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptSegments to fetch.
+     */
+    orderBy?: TranscriptSegmentOrderByWithRelationInput | TranscriptSegmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TranscriptSegments.
+     */
+    cursor?: TranscriptSegmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptSegments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptSegments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TranscriptSegments.
+     */
+    distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptSegment create
+   */
+  export type TranscriptSegmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TranscriptSegment.
+     */
+    data: XOR<TranscriptSegmentCreateInput, TranscriptSegmentUncheckedCreateInput>
+  }
+
+  /**
+   * TranscriptSegment createMany
+   */
+  export type TranscriptSegmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TranscriptSegments.
+     */
+    data: TranscriptSegmentCreateManyInput | TranscriptSegmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TranscriptSegment createManyAndReturn
+   */
+  export type TranscriptSegmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many TranscriptSegments.
+     */
+    data: TranscriptSegmentCreateManyInput | TranscriptSegmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TranscriptSegment update
+   */
+  export type TranscriptSegmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TranscriptSegment.
+     */
+    data: XOR<TranscriptSegmentUpdateInput, TranscriptSegmentUncheckedUpdateInput>
+    /**
+     * Choose, which TranscriptSegment to update.
+     */
+    where: TranscriptSegmentWhereUniqueInput
+  }
+
+  /**
+   * TranscriptSegment updateMany
+   */
+  export type TranscriptSegmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TranscriptSegments.
+     */
+    data: XOR<TranscriptSegmentUpdateManyMutationInput, TranscriptSegmentUncheckedUpdateManyInput>
+    /**
+     * Filter which TranscriptSegments to update
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * Limit how many TranscriptSegments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TranscriptSegment updateManyAndReturn
+   */
+  export type TranscriptSegmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * The data used to update TranscriptSegments.
+     */
+    data: XOR<TranscriptSegmentUpdateManyMutationInput, TranscriptSegmentUncheckedUpdateManyInput>
+    /**
+     * Filter which TranscriptSegments to update
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * Limit how many TranscriptSegments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TranscriptSegment upsert
+   */
+  export type TranscriptSegmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TranscriptSegment to update in case it exists.
+     */
+    where: TranscriptSegmentWhereUniqueInput
+    /**
+     * In case the TranscriptSegment found by the `where` argument doesn't exist, create a new TranscriptSegment with this data.
+     */
+    create: XOR<TranscriptSegmentCreateInput, TranscriptSegmentUncheckedCreateInput>
+    /**
+     * In case the TranscriptSegment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TranscriptSegmentUpdateInput, TranscriptSegmentUncheckedUpdateInput>
+  }
+
+  /**
+   * TranscriptSegment delete
+   */
+  export type TranscriptSegmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+    /**
+     * Filter which TranscriptSegment to delete.
+     */
+    where: TranscriptSegmentWhereUniqueInput
+  }
+
+  /**
+   * TranscriptSegment deleteMany
+   */
+  export type TranscriptSegmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TranscriptSegments to delete
+     */
+    where?: TranscriptSegmentWhereInput
+    /**
+     * Limit how many TranscriptSegments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TranscriptSegment without action
+   */
+  export type TranscriptSegmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptSegment
+     */
+    select?: TranscriptSegmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptSegment
+     */
+    omit?: TranscriptSegmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptSegmentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MeetingSummary
+   */
+
+  export type AggregateMeetingSummary = {
+    _count: MeetingSummaryCountAggregateOutputType | null
+    _min: MeetingSummaryMinAggregateOutputType | null
+    _max: MeetingSummaryMaxAggregateOutputType | null
+  }
+
+  export type MeetingSummaryMinAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    aiSummary: string | null
+    editedSummary: string | null
+    llmModel: string | null
+    generatedAt: Date | null
+    editedAt: Date | null
+  }
+
+  export type MeetingSummaryMaxAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    aiSummary: string | null
+    editedSummary: string | null
+    llmModel: string | null
+    generatedAt: Date | null
+    editedAt: Date | null
+  }
+
+  export type MeetingSummaryCountAggregateOutputType = {
+    id: number
+    meetingId: number
+    aiSummary: number
+    editedSummary: number
+    llmModel: number
+    generatedAt: number
+    editedAt: number
+    _all: number
+  }
+
+
+  export type MeetingSummaryMinAggregateInputType = {
+    id?: true
+    meetingId?: true
+    aiSummary?: true
+    editedSummary?: true
+    llmModel?: true
+    generatedAt?: true
+    editedAt?: true
+  }
+
+  export type MeetingSummaryMaxAggregateInputType = {
+    id?: true
+    meetingId?: true
+    aiSummary?: true
+    editedSummary?: true
+    llmModel?: true
+    generatedAt?: true
+    editedAt?: true
+  }
+
+  export type MeetingSummaryCountAggregateInputType = {
+    id?: true
+    meetingId?: true
+    aiSummary?: true
+    editedSummary?: true
+    llmModel?: true
+    generatedAt?: true
+    editedAt?: true
+    _all?: true
+  }
+
+  export type MeetingSummaryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MeetingSummary to aggregate.
+     */
+    where?: MeetingSummaryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MeetingSummaries to fetch.
+     */
+    orderBy?: MeetingSummaryOrderByWithRelationInput | MeetingSummaryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MeetingSummaryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MeetingSummaries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MeetingSummaries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MeetingSummaries
+    **/
+    _count?: true | MeetingSummaryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MeetingSummaryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MeetingSummaryMaxAggregateInputType
+  }
+
+  export type GetMeetingSummaryAggregateType<T extends MeetingSummaryAggregateArgs> = {
+        [P in keyof T & keyof AggregateMeetingSummary]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMeetingSummary[P]>
+      : GetScalarType<T[P], AggregateMeetingSummary[P]>
+  }
+
+
+
+
+  export type MeetingSummaryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MeetingSummaryWhereInput
+    orderBy?: MeetingSummaryOrderByWithAggregationInput | MeetingSummaryOrderByWithAggregationInput[]
+    by: MeetingSummaryScalarFieldEnum[] | MeetingSummaryScalarFieldEnum
+    having?: MeetingSummaryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MeetingSummaryCountAggregateInputType | true
+    _min?: MeetingSummaryMinAggregateInputType
+    _max?: MeetingSummaryMaxAggregateInputType
+  }
+
+  export type MeetingSummaryGroupByOutputType = {
+    id: string
+    meetingId: string
+    aiSummary: string
+    editedSummary: string | null
+    llmModel: string
+    generatedAt: Date
+    editedAt: Date | null
+    _count: MeetingSummaryCountAggregateOutputType | null
+    _min: MeetingSummaryMinAggregateOutputType | null
+    _max: MeetingSummaryMaxAggregateOutputType | null
+  }
+
+  type GetMeetingSummaryGroupByPayload<T extends MeetingSummaryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MeetingSummaryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MeetingSummaryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MeetingSummaryGroupByOutputType[P]>
+            : GetScalarType<T[P], MeetingSummaryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MeetingSummarySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    aiSummary?: boolean
+    editedSummary?: boolean
+    llmModel?: boolean
+    generatedAt?: boolean
+    editedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["meetingSummary"]>
+
+  export type MeetingSummarySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    aiSummary?: boolean
+    editedSummary?: boolean
+    llmModel?: boolean
+    generatedAt?: boolean
+    editedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["meetingSummary"]>
+
+  export type MeetingSummarySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    aiSummary?: boolean
+    editedSummary?: boolean
+    llmModel?: boolean
+    generatedAt?: boolean
+    editedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["meetingSummary"]>
+
+  export type MeetingSummarySelectScalar = {
+    id?: boolean
+    meetingId?: boolean
+    aiSummary?: boolean
+    editedSummary?: boolean
+    llmModel?: boolean
+    generatedAt?: boolean
+    editedAt?: boolean
+  }
+
+  export type MeetingSummaryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "aiSummary" | "editedSummary" | "llmModel" | "generatedAt" | "editedAt", ExtArgs["result"]["meetingSummary"]>
+  export type MeetingSummaryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type MeetingSummaryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type MeetingSummaryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+
+  export type $MeetingSummaryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MeetingSummary"
+    objects: {
+      meeting: Prisma.$MeetingPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      meetingId: string
+      aiSummary: string
+      editedSummary: string | null
+      llmModel: string
+      generatedAt: Date
+      editedAt: Date | null
+    }, ExtArgs["result"]["meetingSummary"]>
+    composites: {}
+  }
+
+  type MeetingSummaryGetPayload<S extends boolean | null | undefined | MeetingSummaryDefaultArgs> = $Result.GetResult<Prisma.$MeetingSummaryPayload, S>
+
+  type MeetingSummaryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MeetingSummaryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MeetingSummaryCountAggregateInputType | true
+    }
+
+  export interface MeetingSummaryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MeetingSummary'], meta: { name: 'MeetingSummary' } }
+    /**
+     * Find zero or one MeetingSummary that matches the filter.
+     * @param {MeetingSummaryFindUniqueArgs} args - Arguments to find a MeetingSummary
+     * @example
+     * // Get one MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MeetingSummaryFindUniqueArgs>(args: SelectSubset<T, MeetingSummaryFindUniqueArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MeetingSummary that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MeetingSummaryFindUniqueOrThrowArgs} args - Arguments to find a MeetingSummary
+     * @example
+     * // Get one MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MeetingSummaryFindUniqueOrThrowArgs>(args: SelectSubset<T, MeetingSummaryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MeetingSummary that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryFindFirstArgs} args - Arguments to find a MeetingSummary
+     * @example
+     * // Get one MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MeetingSummaryFindFirstArgs>(args?: SelectSubset<T, MeetingSummaryFindFirstArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MeetingSummary that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryFindFirstOrThrowArgs} args - Arguments to find a MeetingSummary
+     * @example
+     * // Get one MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MeetingSummaryFindFirstOrThrowArgs>(args?: SelectSubset<T, MeetingSummaryFindFirstOrThrowArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MeetingSummaries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MeetingSummaries
+     * const meetingSummaries = await prisma.meetingSummary.findMany()
+     * 
+     * // Get first 10 MeetingSummaries
+     * const meetingSummaries = await prisma.meetingSummary.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const meetingSummaryWithIdOnly = await prisma.meetingSummary.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MeetingSummaryFindManyArgs>(args?: SelectSubset<T, MeetingSummaryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MeetingSummary.
+     * @param {MeetingSummaryCreateArgs} args - Arguments to create a MeetingSummary.
+     * @example
+     * // Create one MeetingSummary
+     * const MeetingSummary = await prisma.meetingSummary.create({
+     *   data: {
+     *     // ... data to create a MeetingSummary
+     *   }
+     * })
+     * 
+     */
+    create<T extends MeetingSummaryCreateArgs>(args: SelectSubset<T, MeetingSummaryCreateArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MeetingSummaries.
+     * @param {MeetingSummaryCreateManyArgs} args - Arguments to create many MeetingSummaries.
+     * @example
+     * // Create many MeetingSummaries
+     * const meetingSummary = await prisma.meetingSummary.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MeetingSummaryCreateManyArgs>(args?: SelectSubset<T, MeetingSummaryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MeetingSummaries and returns the data saved in the database.
+     * @param {MeetingSummaryCreateManyAndReturnArgs} args - Arguments to create many MeetingSummaries.
+     * @example
+     * // Create many MeetingSummaries
+     * const meetingSummary = await prisma.meetingSummary.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MeetingSummaries and only return the `id`
+     * const meetingSummaryWithIdOnly = await prisma.meetingSummary.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MeetingSummaryCreateManyAndReturnArgs>(args?: SelectSubset<T, MeetingSummaryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MeetingSummary.
+     * @param {MeetingSummaryDeleteArgs} args - Arguments to delete one MeetingSummary.
+     * @example
+     * // Delete one MeetingSummary
+     * const MeetingSummary = await prisma.meetingSummary.delete({
+     *   where: {
+     *     // ... filter to delete one MeetingSummary
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MeetingSummaryDeleteArgs>(args: SelectSubset<T, MeetingSummaryDeleteArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MeetingSummary.
+     * @param {MeetingSummaryUpdateArgs} args - Arguments to update one MeetingSummary.
+     * @example
+     * // Update one MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MeetingSummaryUpdateArgs>(args: SelectSubset<T, MeetingSummaryUpdateArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MeetingSummaries.
+     * @param {MeetingSummaryDeleteManyArgs} args - Arguments to filter MeetingSummaries to delete.
+     * @example
+     * // Delete a few MeetingSummaries
+     * const { count } = await prisma.meetingSummary.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MeetingSummaryDeleteManyArgs>(args?: SelectSubset<T, MeetingSummaryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MeetingSummaries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MeetingSummaries
+     * const meetingSummary = await prisma.meetingSummary.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MeetingSummaryUpdateManyArgs>(args: SelectSubset<T, MeetingSummaryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MeetingSummaries and returns the data updated in the database.
+     * @param {MeetingSummaryUpdateManyAndReturnArgs} args - Arguments to update many MeetingSummaries.
+     * @example
+     * // Update many MeetingSummaries
+     * const meetingSummary = await prisma.meetingSummary.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MeetingSummaries and only return the `id`
+     * const meetingSummaryWithIdOnly = await prisma.meetingSummary.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MeetingSummaryUpdateManyAndReturnArgs>(args: SelectSubset<T, MeetingSummaryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MeetingSummary.
+     * @param {MeetingSummaryUpsertArgs} args - Arguments to update or create a MeetingSummary.
+     * @example
+     * // Update or create a MeetingSummary
+     * const meetingSummary = await prisma.meetingSummary.upsert({
+     *   create: {
+     *     // ... data to create a MeetingSummary
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MeetingSummary we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MeetingSummaryUpsertArgs>(args: SelectSubset<T, MeetingSummaryUpsertArgs<ExtArgs>>): Prisma__MeetingSummaryClient<$Result.GetResult<Prisma.$MeetingSummaryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MeetingSummaries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryCountArgs} args - Arguments to filter MeetingSummaries to count.
+     * @example
+     * // Count the number of MeetingSummaries
+     * const count = await prisma.meetingSummary.count({
+     *   where: {
+     *     // ... the filter for the MeetingSummaries we want to count
+     *   }
+     * })
+    **/
+    count<T extends MeetingSummaryCountArgs>(
+      args?: Subset<T, MeetingSummaryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MeetingSummaryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MeetingSummary.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MeetingSummaryAggregateArgs>(args: Subset<T, MeetingSummaryAggregateArgs>): Prisma.PrismaPromise<GetMeetingSummaryAggregateType<T>>
+
+    /**
+     * Group by MeetingSummary.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MeetingSummaryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MeetingSummaryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MeetingSummaryGroupByArgs['orderBy'] }
+        : { orderBy?: MeetingSummaryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MeetingSummaryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMeetingSummaryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MeetingSummary model
+   */
+  readonly fields: MeetingSummaryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MeetingSummary.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MeetingSummaryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
@@ -7715,430 +10526,2635 @@ export namespace Prisma {
 
 
   /**
-   * Fields of the Summary model
+   * Fields of the MeetingSummary model
    */
-  interface SummaryFieldRefs {
-    readonly id: FieldRef<"Summary", 'String'>
-    readonly meetingId: FieldRef<"Summary", 'String'>
-    readonly content: FieldRef<"Summary", 'String'>
-    readonly createdAt: FieldRef<"Summary", 'DateTime'>
-    readonly updatedAt: FieldRef<"Summary", 'DateTime'>
+  interface MeetingSummaryFieldRefs {
+    readonly id: FieldRef<"MeetingSummary", 'String'>
+    readonly meetingId: FieldRef<"MeetingSummary", 'String'>
+    readonly aiSummary: FieldRef<"MeetingSummary", 'String'>
+    readonly editedSummary: FieldRef<"MeetingSummary", 'String'>
+    readonly llmModel: FieldRef<"MeetingSummary", 'String'>
+    readonly generatedAt: FieldRef<"MeetingSummary", 'DateTime'>
+    readonly editedAt: FieldRef<"MeetingSummary", 'DateTime'>
   }
     
 
   // Custom InputTypes
   /**
-   * Summary findUnique
+   * MeetingSummary findUnique
    */
-  export type SummaryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter, which Summary to fetch.
+     * Filter, which MeetingSummary to fetch.
      */
-    where: SummaryWhereUniqueInput
+    where: MeetingSummaryWhereUniqueInput
   }
 
   /**
-   * Summary findUniqueOrThrow
+   * MeetingSummary findUniqueOrThrow
    */
-  export type SummaryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter, which Summary to fetch.
+     * Filter, which MeetingSummary to fetch.
      */
-    where: SummaryWhereUniqueInput
+    where: MeetingSummaryWhereUniqueInput
   }
 
   /**
-   * Summary findFirst
+   * MeetingSummary findFirst
    */
-  export type SummaryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter, which Summary to fetch.
+     * Filter, which MeetingSummary to fetch.
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Summaries to fetch.
+     * Determine the order of MeetingSummaries to fetch.
      */
-    orderBy?: SummaryOrderByWithRelationInput | SummaryOrderByWithRelationInput[]
+    orderBy?: MeetingSummaryOrderByWithRelationInput | MeetingSummaryOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Summaries.
+     * Sets the position for searching for MeetingSummaries.
      */
-    cursor?: SummaryWhereUniqueInput
+    cursor?: MeetingSummaryWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Summaries from the position of the cursor.
+     * Take `±n` MeetingSummaries from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Summaries.
+     * Skip the first `n` MeetingSummaries.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Summaries.
+     * Filter by unique combinations of MeetingSummaries.
      */
-    distinct?: SummaryScalarFieldEnum | SummaryScalarFieldEnum[]
+    distinct?: MeetingSummaryScalarFieldEnum | MeetingSummaryScalarFieldEnum[]
   }
 
   /**
-   * Summary findFirstOrThrow
+   * MeetingSummary findFirstOrThrow
    */
-  export type SummaryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter, which Summary to fetch.
+     * Filter, which MeetingSummary to fetch.
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Summaries to fetch.
+     * Determine the order of MeetingSummaries to fetch.
      */
-    orderBy?: SummaryOrderByWithRelationInput | SummaryOrderByWithRelationInput[]
+    orderBy?: MeetingSummaryOrderByWithRelationInput | MeetingSummaryOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Summaries.
+     * Sets the position for searching for MeetingSummaries.
      */
-    cursor?: SummaryWhereUniqueInput
+    cursor?: MeetingSummaryWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Summaries from the position of the cursor.
+     * Take `±n` MeetingSummaries from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Summaries.
+     * Skip the first `n` MeetingSummaries.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Summaries.
+     * Filter by unique combinations of MeetingSummaries.
      */
-    distinct?: SummaryScalarFieldEnum | SummaryScalarFieldEnum[]
+    distinct?: MeetingSummaryScalarFieldEnum | MeetingSummaryScalarFieldEnum[]
   }
 
   /**
-   * Summary findMany
+   * MeetingSummary findMany
    */
-  export type SummaryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter, which Summaries to fetch.
+     * Filter, which MeetingSummaries to fetch.
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Summaries to fetch.
+     * Determine the order of MeetingSummaries to fetch.
      */
-    orderBy?: SummaryOrderByWithRelationInput | SummaryOrderByWithRelationInput[]
+    orderBy?: MeetingSummaryOrderByWithRelationInput | MeetingSummaryOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for listing Summaries.
+     * Sets the position for listing MeetingSummaries.
      */
-    cursor?: SummaryWhereUniqueInput
+    cursor?: MeetingSummaryWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Summaries from the position of the cursor.
+     * Take `±n` MeetingSummaries from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Summaries.
+     * Skip the first `n` MeetingSummaries.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Summaries.
+     * Filter by unique combinations of MeetingSummaries.
      */
-    distinct?: SummaryScalarFieldEnum | SummaryScalarFieldEnum[]
+    distinct?: MeetingSummaryScalarFieldEnum | MeetingSummaryScalarFieldEnum[]
   }
 
   /**
-   * Summary create
+   * MeetingSummary create
    */
-  export type SummaryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * The data needed to create a Summary.
+     * The data needed to create a MeetingSummary.
      */
-    data: XOR<SummaryCreateInput, SummaryUncheckedCreateInput>
+    data: XOR<MeetingSummaryCreateInput, MeetingSummaryUncheckedCreateInput>
   }
 
   /**
-   * Summary createMany
+   * MeetingSummary createMany
    */
-  export type SummaryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to create many Summaries.
+     * The data used to create many MeetingSummaries.
      */
-    data: SummaryCreateManyInput | SummaryCreateManyInput[]
+    data: MeetingSummaryCreateManyInput | MeetingSummaryCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Summary createManyAndReturn
+   * MeetingSummary createManyAndReturn
    */
-  export type SummaryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelectCreateManyAndReturn<ExtArgs> | null
+    select?: MeetingSummarySelectCreateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
-     * The data used to create many Summaries.
+     * The data used to create many MeetingSummaries.
      */
-    data: SummaryCreateManyInput | SummaryCreateManyInput[]
+    data: MeetingSummaryCreateManyInput | MeetingSummaryCreateManyInput[]
     skipDuplicates?: boolean
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryIncludeCreateManyAndReturn<ExtArgs> | null
+    include?: MeetingSummaryIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
-   * Summary update
+   * MeetingSummary update
    */
-  export type SummaryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * The data needed to update a Summary.
+     * The data needed to update a MeetingSummary.
      */
-    data: XOR<SummaryUpdateInput, SummaryUncheckedUpdateInput>
+    data: XOR<MeetingSummaryUpdateInput, MeetingSummaryUncheckedUpdateInput>
     /**
-     * Choose, which Summary to update.
+     * Choose, which MeetingSummary to update.
      */
-    where: SummaryWhereUniqueInput
+    where: MeetingSummaryWhereUniqueInput
   }
 
   /**
-   * Summary updateMany
+   * MeetingSummary updateMany
    */
-  export type SummaryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to update Summaries.
+     * The data used to update MeetingSummaries.
      */
-    data: XOR<SummaryUpdateManyMutationInput, SummaryUncheckedUpdateManyInput>
+    data: XOR<MeetingSummaryUpdateManyMutationInput, MeetingSummaryUncheckedUpdateManyInput>
     /**
-     * Filter which Summaries to update
+     * Filter which MeetingSummaries to update
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
-     * Limit how many Summaries to update.
+     * Limit how many MeetingSummaries to update.
      */
     limit?: number
   }
 
   /**
-   * Summary updateManyAndReturn
+   * MeetingSummary updateManyAndReturn
    */
-  export type SummaryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelectUpdateManyAndReturn<ExtArgs> | null
+    select?: MeetingSummarySelectUpdateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
-     * The data used to update Summaries.
+     * The data used to update MeetingSummaries.
      */
-    data: XOR<SummaryUpdateManyMutationInput, SummaryUncheckedUpdateManyInput>
+    data: XOR<MeetingSummaryUpdateManyMutationInput, MeetingSummaryUncheckedUpdateManyInput>
     /**
-     * Filter which Summaries to update
+     * Filter which MeetingSummaries to update
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
-     * Limit how many Summaries to update.
+     * Limit how many MeetingSummaries to update.
      */
     limit?: number
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryIncludeUpdateManyAndReturn<ExtArgs> | null
+    include?: MeetingSummaryIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
-   * Summary upsert
+   * MeetingSummary upsert
    */
-  export type SummaryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * The filter to search for the Summary to update in case it exists.
+     * The filter to search for the MeetingSummary to update in case it exists.
      */
-    where: SummaryWhereUniqueInput
+    where: MeetingSummaryWhereUniqueInput
     /**
-     * In case the Summary found by the `where` argument doesn't exist, create a new Summary with this data.
+     * In case the MeetingSummary found by the `where` argument doesn't exist, create a new MeetingSummary with this data.
      */
-    create: XOR<SummaryCreateInput, SummaryUncheckedCreateInput>
+    create: XOR<MeetingSummaryCreateInput, MeetingSummaryUncheckedCreateInput>
     /**
-     * In case the Summary was found with the provided `where` argument, update it with this data.
+     * In case the MeetingSummary was found with the provided `where` argument, update it with this data.
      */
-    update: XOR<SummaryUpdateInput, SummaryUncheckedUpdateInput>
+    update: XOR<MeetingSummaryUpdateInput, MeetingSummaryUncheckedUpdateInput>
   }
 
   /**
-   * Summary delete
+   * MeetingSummary delete
    */
-  export type SummaryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
     /**
-     * Filter which Summary to delete.
+     * Filter which MeetingSummary to delete.
      */
-    where: SummaryWhereUniqueInput
+    where: MeetingSummaryWhereUniqueInput
   }
 
   /**
-   * Summary deleteMany
+   * MeetingSummary deleteMany
    */
-  export type SummaryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Summaries to delete
+     * Filter which MeetingSummaries to delete
      */
-    where?: SummaryWhereInput
+    where?: MeetingSummaryWhereInput
     /**
-     * Limit how many Summaries to delete.
+     * Limit how many MeetingSummaries to delete.
      */
     limit?: number
   }
 
   /**
-   * Summary without action
+   * MeetingSummary without action
    */
-  export type SummaryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type MeetingSummaryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Summary
+     * Select specific fields to fetch from the MeetingSummary
      */
-    select?: SummarySelect<ExtArgs> | null
+    select?: MeetingSummarySelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Summary
+     * Omit specific fields from the MeetingSummary
      */
-    omit?: SummaryOmit<ExtArgs> | null
+    omit?: MeetingSummaryOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SummaryInclude<ExtArgs> | null
+    include?: MeetingSummaryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Recording
+   */
+
+  export type AggregateRecording = {
+    _count: RecordingCountAggregateOutputType | null
+    _avg: RecordingAvgAggregateOutputType | null
+    _sum: RecordingSumAggregateOutputType | null
+    _min: RecordingMinAggregateOutputType | null
+    _max: RecordingMaxAggregateOutputType | null
+  }
+
+  export type RecordingAvgAggregateOutputType = {
+    durationSeconds: number | null
+    fileSize: number | null
+  }
+
+  export type RecordingSumAggregateOutputType = {
+    durationSeconds: number | null
+    fileSize: bigint | null
+  }
+
+  export type RecordingMinAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    fileName: string | null
+    objectKey: string | null
+    durationSeconds: number | null
+    fileSize: bigint | null
+    mimeType: string | null
+    createdAt: Date | null
+  }
+
+  export type RecordingMaxAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    fileName: string | null
+    objectKey: string | null
+    durationSeconds: number | null
+    fileSize: bigint | null
+    mimeType: string | null
+    createdAt: Date | null
+  }
+
+  export type RecordingCountAggregateOutputType = {
+    id: number
+    meetingId: number
+    fileName: number
+    objectKey: number
+    durationSeconds: number
+    fileSize: number
+    mimeType: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RecordingAvgAggregateInputType = {
+    durationSeconds?: true
+    fileSize?: true
+  }
+
+  export type RecordingSumAggregateInputType = {
+    durationSeconds?: true
+    fileSize?: true
+  }
+
+  export type RecordingMinAggregateInputType = {
+    id?: true
+    meetingId?: true
+    fileName?: true
+    objectKey?: true
+    durationSeconds?: true
+    fileSize?: true
+    mimeType?: true
+    createdAt?: true
+  }
+
+  export type RecordingMaxAggregateInputType = {
+    id?: true
+    meetingId?: true
+    fileName?: true
+    objectKey?: true
+    durationSeconds?: true
+    fileSize?: true
+    mimeType?: true
+    createdAt?: true
+  }
+
+  export type RecordingCountAggregateInputType = {
+    id?: true
+    meetingId?: true
+    fileName?: true
+    objectKey?: true
+    durationSeconds?: true
+    fileSize?: true
+    mimeType?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RecordingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Recording to aggregate.
+     */
+    where?: RecordingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recordings to fetch.
+     */
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecordingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recordings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recordings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Recordings
+    **/
+    _count?: true | RecordingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RecordingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RecordingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecordingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecordingMaxAggregateInputType
+  }
+
+  export type GetRecordingAggregateType<T extends RecordingAggregateArgs> = {
+        [P in keyof T & keyof AggregateRecording]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRecording[P]>
+      : GetScalarType<T[P], AggregateRecording[P]>
+  }
+
+
+
+
+  export type RecordingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecordingWhereInput
+    orderBy?: RecordingOrderByWithAggregationInput | RecordingOrderByWithAggregationInput[]
+    by: RecordingScalarFieldEnum[] | RecordingScalarFieldEnum
+    having?: RecordingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecordingCountAggregateInputType | true
+    _avg?: RecordingAvgAggregateInputType
+    _sum?: RecordingSumAggregateInputType
+    _min?: RecordingMinAggregateInputType
+    _max?: RecordingMaxAggregateInputType
+  }
+
+  export type RecordingGroupByOutputType = {
+    id: string
+    meetingId: string
+    fileName: string
+    objectKey: string
+    durationSeconds: number | null
+    fileSize: bigint
+    mimeType: string
+    createdAt: Date
+    _count: RecordingCountAggregateOutputType | null
+    _avg: RecordingAvgAggregateOutputType | null
+    _sum: RecordingSumAggregateOutputType | null
+    _min: RecordingMinAggregateOutputType | null
+    _max: RecordingMaxAggregateOutputType | null
+  }
+
+  type GetRecordingGroupByPayload<T extends RecordingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecordingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecordingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecordingGroupByOutputType[P]>
+            : GetScalarType<T[P], RecordingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecordingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    fileName?: boolean
+    objectKey?: boolean
+    durationSeconds?: boolean
+    fileSize?: boolean
+    mimeType?: boolean
+    createdAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recording"]>
+
+  export type RecordingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    fileName?: boolean
+    objectKey?: boolean
+    durationSeconds?: boolean
+    fileSize?: boolean
+    mimeType?: boolean
+    createdAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recording"]>
+
+  export type RecordingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    fileName?: boolean
+    objectKey?: boolean
+    durationSeconds?: boolean
+    fileSize?: boolean
+    mimeType?: boolean
+    createdAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recording"]>
+
+  export type RecordingSelectScalar = {
+    id?: boolean
+    meetingId?: boolean
+    fileName?: boolean
+    objectKey?: boolean
+    durationSeconds?: boolean
+    fileSize?: boolean
+    mimeType?: boolean
+    createdAt?: boolean
+  }
+
+  export type RecordingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "fileName" | "objectKey" | "durationSeconds" | "fileSize" | "mimeType" | "createdAt", ExtArgs["result"]["recording"]>
+  export type RecordingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type RecordingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type RecordingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+
+  export type $RecordingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Recording"
+    objects: {
+      meeting: Prisma.$MeetingPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      meetingId: string
+      fileName: string
+      objectKey: string
+      durationSeconds: number | null
+      fileSize: bigint
+      mimeType: string
+      createdAt: Date
+    }, ExtArgs["result"]["recording"]>
+    composites: {}
+  }
+
+  type RecordingGetPayload<S extends boolean | null | undefined | RecordingDefaultArgs> = $Result.GetResult<Prisma.$RecordingPayload, S>
+
+  type RecordingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RecordingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RecordingCountAggregateInputType | true
+    }
+
+  export interface RecordingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Recording'], meta: { name: 'Recording' } }
+    /**
+     * Find zero or one Recording that matches the filter.
+     * @param {RecordingFindUniqueArgs} args - Arguments to find a Recording
+     * @example
+     * // Get one Recording
+     * const recording = await prisma.recording.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecordingFindUniqueArgs>(args: SelectSubset<T, RecordingFindUniqueArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Recording that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RecordingFindUniqueOrThrowArgs} args - Arguments to find a Recording
+     * @example
+     * // Get one Recording
+     * const recording = await prisma.recording.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecordingFindUniqueOrThrowArgs>(args: SelectSubset<T, RecordingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Recording that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingFindFirstArgs} args - Arguments to find a Recording
+     * @example
+     * // Get one Recording
+     * const recording = await prisma.recording.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecordingFindFirstArgs>(args?: SelectSubset<T, RecordingFindFirstArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Recording that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingFindFirstOrThrowArgs} args - Arguments to find a Recording
+     * @example
+     * // Get one Recording
+     * const recording = await prisma.recording.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecordingFindFirstOrThrowArgs>(args?: SelectSubset<T, RecordingFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Recordings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Recordings
+     * const recordings = await prisma.recording.findMany()
+     * 
+     * // Get first 10 Recordings
+     * const recordings = await prisma.recording.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const recordingWithIdOnly = await prisma.recording.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RecordingFindManyArgs>(args?: SelectSubset<T, RecordingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Recording.
+     * @param {RecordingCreateArgs} args - Arguments to create a Recording.
+     * @example
+     * // Create one Recording
+     * const Recording = await prisma.recording.create({
+     *   data: {
+     *     // ... data to create a Recording
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecordingCreateArgs>(args: SelectSubset<T, RecordingCreateArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Recordings.
+     * @param {RecordingCreateManyArgs} args - Arguments to create many Recordings.
+     * @example
+     * // Create many Recordings
+     * const recording = await prisma.recording.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecordingCreateManyArgs>(args?: SelectSubset<T, RecordingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Recordings and returns the data saved in the database.
+     * @param {RecordingCreateManyAndReturnArgs} args - Arguments to create many Recordings.
+     * @example
+     * // Create many Recordings
+     * const recording = await prisma.recording.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Recordings and only return the `id`
+     * const recordingWithIdOnly = await prisma.recording.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecordingCreateManyAndReturnArgs>(args?: SelectSubset<T, RecordingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Recording.
+     * @param {RecordingDeleteArgs} args - Arguments to delete one Recording.
+     * @example
+     * // Delete one Recording
+     * const Recording = await prisma.recording.delete({
+     *   where: {
+     *     // ... filter to delete one Recording
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecordingDeleteArgs>(args: SelectSubset<T, RecordingDeleteArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Recording.
+     * @param {RecordingUpdateArgs} args - Arguments to update one Recording.
+     * @example
+     * // Update one Recording
+     * const recording = await prisma.recording.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecordingUpdateArgs>(args: SelectSubset<T, RecordingUpdateArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Recordings.
+     * @param {RecordingDeleteManyArgs} args - Arguments to filter Recordings to delete.
+     * @example
+     * // Delete a few Recordings
+     * const { count } = await prisma.recording.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecordingDeleteManyArgs>(args?: SelectSubset<T, RecordingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Recordings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Recordings
+     * const recording = await prisma.recording.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecordingUpdateManyArgs>(args: SelectSubset<T, RecordingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Recordings and returns the data updated in the database.
+     * @param {RecordingUpdateManyAndReturnArgs} args - Arguments to update many Recordings.
+     * @example
+     * // Update many Recordings
+     * const recording = await prisma.recording.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Recordings and only return the `id`
+     * const recordingWithIdOnly = await prisma.recording.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RecordingUpdateManyAndReturnArgs>(args: SelectSubset<T, RecordingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Recording.
+     * @param {RecordingUpsertArgs} args - Arguments to update or create a Recording.
+     * @example
+     * // Update or create a Recording
+     * const recording = await prisma.recording.upsert({
+     *   create: {
+     *     // ... data to create a Recording
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Recording we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecordingUpsertArgs>(args: SelectSubset<T, RecordingUpsertArgs<ExtArgs>>): Prisma__RecordingClient<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Recordings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingCountArgs} args - Arguments to filter Recordings to count.
+     * @example
+     * // Count the number of Recordings
+     * const count = await prisma.recording.count({
+     *   where: {
+     *     // ... the filter for the Recordings we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecordingCountArgs>(
+      args?: Subset<T, RecordingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecordingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Recording.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecordingAggregateArgs>(args: Subset<T, RecordingAggregateArgs>): Prisma.PrismaPromise<GetRecordingAggregateType<T>>
+
+    /**
+     * Group by Recording.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecordingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecordingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecordingGroupByArgs['orderBy'] }
+        : { orderBy?: RecordingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecordingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecordingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Recording model
+   */
+  readonly fields: RecordingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Recording.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecordingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Recording model
+   */
+  interface RecordingFieldRefs {
+    readonly id: FieldRef<"Recording", 'String'>
+    readonly meetingId: FieldRef<"Recording", 'String'>
+    readonly fileName: FieldRef<"Recording", 'String'>
+    readonly objectKey: FieldRef<"Recording", 'String'>
+    readonly durationSeconds: FieldRef<"Recording", 'Int'>
+    readonly fileSize: FieldRef<"Recording", 'BigInt'>
+    readonly mimeType: FieldRef<"Recording", 'String'>
+    readonly createdAt: FieldRef<"Recording", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Recording findUnique
+   */
+  export type RecordingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter, which Recording to fetch.
+     */
+    where: RecordingWhereUniqueInput
+  }
+
+  /**
+   * Recording findUniqueOrThrow
+   */
+  export type RecordingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter, which Recording to fetch.
+     */
+    where: RecordingWhereUniqueInput
+  }
+
+  /**
+   * Recording findFirst
+   */
+  export type RecordingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter, which Recording to fetch.
+     */
+    where?: RecordingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recordings to fetch.
+     */
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Recordings.
+     */
+    cursor?: RecordingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recordings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recordings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Recordings.
+     */
+    distinct?: RecordingScalarFieldEnum | RecordingScalarFieldEnum[]
+  }
+
+  /**
+   * Recording findFirstOrThrow
+   */
+  export type RecordingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter, which Recording to fetch.
+     */
+    where?: RecordingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recordings to fetch.
+     */
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Recordings.
+     */
+    cursor?: RecordingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recordings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recordings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Recordings.
+     */
+    distinct?: RecordingScalarFieldEnum | RecordingScalarFieldEnum[]
+  }
+
+  /**
+   * Recording findMany
+   */
+  export type RecordingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter, which Recordings to fetch.
+     */
+    where?: RecordingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recordings to fetch.
+     */
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Recordings.
+     */
+    cursor?: RecordingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recordings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recordings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Recordings.
+     */
+    distinct?: RecordingScalarFieldEnum | RecordingScalarFieldEnum[]
+  }
+
+  /**
+   * Recording create
+   */
+  export type RecordingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Recording.
+     */
+    data: XOR<RecordingCreateInput, RecordingUncheckedCreateInput>
+  }
+
+  /**
+   * Recording createMany
+   */
+  export type RecordingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Recordings.
+     */
+    data: RecordingCreateManyInput | RecordingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Recording createManyAndReturn
+   */
+  export type RecordingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * The data used to create many Recordings.
+     */
+    data: RecordingCreateManyInput | RecordingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Recording update
+   */
+  export type RecordingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Recording.
+     */
+    data: XOR<RecordingUpdateInput, RecordingUncheckedUpdateInput>
+    /**
+     * Choose, which Recording to update.
+     */
+    where: RecordingWhereUniqueInput
+  }
+
+  /**
+   * Recording updateMany
+   */
+  export type RecordingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Recordings.
+     */
+    data: XOR<RecordingUpdateManyMutationInput, RecordingUncheckedUpdateManyInput>
+    /**
+     * Filter which Recordings to update
+     */
+    where?: RecordingWhereInput
+    /**
+     * Limit how many Recordings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Recording updateManyAndReturn
+   */
+  export type RecordingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * The data used to update Recordings.
+     */
+    data: XOR<RecordingUpdateManyMutationInput, RecordingUncheckedUpdateManyInput>
+    /**
+     * Filter which Recordings to update
+     */
+    where?: RecordingWhereInput
+    /**
+     * Limit how many Recordings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Recording upsert
+   */
+  export type RecordingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Recording to update in case it exists.
+     */
+    where: RecordingWhereUniqueInput
+    /**
+     * In case the Recording found by the `where` argument doesn't exist, create a new Recording with this data.
+     */
+    create: XOR<RecordingCreateInput, RecordingUncheckedCreateInput>
+    /**
+     * In case the Recording was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecordingUpdateInput, RecordingUncheckedUpdateInput>
+  }
+
+  /**
+   * Recording delete
+   */
+  export type RecordingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    /**
+     * Filter which Recording to delete.
+     */
+    where: RecordingWhereUniqueInput
+  }
+
+  /**
+   * Recording deleteMany
+   */
+  export type RecordingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Recordings to delete
+     */
+    where?: RecordingWhereInput
+    /**
+     * Limit how many Recordings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Recording without action
+   */
+  export type RecordingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Export
+   */
+
+  export type AggregateExport = {
+    _count: ExportCountAggregateOutputType | null
+    _min: ExportMinAggregateOutputType | null
+    _max: ExportMaxAggregateOutputType | null
+  }
+
+  export type ExportMinAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    exportFormat: string | null
+    filePath: string | null
+    exportedAt: Date | null
+  }
+
+  export type ExportMaxAggregateOutputType = {
+    id: string | null
+    meetingId: string | null
+    exportFormat: string | null
+    filePath: string | null
+    exportedAt: Date | null
+  }
+
+  export type ExportCountAggregateOutputType = {
+    id: number
+    meetingId: number
+    exportFormat: number
+    filePath: number
+    exportedAt: number
+    _all: number
+  }
+
+
+  export type ExportMinAggregateInputType = {
+    id?: true
+    meetingId?: true
+    exportFormat?: true
+    filePath?: true
+    exportedAt?: true
+  }
+
+  export type ExportMaxAggregateInputType = {
+    id?: true
+    meetingId?: true
+    exportFormat?: true
+    filePath?: true
+    exportedAt?: true
+  }
+
+  export type ExportCountAggregateInputType = {
+    id?: true
+    meetingId?: true
+    exportFormat?: true
+    filePath?: true
+    exportedAt?: true
+    _all?: true
+  }
+
+  export type ExportAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Export to aggregate.
+     */
+    where?: ExportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Exports to fetch.
+     */
+    orderBy?: ExportOrderByWithRelationInput | ExportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ExportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Exports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Exports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Exports
+    **/
+    _count?: true | ExportCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ExportMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ExportMaxAggregateInputType
+  }
+
+  export type GetExportAggregateType<T extends ExportAggregateArgs> = {
+        [P in keyof T & keyof AggregateExport]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateExport[P]>
+      : GetScalarType<T[P], AggregateExport[P]>
+  }
+
+
+
+
+  export type ExportGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ExportWhereInput
+    orderBy?: ExportOrderByWithAggregationInput | ExportOrderByWithAggregationInput[]
+    by: ExportScalarFieldEnum[] | ExportScalarFieldEnum
+    having?: ExportScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ExportCountAggregateInputType | true
+    _min?: ExportMinAggregateInputType
+    _max?: ExportMaxAggregateInputType
+  }
+
+  export type ExportGroupByOutputType = {
+    id: string
+    meetingId: string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date
+    _count: ExportCountAggregateOutputType | null
+    _min: ExportMinAggregateOutputType | null
+    _max: ExportMaxAggregateOutputType | null
+  }
+
+  type GetExportGroupByPayload<T extends ExportGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ExportGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ExportGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ExportGroupByOutputType[P]>
+            : GetScalarType<T[P], ExportGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ExportSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    exportFormat?: boolean
+    filePath?: boolean
+    exportedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["export"]>
+
+  export type ExportSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    exportFormat?: boolean
+    filePath?: boolean
+    exportedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["export"]>
+
+  export type ExportSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    meetingId?: boolean
+    exportFormat?: boolean
+    filePath?: boolean
+    exportedAt?: boolean
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["export"]>
+
+  export type ExportSelectScalar = {
+    id?: boolean
+    meetingId?: boolean
+    exportFormat?: boolean
+    filePath?: boolean
+    exportedAt?: boolean
+  }
+
+  export type ExportOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "exportFormat" | "filePath" | "exportedAt", ExtArgs["result"]["export"]>
+  export type ExportInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type ExportIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+  export type ExportIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+  }
+
+  export type $ExportPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Export"
+    objects: {
+      meeting: Prisma.$MeetingPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      meetingId: string
+      exportFormat: string
+      filePath: string
+      exportedAt: Date
+    }, ExtArgs["result"]["export"]>
+    composites: {}
+  }
+
+  type ExportGetPayload<S extends boolean | null | undefined | ExportDefaultArgs> = $Result.GetResult<Prisma.$ExportPayload, S>
+
+  type ExportCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ExportFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ExportCountAggregateInputType | true
+    }
+
+  export interface ExportDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Export'], meta: { name: 'Export' } }
+    /**
+     * Find zero or one Export that matches the filter.
+     * @param {ExportFindUniqueArgs} args - Arguments to find a Export
+     * @example
+     * // Get one Export
+     * const export = await prisma.export.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ExportFindUniqueArgs>(args: SelectSubset<T, ExportFindUniqueArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Export that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ExportFindUniqueOrThrowArgs} args - Arguments to find a Export
+     * @example
+     * // Get one Export
+     * const export = await prisma.export.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ExportFindUniqueOrThrowArgs>(args: SelectSubset<T, ExportFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Export that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportFindFirstArgs} args - Arguments to find a Export
+     * @example
+     * // Get one Export
+     * const export = await prisma.export.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ExportFindFirstArgs>(args?: SelectSubset<T, ExportFindFirstArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Export that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportFindFirstOrThrowArgs} args - Arguments to find a Export
+     * @example
+     * // Get one Export
+     * const export = await prisma.export.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ExportFindFirstOrThrowArgs>(args?: SelectSubset<T, ExportFindFirstOrThrowArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Exports that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Exports
+     * const exports = await prisma.export.findMany()
+     * 
+     * // Get first 10 Exports
+     * const exports = await prisma.export.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const exportWithIdOnly = await prisma.export.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ExportFindManyArgs>(args?: SelectSubset<T, ExportFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Export.
+     * @param {ExportCreateArgs} args - Arguments to create a Export.
+     * @example
+     * // Create one Export
+     * const Export = await prisma.export.create({
+     *   data: {
+     *     // ... data to create a Export
+     *   }
+     * })
+     * 
+     */
+    create<T extends ExportCreateArgs>(args: SelectSubset<T, ExportCreateArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Exports.
+     * @param {ExportCreateManyArgs} args - Arguments to create many Exports.
+     * @example
+     * // Create many Exports
+     * const export = await prisma.export.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ExportCreateManyArgs>(args?: SelectSubset<T, ExportCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Exports and returns the data saved in the database.
+     * @param {ExportCreateManyAndReturnArgs} args - Arguments to create many Exports.
+     * @example
+     * // Create many Exports
+     * const export = await prisma.export.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Exports and only return the `id`
+     * const exportWithIdOnly = await prisma.export.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ExportCreateManyAndReturnArgs>(args?: SelectSubset<T, ExportCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Export.
+     * @param {ExportDeleteArgs} args - Arguments to delete one Export.
+     * @example
+     * // Delete one Export
+     * const Export = await prisma.export.delete({
+     *   where: {
+     *     // ... filter to delete one Export
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ExportDeleteArgs>(args: SelectSubset<T, ExportDeleteArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Export.
+     * @param {ExportUpdateArgs} args - Arguments to update one Export.
+     * @example
+     * // Update one Export
+     * const export = await prisma.export.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ExportUpdateArgs>(args: SelectSubset<T, ExportUpdateArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Exports.
+     * @param {ExportDeleteManyArgs} args - Arguments to filter Exports to delete.
+     * @example
+     * // Delete a few Exports
+     * const { count } = await prisma.export.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ExportDeleteManyArgs>(args?: SelectSubset<T, ExportDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Exports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Exports
+     * const export = await prisma.export.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ExportUpdateManyArgs>(args: SelectSubset<T, ExportUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Exports and returns the data updated in the database.
+     * @param {ExportUpdateManyAndReturnArgs} args - Arguments to update many Exports.
+     * @example
+     * // Update many Exports
+     * const export = await prisma.export.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Exports and only return the `id`
+     * const exportWithIdOnly = await prisma.export.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ExportUpdateManyAndReturnArgs>(args: SelectSubset<T, ExportUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Export.
+     * @param {ExportUpsertArgs} args - Arguments to update or create a Export.
+     * @example
+     * // Update or create a Export
+     * const export = await prisma.export.upsert({
+     *   create: {
+     *     // ... data to create a Export
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Export we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ExportUpsertArgs>(args: SelectSubset<T, ExportUpsertArgs<ExtArgs>>): Prisma__ExportClient<$Result.GetResult<Prisma.$ExportPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Exports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportCountArgs} args - Arguments to filter Exports to count.
+     * @example
+     * // Count the number of Exports
+     * const count = await prisma.export.count({
+     *   where: {
+     *     // ... the filter for the Exports we want to count
+     *   }
+     * })
+    **/
+    count<T extends ExportCountArgs>(
+      args?: Subset<T, ExportCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ExportCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Export.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ExportAggregateArgs>(args: Subset<T, ExportAggregateArgs>): Prisma.PrismaPromise<GetExportAggregateType<T>>
+
+    /**
+     * Group by Export.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExportGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ExportGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ExportGroupByArgs['orderBy'] }
+        : { orderBy?: ExportGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ExportGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetExportGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Export model
+   */
+  readonly fields: ExportFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Export.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ExportClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Export model
+   */
+  interface ExportFieldRefs {
+    readonly id: FieldRef<"Export", 'String'>
+    readonly meetingId: FieldRef<"Export", 'String'>
+    readonly exportFormat: FieldRef<"Export", 'String'>
+    readonly filePath: FieldRef<"Export", 'String'>
+    readonly exportedAt: FieldRef<"Export", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Export findUnique
+   */
+  export type ExportFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter, which Export to fetch.
+     */
+    where: ExportWhereUniqueInput
+  }
+
+  /**
+   * Export findUniqueOrThrow
+   */
+  export type ExportFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter, which Export to fetch.
+     */
+    where: ExportWhereUniqueInput
+  }
+
+  /**
+   * Export findFirst
+   */
+  export type ExportFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter, which Export to fetch.
+     */
+    where?: ExportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Exports to fetch.
+     */
+    orderBy?: ExportOrderByWithRelationInput | ExportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Exports.
+     */
+    cursor?: ExportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Exports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Exports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Exports.
+     */
+    distinct?: ExportScalarFieldEnum | ExportScalarFieldEnum[]
+  }
+
+  /**
+   * Export findFirstOrThrow
+   */
+  export type ExportFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter, which Export to fetch.
+     */
+    where?: ExportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Exports to fetch.
+     */
+    orderBy?: ExportOrderByWithRelationInput | ExportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Exports.
+     */
+    cursor?: ExportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Exports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Exports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Exports.
+     */
+    distinct?: ExportScalarFieldEnum | ExportScalarFieldEnum[]
+  }
+
+  /**
+   * Export findMany
+   */
+  export type ExportFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter, which Exports to fetch.
+     */
+    where?: ExportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Exports to fetch.
+     */
+    orderBy?: ExportOrderByWithRelationInput | ExportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Exports.
+     */
+    cursor?: ExportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Exports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Exports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Exports.
+     */
+    distinct?: ExportScalarFieldEnum | ExportScalarFieldEnum[]
+  }
+
+  /**
+   * Export create
+   */
+  export type ExportCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Export.
+     */
+    data: XOR<ExportCreateInput, ExportUncheckedCreateInput>
+  }
+
+  /**
+   * Export createMany
+   */
+  export type ExportCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Exports.
+     */
+    data: ExportCreateManyInput | ExportCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Export createManyAndReturn
+   */
+  export type ExportCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * The data used to create many Exports.
+     */
+    data: ExportCreateManyInput | ExportCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Export update
+   */
+  export type ExportUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Export.
+     */
+    data: XOR<ExportUpdateInput, ExportUncheckedUpdateInput>
+    /**
+     * Choose, which Export to update.
+     */
+    where: ExportWhereUniqueInput
+  }
+
+  /**
+   * Export updateMany
+   */
+  export type ExportUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Exports.
+     */
+    data: XOR<ExportUpdateManyMutationInput, ExportUncheckedUpdateManyInput>
+    /**
+     * Filter which Exports to update
+     */
+    where?: ExportWhereInput
+    /**
+     * Limit how many Exports to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Export updateManyAndReturn
+   */
+  export type ExportUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * The data used to update Exports.
+     */
+    data: XOR<ExportUpdateManyMutationInput, ExportUncheckedUpdateManyInput>
+    /**
+     * Filter which Exports to update
+     */
+    where?: ExportWhereInput
+    /**
+     * Limit how many Exports to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Export upsert
+   */
+  export type ExportUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Export to update in case it exists.
+     */
+    where: ExportWhereUniqueInput
+    /**
+     * In case the Export found by the `where` argument doesn't exist, create a new Export with this data.
+     */
+    create: XOR<ExportCreateInput, ExportUncheckedCreateInput>
+    /**
+     * In case the Export was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ExportUpdateInput, ExportUncheckedUpdateInput>
+  }
+
+  /**
+   * Export delete
+   */
+  export type ExportDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
+    /**
+     * Filter which Export to delete.
+     */
+    where: ExportWhereUniqueInput
+  }
+
+  /**
+   * Export deleteMany
+   */
+  export type ExportDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Exports to delete
+     */
+    where?: ExportWhereInput
+    /**
+     * Limit how many Exports to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Export without action
+   */
+  export type ExportDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Export
+     */
+    select?: ExportSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Export
+     */
+    omit?: ExportOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ExportInclude<ExtArgs> | null
   }
 
 
@@ -8160,7 +13176,7 @@ export namespace Prisma {
     id: 'id',
     email: 'email',
     password: 'password',
-    name: 'name',
+    fullname: 'fullname',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -8168,28 +13184,27 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-  export const RoomScalarFieldEnum: {
+  export const MeetingRoomScalarFieldEnum: {
     id: 'id',
-    slug: 'slug',
-    name: 'name',
-    maxParticipants: 'maxParticipants',
     hostId: 'hostId',
+    roomName: 'roomName',
+    roomHash: 'roomHash',
+    maxParticipants: 'maxParticipants',
+    status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
-  export type RoomScalarFieldEnum = (typeof RoomScalarFieldEnum)[keyof typeof RoomScalarFieldEnum]
+  export type MeetingRoomScalarFieldEnum = (typeof MeetingRoomScalarFieldEnum)[keyof typeof MeetingRoomScalarFieldEnum]
 
 
   export const MeetingScalarFieldEnum: {
     id: 'id',
     roomId: 'roomId',
-    startTime: 'startTime',
-    endTime: 'endTime',
-    duration: 'duration',
-    recordingUrl: 'recordingUrl',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    startedAt: 'startedAt',
+    endedAt: 'endedAt',
+    durationSeconds: 'durationSeconds',
+    createdAt: 'createdAt'
   };
 
   export type MeetingScalarFieldEnum = (typeof MeetingScalarFieldEnum)[keyof typeof MeetingScalarFieldEnum]
@@ -8198,37 +13213,87 @@ export namespace Prisma {
   export const ParticipantScalarFieldEnum: {
     id: 'id',
     meetingId: 'meetingId',
-    name: 'name',
-    role: 'role',
-    joinTime: 'joinTime',
-    leaveTime: 'leaveTime',
-    duration: 'duration',
+    displayName: 'displayName',
     createdAt: 'createdAt'
   };
 
   export type ParticipantScalarFieldEnum = (typeof ParticipantScalarFieldEnum)[keyof typeof ParticipantScalarFieldEnum]
 
 
+  export const ParticipantSessionScalarFieldEnum: {
+    id: 'id',
+    participantId: 'participantId',
+    joinedAt: 'joinedAt',
+    lastSeenAt: 'lastSeenAt',
+    leftAt: 'leftAt',
+    durationSeconds: 'durationSeconds',
+    connectionId: 'connectionId'
+  };
+
+  export type ParticipantSessionScalarFieldEnum = (typeof ParticipantSessionScalarFieldEnum)[keyof typeof ParticipantSessionScalarFieldEnum]
+
+
   export const TranscriptScalarFieldEnum: {
     id: 'id',
     meetingId: 'meetingId',
-    speakerName: 'speakerName',
-    text: 'text',
-    timestamp: 'timestamp'
+    fullTranscript: 'fullTranscript',
+    language: 'language',
+    createdAt: 'createdAt'
   };
 
   export type TranscriptScalarFieldEnum = (typeof TranscriptScalarFieldEnum)[keyof typeof TranscriptScalarFieldEnum]
 
 
-  export const SummaryScalarFieldEnum: {
+  export const TranscriptSegmentScalarFieldEnum: {
     id: 'id',
-    meetingId: 'meetingId',
-    content: 'content',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    transcriptId: 'transcriptId',
+    participantId: 'participantId',
+    startTime: 'startTime',
+    endTime: 'endTime',
+    spokenAt: 'spokenAt',
+    text: 'text',
+    confidence: 'confidence'
   };
 
-  export type SummaryScalarFieldEnum = (typeof SummaryScalarFieldEnum)[keyof typeof SummaryScalarFieldEnum]
+  export type TranscriptSegmentScalarFieldEnum = (typeof TranscriptSegmentScalarFieldEnum)[keyof typeof TranscriptSegmentScalarFieldEnum]
+
+
+  export const MeetingSummaryScalarFieldEnum: {
+    id: 'id',
+    meetingId: 'meetingId',
+    aiSummary: 'aiSummary',
+    editedSummary: 'editedSummary',
+    llmModel: 'llmModel',
+    generatedAt: 'generatedAt',
+    editedAt: 'editedAt'
+  };
+
+  export type MeetingSummaryScalarFieldEnum = (typeof MeetingSummaryScalarFieldEnum)[keyof typeof MeetingSummaryScalarFieldEnum]
+
+
+  export const RecordingScalarFieldEnum: {
+    id: 'id',
+    meetingId: 'meetingId',
+    fileName: 'fileName',
+    objectKey: 'objectKey',
+    durationSeconds: 'durationSeconds',
+    fileSize: 'fileSize',
+    mimeType: 'mimeType',
+    createdAt: 'createdAt'
+  };
+
+  export type RecordingScalarFieldEnum = (typeof RecordingScalarFieldEnum)[keyof typeof RecordingScalarFieldEnum]
+
+
+  export const ExportScalarFieldEnum: {
+    id: 'id',
+    meetingId: 'meetingId',
+    exportFormat: 'exportFormat',
+    filePath: 'filePath',
+    exportedAt: 'exportedAt'
+  };
+
+  export type ExportScalarFieldEnum = (typeof ExportScalarFieldEnum)[keyof typeof ExportScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -8314,6 +13379,20 @@ export namespace Prisma {
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
+
+
+  /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt[]'
+   */
+  export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
   /**
    * Deep Input Types
    */
@@ -8326,20 +13405,20 @@ export namespace Prisma {
     id?: StringFilter<"User"> | string
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
-    name?: StringNullableFilter<"User"> | string | null
+    fullname?: StringFilter<"User"> | string
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
-    rooms?: RoomListRelationFilter
+    rooms?: MeetingRoomListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
-    name?: SortOrderInput | SortOrder
+    fullname?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    rooms?: RoomOrderByRelationAggregateInput
+    rooms?: MeetingRoomOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -8349,17 +13428,17 @@ export namespace Prisma {
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
-    name?: StringNullableFilter<"User"> | string | null
+    fullname?: StringFilter<"User"> | string
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
-    rooms?: RoomListRelationFilter
+    rooms?: MeetingRoomListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
-    name?: SortOrderInput | SortOrder
+    fullname?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -8374,79 +13453,84 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"User"> | string
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
-    name?: StringNullableWithAggregatesFilter<"User"> | string | null
+    fullname?: StringWithAggregatesFilter<"User"> | string
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
 
-  export type RoomWhereInput = {
-    AND?: RoomWhereInput | RoomWhereInput[]
-    OR?: RoomWhereInput[]
-    NOT?: RoomWhereInput | RoomWhereInput[]
-    id?: StringFilter<"Room"> | string
-    slug?: StringFilter<"Room"> | string
-    name?: StringFilter<"Room"> | string
-    maxParticipants?: IntFilter<"Room"> | number
-    hostId?: StringFilter<"Room"> | string
-    createdAt?: DateTimeFilter<"Room"> | Date | string
-    updatedAt?: DateTimeFilter<"Room"> | Date | string
+  export type MeetingRoomWhereInput = {
+    AND?: MeetingRoomWhereInput | MeetingRoomWhereInput[]
+    OR?: MeetingRoomWhereInput[]
+    NOT?: MeetingRoomWhereInput | MeetingRoomWhereInput[]
+    id?: StringFilter<"MeetingRoom"> | string
+    hostId?: StringFilter<"MeetingRoom"> | string
+    roomName?: StringFilter<"MeetingRoom"> | string
+    roomHash?: StringFilter<"MeetingRoom"> | string
+    maxParticipants?: IntFilter<"MeetingRoom"> | number
+    status?: StringFilter<"MeetingRoom"> | string
+    createdAt?: DateTimeFilter<"MeetingRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"MeetingRoom"> | Date | string
     host?: XOR<UserScalarRelationFilter, UserWhereInput>
     meetings?: MeetingListRelationFilter
   }
 
-  export type RoomOrderByWithRelationInput = {
+  export type MeetingRoomOrderByWithRelationInput = {
     id?: SortOrder
-    slug?: SortOrder
-    name?: SortOrder
-    maxParticipants?: SortOrder
     hostId?: SortOrder
+    roomName?: SortOrder
+    roomHash?: SortOrder
+    maxParticipants?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     host?: UserOrderByWithRelationInput
     meetings?: MeetingOrderByRelationAggregateInput
   }
 
-  export type RoomWhereUniqueInput = Prisma.AtLeast<{
+  export type MeetingRoomWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    slug?: string
-    AND?: RoomWhereInput | RoomWhereInput[]
-    OR?: RoomWhereInput[]
-    NOT?: RoomWhereInput | RoomWhereInput[]
-    name?: StringFilter<"Room"> | string
-    maxParticipants?: IntFilter<"Room"> | number
-    hostId?: StringFilter<"Room"> | string
-    createdAt?: DateTimeFilter<"Room"> | Date | string
-    updatedAt?: DateTimeFilter<"Room"> | Date | string
+    roomHash?: string
+    AND?: MeetingRoomWhereInput | MeetingRoomWhereInput[]
+    OR?: MeetingRoomWhereInput[]
+    NOT?: MeetingRoomWhereInput | MeetingRoomWhereInput[]
+    hostId?: StringFilter<"MeetingRoom"> | string
+    roomName?: StringFilter<"MeetingRoom"> | string
+    maxParticipants?: IntFilter<"MeetingRoom"> | number
+    status?: StringFilter<"MeetingRoom"> | string
+    createdAt?: DateTimeFilter<"MeetingRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"MeetingRoom"> | Date | string
     host?: XOR<UserScalarRelationFilter, UserWhereInput>
     meetings?: MeetingListRelationFilter
-  }, "id" | "slug">
+  }, "id" | "roomHash">
 
-  export type RoomOrderByWithAggregationInput = {
+  export type MeetingRoomOrderByWithAggregationInput = {
     id?: SortOrder
-    slug?: SortOrder
-    name?: SortOrder
-    maxParticipants?: SortOrder
     hostId?: SortOrder
+    roomName?: SortOrder
+    roomHash?: SortOrder
+    maxParticipants?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    _count?: RoomCountOrderByAggregateInput
-    _avg?: RoomAvgOrderByAggregateInput
-    _max?: RoomMaxOrderByAggregateInput
-    _min?: RoomMinOrderByAggregateInput
-    _sum?: RoomSumOrderByAggregateInput
+    _count?: MeetingRoomCountOrderByAggregateInput
+    _avg?: MeetingRoomAvgOrderByAggregateInput
+    _max?: MeetingRoomMaxOrderByAggregateInput
+    _min?: MeetingRoomMinOrderByAggregateInput
+    _sum?: MeetingRoomSumOrderByAggregateInput
   }
 
-  export type RoomScalarWhereWithAggregatesInput = {
-    AND?: RoomScalarWhereWithAggregatesInput | RoomScalarWhereWithAggregatesInput[]
-    OR?: RoomScalarWhereWithAggregatesInput[]
-    NOT?: RoomScalarWhereWithAggregatesInput | RoomScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"Room"> | string
-    slug?: StringWithAggregatesFilter<"Room"> | string
-    name?: StringWithAggregatesFilter<"Room"> | string
-    maxParticipants?: IntWithAggregatesFilter<"Room"> | number
-    hostId?: StringWithAggregatesFilter<"Room"> | string
-    createdAt?: DateTimeWithAggregatesFilter<"Room"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"Room"> | Date | string
+  export type MeetingRoomScalarWhereWithAggregatesInput = {
+    AND?: MeetingRoomScalarWhereWithAggregatesInput | MeetingRoomScalarWhereWithAggregatesInput[]
+    OR?: MeetingRoomScalarWhereWithAggregatesInput[]
+    NOT?: MeetingRoomScalarWhereWithAggregatesInput | MeetingRoomScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MeetingRoom"> | string
+    hostId?: StringWithAggregatesFilter<"MeetingRoom"> | string
+    roomName?: StringWithAggregatesFilter<"MeetingRoom"> | string
+    roomHash?: StringWithAggregatesFilter<"MeetingRoom"> | string
+    maxParticipants?: IntWithAggregatesFilter<"MeetingRoom"> | number
+    status?: StringWithAggregatesFilter<"MeetingRoom"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"MeetingRoom"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MeetingRoom"> | Date | string
   }
 
   export type MeetingWhereInput = {
@@ -8455,31 +13539,31 @@ export namespace Prisma {
     NOT?: MeetingWhereInput | MeetingWhereInput[]
     id?: StringFilter<"Meeting"> | string
     roomId?: StringFilter<"Meeting"> | string
-    startTime?: DateTimeFilter<"Meeting"> | Date | string
-    endTime?: DateTimeNullableFilter<"Meeting"> | Date | string | null
-    duration?: IntNullableFilter<"Meeting"> | number | null
-    recordingUrl?: StringNullableFilter<"Meeting"> | string | null
+    startedAt?: DateTimeFilter<"Meeting"> | Date | string
+    endedAt?: DateTimeNullableFilter<"Meeting"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"Meeting"> | number | null
     createdAt?: DateTimeFilter<"Meeting"> | Date | string
-    updatedAt?: DateTimeFilter<"Meeting"> | Date | string
-    room?: XOR<RoomScalarRelationFilter, RoomWhereInput>
+    room?: XOR<MeetingRoomScalarRelationFilter, MeetingRoomWhereInput>
     participants?: ParticipantListRelationFilter
-    transcripts?: TranscriptListRelationFilter
-    summary?: XOR<SummaryNullableScalarRelationFilter, SummaryWhereInput> | null
+    transcript?: XOR<TranscriptNullableScalarRelationFilter, TranscriptWhereInput> | null
+    summary?: XOR<MeetingSummaryNullableScalarRelationFilter, MeetingSummaryWhereInput> | null
+    recordings?: RecordingListRelationFilter
+    exports?: ExportListRelationFilter
   }
 
   export type MeetingOrderByWithRelationInput = {
     id?: SortOrder
     roomId?: SortOrder
-    startTime?: SortOrder
-    endTime?: SortOrderInput | SortOrder
-    duration?: SortOrderInput | SortOrder
-    recordingUrl?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    endedAt?: SortOrderInput | SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
-    room?: RoomOrderByWithRelationInput
+    room?: MeetingRoomOrderByWithRelationInput
     participants?: ParticipantOrderByRelationAggregateInput
-    transcripts?: TranscriptOrderByRelationAggregateInput
-    summary?: SummaryOrderByWithRelationInput
+    transcript?: TranscriptOrderByWithRelationInput
+    summary?: MeetingSummaryOrderByWithRelationInput
+    recordings?: RecordingOrderByRelationAggregateInput
+    exports?: ExportOrderByRelationAggregateInput
   }
 
   export type MeetingWhereUniqueInput = Prisma.AtLeast<{
@@ -8488,27 +13572,25 @@ export namespace Prisma {
     OR?: MeetingWhereInput[]
     NOT?: MeetingWhereInput | MeetingWhereInput[]
     roomId?: StringFilter<"Meeting"> | string
-    startTime?: DateTimeFilter<"Meeting"> | Date | string
-    endTime?: DateTimeNullableFilter<"Meeting"> | Date | string | null
-    duration?: IntNullableFilter<"Meeting"> | number | null
-    recordingUrl?: StringNullableFilter<"Meeting"> | string | null
+    startedAt?: DateTimeFilter<"Meeting"> | Date | string
+    endedAt?: DateTimeNullableFilter<"Meeting"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"Meeting"> | number | null
     createdAt?: DateTimeFilter<"Meeting"> | Date | string
-    updatedAt?: DateTimeFilter<"Meeting"> | Date | string
-    room?: XOR<RoomScalarRelationFilter, RoomWhereInput>
+    room?: XOR<MeetingRoomScalarRelationFilter, MeetingRoomWhereInput>
     participants?: ParticipantListRelationFilter
-    transcripts?: TranscriptListRelationFilter
-    summary?: XOR<SummaryNullableScalarRelationFilter, SummaryWhereInput> | null
+    transcript?: XOR<TranscriptNullableScalarRelationFilter, TranscriptWhereInput> | null
+    summary?: XOR<MeetingSummaryNullableScalarRelationFilter, MeetingSummaryWhereInput> | null
+    recordings?: RecordingListRelationFilter
+    exports?: ExportListRelationFilter
   }, "id">
 
   export type MeetingOrderByWithAggregationInput = {
     id?: SortOrder
     roomId?: SortOrder
-    startTime?: SortOrder
-    endTime?: SortOrderInput | SortOrder
-    duration?: SortOrderInput | SortOrder
-    recordingUrl?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    endedAt?: SortOrderInput | SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
     _count?: MeetingCountOrderByAggregateInput
     _avg?: MeetingAvgOrderByAggregateInput
     _max?: MeetingMaxOrderByAggregateInput
@@ -8522,12 +13604,10 @@ export namespace Prisma {
     NOT?: MeetingScalarWhereWithAggregatesInput | MeetingScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Meeting"> | string
     roomId?: StringWithAggregatesFilter<"Meeting"> | string
-    startTime?: DateTimeWithAggregatesFilter<"Meeting"> | Date | string
-    endTime?: DateTimeNullableWithAggregatesFilter<"Meeting"> | Date | string | null
-    duration?: IntNullableWithAggregatesFilter<"Meeting"> | number | null
-    recordingUrl?: StringNullableWithAggregatesFilter<"Meeting"> | string | null
+    startedAt?: DateTimeWithAggregatesFilter<"Meeting"> | Date | string
+    endedAt?: DateTimeNullableWithAggregatesFilter<"Meeting"> | Date | string | null
+    durationSeconds?: IntNullableWithAggregatesFilter<"Meeting"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Meeting"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"Meeting"> | Date | string
   }
 
   export type ParticipantWhereInput = {
@@ -8536,25 +13616,21 @@ export namespace Prisma {
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
     id?: StringFilter<"Participant"> | string
     meetingId?: StringFilter<"Participant"> | string
-    name?: StringFilter<"Participant"> | string
-    role?: StringFilter<"Participant"> | string
-    joinTime?: DateTimeFilter<"Participant"> | Date | string
-    leaveTime?: DateTimeNullableFilter<"Participant"> | Date | string | null
-    duration?: IntNullableFilter<"Participant"> | number | null
+    displayName?: StringFilter<"Participant"> | string
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+    sessions?: ParticipantSessionListRelationFilter
+    segments?: TranscriptSegmentListRelationFilter
   }
 
   export type ParticipantOrderByWithRelationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    joinTime?: SortOrder
-    leaveTime?: SortOrderInput | SortOrder
-    duration?: SortOrderInput | SortOrder
+    displayName?: SortOrder
     createdAt?: SortOrder
     meeting?: MeetingOrderByWithRelationInput
+    sessions?: ParticipantSessionOrderByRelationAggregateInput
+    segments?: TranscriptSegmentOrderByRelationAggregateInput
   }
 
   export type ParticipantWhereUniqueInput = Prisma.AtLeast<{
@@ -8563,29 +13639,21 @@ export namespace Prisma {
     OR?: ParticipantWhereInput[]
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
     meetingId?: StringFilter<"Participant"> | string
-    name?: StringFilter<"Participant"> | string
-    role?: StringFilter<"Participant"> | string
-    joinTime?: DateTimeFilter<"Participant"> | Date | string
-    leaveTime?: DateTimeNullableFilter<"Participant"> | Date | string | null
-    duration?: IntNullableFilter<"Participant"> | number | null
+    displayName?: StringFilter<"Participant"> | string
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+    sessions?: ParticipantSessionListRelationFilter
+    segments?: TranscriptSegmentListRelationFilter
   }, "id">
 
   export type ParticipantOrderByWithAggregationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    joinTime?: SortOrder
-    leaveTime?: SortOrderInput | SortOrder
-    duration?: SortOrderInput | SortOrder
+    displayName?: SortOrder
     createdAt?: SortOrder
     _count?: ParticipantCountOrderByAggregateInput
-    _avg?: ParticipantAvgOrderByAggregateInput
     _max?: ParticipantMaxOrderByAggregateInput
     _min?: ParticipantMinOrderByAggregateInput
-    _sum?: ParticipantSumOrderByAggregateInput
   }
 
   export type ParticipantScalarWhereWithAggregatesInput = {
@@ -8594,12 +13662,75 @@ export namespace Prisma {
     NOT?: ParticipantScalarWhereWithAggregatesInput | ParticipantScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Participant"> | string
     meetingId?: StringWithAggregatesFilter<"Participant"> | string
-    name?: StringWithAggregatesFilter<"Participant"> | string
-    role?: StringWithAggregatesFilter<"Participant"> | string
-    joinTime?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
-    leaveTime?: DateTimeNullableWithAggregatesFilter<"Participant"> | Date | string | null
-    duration?: IntNullableWithAggregatesFilter<"Participant"> | number | null
+    displayName?: StringWithAggregatesFilter<"Participant"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
+  }
+
+  export type ParticipantSessionWhereInput = {
+    AND?: ParticipantSessionWhereInput | ParticipantSessionWhereInput[]
+    OR?: ParticipantSessionWhereInput[]
+    NOT?: ParticipantSessionWhereInput | ParticipantSessionWhereInput[]
+    id?: StringFilter<"ParticipantSession"> | string
+    participantId?: StringFilter<"ParticipantSession"> | string
+    joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
+    connectionId?: StringFilter<"ParticipantSession"> | string
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
+  }
+
+  export type ParticipantSessionOrderByWithRelationInput = {
+    id?: SortOrder
+    participantId?: SortOrder
+    joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
+    leftAt?: SortOrderInput | SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
+    connectionId?: SortOrder
+    participant?: ParticipantOrderByWithRelationInput
+  }
+
+  export type ParticipantSessionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ParticipantSessionWhereInput | ParticipantSessionWhereInput[]
+    OR?: ParticipantSessionWhereInput[]
+    NOT?: ParticipantSessionWhereInput | ParticipantSessionWhereInput[]
+    participantId?: StringFilter<"ParticipantSession"> | string
+    joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
+    connectionId?: StringFilter<"ParticipantSession"> | string
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
+  }, "id">
+
+  export type ParticipantSessionOrderByWithAggregationInput = {
+    id?: SortOrder
+    participantId?: SortOrder
+    joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
+    leftAt?: SortOrderInput | SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
+    connectionId?: SortOrder
+    _count?: ParticipantSessionCountOrderByAggregateInput
+    _avg?: ParticipantSessionAvgOrderByAggregateInput
+    _max?: ParticipantSessionMaxOrderByAggregateInput
+    _min?: ParticipantSessionMinOrderByAggregateInput
+    _sum?: ParticipantSessionSumOrderByAggregateInput
+  }
+
+  export type ParticipantSessionScalarWhereWithAggregatesInput = {
+    AND?: ParticipantSessionScalarWhereWithAggregatesInput | ParticipantSessionScalarWhereWithAggregatesInput[]
+    OR?: ParticipantSessionScalarWhereWithAggregatesInput[]
+    NOT?: ParticipantSessionScalarWhereWithAggregatesInput | ParticipantSessionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ParticipantSession"> | string
+    participantId?: StringWithAggregatesFilter<"ParticipantSession"> | string
+    joinedAt?: DateTimeWithAggregatesFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeWithAggregatesFilter<"ParticipantSession"> | Date | string
+    leftAt?: DateTimeNullableWithAggregatesFilter<"ParticipantSession"> | Date | string | null
+    durationSeconds?: IntNullableWithAggregatesFilter<"ParticipantSession"> | number | null
+    connectionId?: StringWithAggregatesFilter<"ParticipantSession"> | string
   }
 
   export type TranscriptWhereInput = {
@@ -8608,39 +13739,42 @@ export namespace Prisma {
     NOT?: TranscriptWhereInput | TranscriptWhereInput[]
     id?: StringFilter<"Transcript"> | string
     meetingId?: StringFilter<"Transcript"> | string
-    speakerName?: StringFilter<"Transcript"> | string
-    text?: StringFilter<"Transcript"> | string
-    timestamp?: DateTimeFilter<"Transcript"> | Date | string
+    fullTranscript?: StringFilter<"Transcript"> | string
+    language?: StringFilter<"Transcript"> | string
+    createdAt?: DateTimeFilter<"Transcript"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+    segments?: TranscriptSegmentListRelationFilter
   }
 
   export type TranscriptOrderByWithRelationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    speakerName?: SortOrder
-    text?: SortOrder
-    timestamp?: SortOrder
+    fullTranscript?: SortOrder
+    language?: SortOrder
+    createdAt?: SortOrder
     meeting?: MeetingOrderByWithRelationInput
+    segments?: TranscriptSegmentOrderByRelationAggregateInput
   }
 
   export type TranscriptWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    meetingId?: string
     AND?: TranscriptWhereInput | TranscriptWhereInput[]
     OR?: TranscriptWhereInput[]
     NOT?: TranscriptWhereInput | TranscriptWhereInput[]
-    meetingId?: StringFilter<"Transcript"> | string
-    speakerName?: StringFilter<"Transcript"> | string
-    text?: StringFilter<"Transcript"> | string
-    timestamp?: DateTimeFilter<"Transcript"> | Date | string
+    fullTranscript?: StringFilter<"Transcript"> | string
+    language?: StringFilter<"Transcript"> | string
+    createdAt?: DateTimeFilter<"Transcript"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
-  }, "id">
+    segments?: TranscriptSegmentListRelationFilter
+  }, "id" | "meetingId">
 
   export type TranscriptOrderByWithAggregationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    speakerName?: SortOrder
-    text?: SortOrder
-    timestamp?: SortOrder
+    fullTranscript?: SortOrder
+    language?: SortOrder
+    createdAt?: SortOrder
     _count?: TranscriptCountOrderByAggregateInput
     _max?: TranscriptMaxOrderByAggregateInput
     _min?: TranscriptMinOrderByAggregateInput
@@ -8652,111 +13786,323 @@ export namespace Prisma {
     NOT?: TranscriptScalarWhereWithAggregatesInput | TranscriptScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Transcript"> | string
     meetingId?: StringWithAggregatesFilter<"Transcript"> | string
-    speakerName?: StringWithAggregatesFilter<"Transcript"> | string
-    text?: StringWithAggregatesFilter<"Transcript"> | string
-    timestamp?: DateTimeWithAggregatesFilter<"Transcript"> | Date | string
+    fullTranscript?: StringWithAggregatesFilter<"Transcript"> | string
+    language?: StringWithAggregatesFilter<"Transcript"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Transcript"> | Date | string
   }
 
-  export type SummaryWhereInput = {
-    AND?: SummaryWhereInput | SummaryWhereInput[]
-    OR?: SummaryWhereInput[]
-    NOT?: SummaryWhereInput | SummaryWhereInput[]
-    id?: StringFilter<"Summary"> | string
-    meetingId?: StringFilter<"Summary"> | string
-    content?: StringFilter<"Summary"> | string
-    createdAt?: DateTimeFilter<"Summary"> | Date | string
-    updatedAt?: DateTimeFilter<"Summary"> | Date | string
+  export type TranscriptSegmentWhereInput = {
+    AND?: TranscriptSegmentWhereInput | TranscriptSegmentWhereInput[]
+    OR?: TranscriptSegmentWhereInput[]
+    NOT?: TranscriptSegmentWhereInput | TranscriptSegmentWhereInput[]
+    id?: StringFilter<"TranscriptSegment"> | string
+    transcriptId?: StringFilter<"TranscriptSegment"> | string
+    participantId?: StringFilter<"TranscriptSegment"> | string
+    startTime?: FloatFilter<"TranscriptSegment"> | number
+    endTime?: FloatFilter<"TranscriptSegment"> | number
+    spokenAt?: DateTimeFilter<"TranscriptSegment"> | Date | string
+    text?: StringFilter<"TranscriptSegment"> | string
+    confidence?: FloatFilter<"TranscriptSegment"> | number
+    transcript?: XOR<TranscriptScalarRelationFilter, TranscriptWhereInput>
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
+  }
+
+  export type TranscriptSegmentOrderByWithRelationInput = {
+    id?: SortOrder
+    transcriptId?: SortOrder
+    participantId?: SortOrder
+    startTime?: SortOrder
+    endTime?: SortOrder
+    spokenAt?: SortOrder
+    text?: SortOrder
+    confidence?: SortOrder
+    transcript?: TranscriptOrderByWithRelationInput
+    participant?: ParticipantOrderByWithRelationInput
+  }
+
+  export type TranscriptSegmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TranscriptSegmentWhereInput | TranscriptSegmentWhereInput[]
+    OR?: TranscriptSegmentWhereInput[]
+    NOT?: TranscriptSegmentWhereInput | TranscriptSegmentWhereInput[]
+    transcriptId?: StringFilter<"TranscriptSegment"> | string
+    participantId?: StringFilter<"TranscriptSegment"> | string
+    startTime?: FloatFilter<"TranscriptSegment"> | number
+    endTime?: FloatFilter<"TranscriptSegment"> | number
+    spokenAt?: DateTimeFilter<"TranscriptSegment"> | Date | string
+    text?: StringFilter<"TranscriptSegment"> | string
+    confidence?: FloatFilter<"TranscriptSegment"> | number
+    transcript?: XOR<TranscriptScalarRelationFilter, TranscriptWhereInput>
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
+  }, "id">
+
+  export type TranscriptSegmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    transcriptId?: SortOrder
+    participantId?: SortOrder
+    startTime?: SortOrder
+    endTime?: SortOrder
+    spokenAt?: SortOrder
+    text?: SortOrder
+    confidence?: SortOrder
+    _count?: TranscriptSegmentCountOrderByAggregateInput
+    _avg?: TranscriptSegmentAvgOrderByAggregateInput
+    _max?: TranscriptSegmentMaxOrderByAggregateInput
+    _min?: TranscriptSegmentMinOrderByAggregateInput
+    _sum?: TranscriptSegmentSumOrderByAggregateInput
+  }
+
+  export type TranscriptSegmentScalarWhereWithAggregatesInput = {
+    AND?: TranscriptSegmentScalarWhereWithAggregatesInput | TranscriptSegmentScalarWhereWithAggregatesInput[]
+    OR?: TranscriptSegmentScalarWhereWithAggregatesInput[]
+    NOT?: TranscriptSegmentScalarWhereWithAggregatesInput | TranscriptSegmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TranscriptSegment"> | string
+    transcriptId?: StringWithAggregatesFilter<"TranscriptSegment"> | string
+    participantId?: StringWithAggregatesFilter<"TranscriptSegment"> | string
+    startTime?: FloatWithAggregatesFilter<"TranscriptSegment"> | number
+    endTime?: FloatWithAggregatesFilter<"TranscriptSegment"> | number
+    spokenAt?: DateTimeWithAggregatesFilter<"TranscriptSegment"> | Date | string
+    text?: StringWithAggregatesFilter<"TranscriptSegment"> | string
+    confidence?: FloatWithAggregatesFilter<"TranscriptSegment"> | number
+  }
+
+  export type MeetingSummaryWhereInput = {
+    AND?: MeetingSummaryWhereInput | MeetingSummaryWhereInput[]
+    OR?: MeetingSummaryWhereInput[]
+    NOT?: MeetingSummaryWhereInput | MeetingSummaryWhereInput[]
+    id?: StringFilter<"MeetingSummary"> | string
+    meetingId?: StringFilter<"MeetingSummary"> | string
+    aiSummary?: StringFilter<"MeetingSummary"> | string
+    editedSummary?: StringNullableFilter<"MeetingSummary"> | string | null
+    llmModel?: StringFilter<"MeetingSummary"> | string
+    generatedAt?: DateTimeFilter<"MeetingSummary"> | Date | string
+    editedAt?: DateTimeNullableFilter<"MeetingSummary"> | Date | string | null
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
   }
 
-  export type SummaryOrderByWithRelationInput = {
+  export type MeetingSummaryOrderByWithRelationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    content?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
+    aiSummary?: SortOrder
+    editedSummary?: SortOrderInput | SortOrder
+    llmModel?: SortOrder
+    generatedAt?: SortOrder
+    editedAt?: SortOrderInput | SortOrder
     meeting?: MeetingOrderByWithRelationInput
   }
 
-  export type SummaryWhereUniqueInput = Prisma.AtLeast<{
+  export type MeetingSummaryWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     meetingId?: string
-    AND?: SummaryWhereInput | SummaryWhereInput[]
-    OR?: SummaryWhereInput[]
-    NOT?: SummaryWhereInput | SummaryWhereInput[]
-    content?: StringFilter<"Summary"> | string
-    createdAt?: DateTimeFilter<"Summary"> | Date | string
-    updatedAt?: DateTimeFilter<"Summary"> | Date | string
+    AND?: MeetingSummaryWhereInput | MeetingSummaryWhereInput[]
+    OR?: MeetingSummaryWhereInput[]
+    NOT?: MeetingSummaryWhereInput | MeetingSummaryWhereInput[]
+    aiSummary?: StringFilter<"MeetingSummary"> | string
+    editedSummary?: StringNullableFilter<"MeetingSummary"> | string | null
+    llmModel?: StringFilter<"MeetingSummary"> | string
+    generatedAt?: DateTimeFilter<"MeetingSummary"> | Date | string
+    editedAt?: DateTimeNullableFilter<"MeetingSummary"> | Date | string | null
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
   }, "id" | "meetingId">
 
-  export type SummaryOrderByWithAggregationInput = {
+  export type MeetingSummaryOrderByWithAggregationInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    content?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: SummaryCountOrderByAggregateInput
-    _max?: SummaryMaxOrderByAggregateInput
-    _min?: SummaryMinOrderByAggregateInput
+    aiSummary?: SortOrder
+    editedSummary?: SortOrderInput | SortOrder
+    llmModel?: SortOrder
+    generatedAt?: SortOrder
+    editedAt?: SortOrderInput | SortOrder
+    _count?: MeetingSummaryCountOrderByAggregateInput
+    _max?: MeetingSummaryMaxOrderByAggregateInput
+    _min?: MeetingSummaryMinOrderByAggregateInput
   }
 
-  export type SummaryScalarWhereWithAggregatesInput = {
-    AND?: SummaryScalarWhereWithAggregatesInput | SummaryScalarWhereWithAggregatesInput[]
-    OR?: SummaryScalarWhereWithAggregatesInput[]
-    NOT?: SummaryScalarWhereWithAggregatesInput | SummaryScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"Summary"> | string
-    meetingId?: StringWithAggregatesFilter<"Summary"> | string
-    content?: StringWithAggregatesFilter<"Summary"> | string
-    createdAt?: DateTimeWithAggregatesFilter<"Summary"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"Summary"> | Date | string
+  export type MeetingSummaryScalarWhereWithAggregatesInput = {
+    AND?: MeetingSummaryScalarWhereWithAggregatesInput | MeetingSummaryScalarWhereWithAggregatesInput[]
+    OR?: MeetingSummaryScalarWhereWithAggregatesInput[]
+    NOT?: MeetingSummaryScalarWhereWithAggregatesInput | MeetingSummaryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MeetingSummary"> | string
+    meetingId?: StringWithAggregatesFilter<"MeetingSummary"> | string
+    aiSummary?: StringWithAggregatesFilter<"MeetingSummary"> | string
+    editedSummary?: StringNullableWithAggregatesFilter<"MeetingSummary"> | string | null
+    llmModel?: StringWithAggregatesFilter<"MeetingSummary"> | string
+    generatedAt?: DateTimeWithAggregatesFilter<"MeetingSummary"> | Date | string
+    editedAt?: DateTimeNullableWithAggregatesFilter<"MeetingSummary"> | Date | string | null
+  }
+
+  export type RecordingWhereInput = {
+    AND?: RecordingWhereInput | RecordingWhereInput[]
+    OR?: RecordingWhereInput[]
+    NOT?: RecordingWhereInput | RecordingWhereInput[]
+    id?: StringFilter<"Recording"> | string
+    meetingId?: StringFilter<"Recording"> | string
+    fileName?: StringFilter<"Recording"> | string
+    objectKey?: StringFilter<"Recording"> | string
+    durationSeconds?: IntNullableFilter<"Recording"> | number | null
+    fileSize?: BigIntFilter<"Recording"> | bigint | number
+    mimeType?: StringFilter<"Recording"> | string
+    createdAt?: DateTimeFilter<"Recording"> | Date | string
+    meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+  }
+
+  export type RecordingOrderByWithRelationInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    fileName?: SortOrder
+    objectKey?: SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
+    fileSize?: SortOrder
+    mimeType?: SortOrder
+    createdAt?: SortOrder
+    meeting?: MeetingOrderByWithRelationInput
+  }
+
+  export type RecordingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: RecordingWhereInput | RecordingWhereInput[]
+    OR?: RecordingWhereInput[]
+    NOT?: RecordingWhereInput | RecordingWhereInput[]
+    meetingId?: StringFilter<"Recording"> | string
+    fileName?: StringFilter<"Recording"> | string
+    objectKey?: StringFilter<"Recording"> | string
+    durationSeconds?: IntNullableFilter<"Recording"> | number | null
+    fileSize?: BigIntFilter<"Recording"> | bigint | number
+    mimeType?: StringFilter<"Recording"> | string
+    createdAt?: DateTimeFilter<"Recording"> | Date | string
+    meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+  }, "id">
+
+  export type RecordingOrderByWithAggregationInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    fileName?: SortOrder
+    objectKey?: SortOrder
+    durationSeconds?: SortOrderInput | SortOrder
+    fileSize?: SortOrder
+    mimeType?: SortOrder
+    createdAt?: SortOrder
+    _count?: RecordingCountOrderByAggregateInput
+    _avg?: RecordingAvgOrderByAggregateInput
+    _max?: RecordingMaxOrderByAggregateInput
+    _min?: RecordingMinOrderByAggregateInput
+    _sum?: RecordingSumOrderByAggregateInput
+  }
+
+  export type RecordingScalarWhereWithAggregatesInput = {
+    AND?: RecordingScalarWhereWithAggregatesInput | RecordingScalarWhereWithAggregatesInput[]
+    OR?: RecordingScalarWhereWithAggregatesInput[]
+    NOT?: RecordingScalarWhereWithAggregatesInput | RecordingScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Recording"> | string
+    meetingId?: StringWithAggregatesFilter<"Recording"> | string
+    fileName?: StringWithAggregatesFilter<"Recording"> | string
+    objectKey?: StringWithAggregatesFilter<"Recording"> | string
+    durationSeconds?: IntNullableWithAggregatesFilter<"Recording"> | number | null
+    fileSize?: BigIntWithAggregatesFilter<"Recording"> | bigint | number
+    mimeType?: StringWithAggregatesFilter<"Recording"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Recording"> | Date | string
+  }
+
+  export type ExportWhereInput = {
+    AND?: ExportWhereInput | ExportWhereInput[]
+    OR?: ExportWhereInput[]
+    NOT?: ExportWhereInput | ExportWhereInput[]
+    id?: StringFilter<"Export"> | string
+    meetingId?: StringFilter<"Export"> | string
+    exportFormat?: StringFilter<"Export"> | string
+    filePath?: StringFilter<"Export"> | string
+    exportedAt?: DateTimeFilter<"Export"> | Date | string
+    meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+  }
+
+  export type ExportOrderByWithRelationInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    exportFormat?: SortOrder
+    filePath?: SortOrder
+    exportedAt?: SortOrder
+    meeting?: MeetingOrderByWithRelationInput
+  }
+
+  export type ExportWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ExportWhereInput | ExportWhereInput[]
+    OR?: ExportWhereInput[]
+    NOT?: ExportWhereInput | ExportWhereInput[]
+    meetingId?: StringFilter<"Export"> | string
+    exportFormat?: StringFilter<"Export"> | string
+    filePath?: StringFilter<"Export"> | string
+    exportedAt?: DateTimeFilter<"Export"> | Date | string
+    meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+  }, "id">
+
+  export type ExportOrderByWithAggregationInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    exportFormat?: SortOrder
+    filePath?: SortOrder
+    exportedAt?: SortOrder
+    _count?: ExportCountOrderByAggregateInput
+    _max?: ExportMaxOrderByAggregateInput
+    _min?: ExportMinOrderByAggregateInput
+  }
+
+  export type ExportScalarWhereWithAggregatesInput = {
+    AND?: ExportScalarWhereWithAggregatesInput | ExportScalarWhereWithAggregatesInput[]
+    OR?: ExportScalarWhereWithAggregatesInput[]
+    NOT?: ExportScalarWhereWithAggregatesInput | ExportScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Export"> | string
+    meetingId?: StringWithAggregatesFilter<"Export"> | string
+    exportFormat?: StringWithAggregatesFilter<"Export"> | string
+    filePath?: StringWithAggregatesFilter<"Export"> | string
+    exportedAt?: DateTimeWithAggregatesFilter<"Export"> | Date | string
   }
 
   export type UserCreateInput = {
     id?: string
     email: string
     password: string
-    name?: string | null
+    fullname: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    rooms?: RoomCreateNestedManyWithoutHostInput
+    rooms?: MeetingRoomCreateNestedManyWithoutHostInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: string
     email: string
     password: string
-    name?: string | null
+    fullname: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    rooms?: RoomUncheckedCreateNestedManyWithoutHostInput
+    rooms?: MeetingRoomUncheckedCreateNestedManyWithoutHostInput
   }
 
   export type UserUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    rooms?: RoomUpdateManyWithoutHostNestedInput
+    rooms?: MeetingRoomUpdateManyWithoutHostNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    rooms?: RoomUncheckedUpdateManyWithoutHostNestedInput
+    rooms?: MeetingRoomUncheckedUpdateManyWithoutHostNestedInput
   }
 
   export type UserCreateManyInput = {
     id?: string
     email: string
     password: string
-    name?: string | null
+    fullname: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -8765,7 +14111,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8774,356 +14120,630 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type RoomCreateInput = {
+  export type MeetingRoomCreateInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
     host: UserCreateNestedOneWithoutRoomsInput
     meetings?: MeetingCreateNestedManyWithoutRoomInput
   }
 
-  export type RoomUncheckedCreateInput = {
+  export type MeetingRoomUncheckedCreateInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
     hostId: string
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
     meetings?: MeetingUncheckedCreateNestedManyWithoutRoomInput
   }
 
-  export type RoomUpdateInput = {
+  export type MeetingRoomUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     host?: UserUpdateOneRequiredWithoutRoomsNestedInput
     meetings?: MeetingUpdateManyWithoutRoomNestedInput
   }
 
-  export type RoomUncheckedUpdateInput = {
+  export type MeetingRoomUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    maxParticipants?: IntFieldUpdateOperationsInput | number
     hostId?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
+    maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meetings?: MeetingUncheckedUpdateManyWithoutRoomNestedInput
   }
 
-  export type RoomCreateManyInput = {
+  export type MeetingRoomCreateManyInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
     hostId: string
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
-  export type RoomUpdateManyMutationInput = {
+  export type MeetingRoomUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type RoomUncheckedUpdateManyInput = {
+  export type MeetingRoomUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    maxParticipants?: IntFieldUpdateOperationsInput | number
     hostId?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
+    maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MeetingCreateInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
-    room: RoomCreateNestedOneWithoutMeetingsInput
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
     participants?: ParticipantCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptCreateNestedManyWithoutMeetingInput
-    summary?: SummaryCreateNestedOneWithoutMeetingInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingUncheckedCreateInput = {
     id?: string
     roomId: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
     participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptUncheckedCreateNestedManyWithoutMeetingInput
-    summary?: SummaryUncheckedCreateNestedOneWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    room?: RoomUpdateOneRequiredWithoutMeetingsNestedInput
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
     participants?: ParticipantUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUpdateOneWithoutMeetingNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUncheckedUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingCreateManyInput = {
     id?: string
     roomId: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
   }
 
   export type MeetingUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MeetingUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ParticipantCreateInput = {
     id?: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
     meeting: MeetingCreateNestedOneWithoutParticipantsInput
+    sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateInput = {
     id?: string
     meetingId: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
+    sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
+    sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantCreateManyInput = {
     id?: string
     meetingId: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
   }
 
   export type ParticipantUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ParticipantUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantSessionCreateInput = {
+    id?: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+    participant: ParticipantCreateNestedOneWithoutSessionsInput
+  }
+
+  export type ParticipantSessionUncheckedCreateInput = {
+    id?: string
+    participantId: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+  }
+
+  export type ParticipantSessionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+    participant?: ParticipantUpdateOneRequiredWithoutSessionsNestedInput
+  }
+
+  export type ParticipantSessionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ParticipantSessionCreateManyInput = {
+    id?: string
+    participantId: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+  }
+
+  export type ParticipantSessionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ParticipantSessionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type TranscriptCreateInput = {
     id?: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
-    meeting: MeetingCreateNestedOneWithoutTranscriptsInput
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutTranscriptInput
+    segments?: TranscriptSegmentCreateNestedManyWithoutTranscriptInput
   }
 
   export type TranscriptUncheckedCreateInput = {
     id?: string
     meetingId: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutTranscriptInput
   }
 
   export type TranscriptUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-    meeting?: MeetingUpdateOneRequiredWithoutTranscriptsNestedInput
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutTranscriptNestedInput
+    segments?: TranscriptSegmentUpdateManyWithoutTranscriptNestedInput
   }
 
   export type TranscriptUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutTranscriptNestedInput
   }
 
   export type TranscriptCreateManyInput = {
     id?: string
     meetingId: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
   }
 
   export type TranscriptUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TranscriptUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type SummaryCreateInput = {
+  export type TranscriptSegmentCreateInput = {
     id?: string
-    content: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+    transcript: TranscriptCreateNestedOneWithoutSegmentsInput
+    participant: ParticipantCreateNestedOneWithoutSegmentsInput
+  }
+
+  export type TranscriptSegmentUncheckedCreateInput = {
+    id?: string
+    transcriptId: string
+    participantId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type TranscriptSegmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    transcript?: TranscriptUpdateOneRequiredWithoutSegmentsNestedInput
+    participant?: ParticipantUpdateOneRequiredWithoutSegmentsNestedInput
+  }
+
+  export type TranscriptSegmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    transcriptId?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type TranscriptSegmentCreateManyInput = {
+    id?: string
+    transcriptId: string
+    participantId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type TranscriptSegmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type TranscriptSegmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    transcriptId?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type MeetingSummaryCreateInput = {
+    id?: string
+    aiSummary: string
+    editedSummary?: string | null
+    llmModel: string
+    generatedAt: Date | string
+    editedAt?: Date | string | null
     meeting: MeetingCreateNestedOneWithoutSummaryInput
   }
 
-  export type SummaryUncheckedCreateInput = {
+  export type MeetingSummaryUncheckedCreateInput = {
     id?: string
     meetingId: string
-    content: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
+    aiSummary: string
+    editedSummary?: string | null
+    llmModel: string
+    generatedAt: Date | string
+    editedAt?: Date | string | null
   }
 
-  export type SummaryUpdateInput = {
+  export type MeetingSummaryUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     meeting?: MeetingUpdateOneRequiredWithoutSummaryNestedInput
   }
 
-  export type SummaryUncheckedUpdateInput = {
+  export type MeetingSummaryUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
-  export type SummaryCreateManyInput = {
+  export type MeetingSummaryCreateManyInput = {
     id?: string
     meetingId: string
-    content: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
+    aiSummary: string
+    editedSummary?: string | null
+    llmModel: string
+    generatedAt: Date | string
+    editedAt?: Date | string | null
   }
 
-  export type SummaryUpdateManyMutationInput = {
+  export type MeetingSummaryUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
-  export type SummaryUncheckedUpdateManyInput = {
+  export type MeetingSummaryUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RecordingCreateInput = {
+    id?: string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutRecordingsInput
+  }
+
+  export type RecordingUncheckedCreateInput = {
+    id?: string
+    meetingId: string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type RecordingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutRecordingsNestedInput
+  }
+
+  export type RecordingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecordingCreateManyInput = {
+    id?: string
+    meetingId: string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type RecordingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecordingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportCreateInput = {
+    id?: string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
+    meeting: MeetingCreateNestedOneWithoutExportsInput
+  }
+
+  export type ExportUncheckedCreateInput = {
+    id?: string
+    meetingId: string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
+  }
+
+  export type ExportUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutExportsNestedInput
+  }
+
+  export type ExportUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportCreateManyInput = {
+    id?: string
+    meetingId: string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
+  }
+
+  export type ExportUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -9141,21 +14761,6 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -9167,18 +14772,13 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
-  export type RoomListRelationFilter = {
-    every?: RoomWhereInput
-    some?: RoomWhereInput
-    none?: RoomWhereInput
+  export type MeetingRoomListRelationFilter = {
+    every?: MeetingRoomWhereInput
+    some?: MeetingRoomWhereInput
+    none?: MeetingRoomWhereInput
   }
 
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
-  }
-
-  export type RoomOrderByRelationAggregateInput = {
+  export type MeetingRoomOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9186,7 +14786,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
-    name?: SortOrder
+    fullname?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9195,7 +14795,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
-    name?: SortOrder
+    fullname?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9204,7 +14804,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
-    name?: SortOrder
+    fullname?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9225,24 +14825,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -9285,41 +14867,44 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type RoomCountOrderByAggregateInput = {
+  export type MeetingRoomCountOrderByAggregateInput = {
     id?: SortOrder
-    slug?: SortOrder
-    name?: SortOrder
-    maxParticipants?: SortOrder
     hostId?: SortOrder
+    roomName?: SortOrder
+    roomHash?: SortOrder
+    maxParticipants?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type RoomAvgOrderByAggregateInput = {
+  export type MeetingRoomAvgOrderByAggregateInput = {
     maxParticipants?: SortOrder
   }
 
-  export type RoomMaxOrderByAggregateInput = {
+  export type MeetingRoomMaxOrderByAggregateInput = {
     id?: SortOrder
-    slug?: SortOrder
-    name?: SortOrder
-    maxParticipants?: SortOrder
     hostId?: SortOrder
+    roomName?: SortOrder
+    roomHash?: SortOrder
+    maxParticipants?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type RoomMinOrderByAggregateInput = {
+  export type MeetingRoomMinOrderByAggregateInput = {
     id?: SortOrder
-    slug?: SortOrder
-    name?: SortOrder
-    maxParticipants?: SortOrder
     hostId?: SortOrder
+    roomName?: SortOrder
+    roomHash?: SortOrder
+    maxParticipants?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type RoomSumOrderByAggregateInput = {
+  export type MeetingRoomSumOrderByAggregateInput = {
     maxParticipants?: SortOrder
   }
 
@@ -9361,9 +14946,9 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
-  export type RoomScalarRelationFilter = {
-    is?: RoomWhereInput
-    isNot?: RoomWhereInput
+  export type MeetingRoomScalarRelationFilter = {
+    is?: MeetingRoomWhereInput
+    isNot?: MeetingRoomWhereInput
   }
 
   export type ParticipantListRelationFilter = {
@@ -9372,64 +14957,78 @@ export namespace Prisma {
     none?: ParticipantWhereInput
   }
 
-  export type TranscriptListRelationFilter = {
-    every?: TranscriptWhereInput
-    some?: TranscriptWhereInput
-    none?: TranscriptWhereInput
+  export type TranscriptNullableScalarRelationFilter = {
+    is?: TranscriptWhereInput | null
+    isNot?: TranscriptWhereInput | null
   }
 
-  export type SummaryNullableScalarRelationFilter = {
-    is?: SummaryWhereInput | null
-    isNot?: SummaryWhereInput | null
+  export type MeetingSummaryNullableScalarRelationFilter = {
+    is?: MeetingSummaryWhereInput | null
+    isNot?: MeetingSummaryWhereInput | null
+  }
+
+  export type RecordingListRelationFilter = {
+    every?: RecordingWhereInput
+    some?: RecordingWhereInput
+    none?: RecordingWhereInput
+  }
+
+  export type ExportListRelationFilter = {
+    every?: ExportWhereInput
+    some?: ExportWhereInput
+    none?: ExportWhereInput
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
   }
 
   export type ParticipantOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type TranscriptOrderByRelationAggregateInput = {
+  export type RecordingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ExportOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type MeetingCountOrderByAggregateInput = {
     id?: SortOrder
     roomId?: SortOrder
-    startTime?: SortOrder
-    endTime?: SortOrder
-    duration?: SortOrder
-    recordingUrl?: SortOrder
+    startedAt?: SortOrder
+    endedAt?: SortOrder
+    durationSeconds?: SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
   export type MeetingAvgOrderByAggregateInput = {
-    duration?: SortOrder
+    durationSeconds?: SortOrder
   }
 
   export type MeetingMaxOrderByAggregateInput = {
     id?: SortOrder
     roomId?: SortOrder
-    startTime?: SortOrder
-    endTime?: SortOrder
-    duration?: SortOrder
-    recordingUrl?: SortOrder
+    startedAt?: SortOrder
+    endedAt?: SortOrder
+    durationSeconds?: SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
   export type MeetingMinOrderByAggregateInput = {
     id?: SortOrder
     roomId?: SortOrder
-    startTime?: SortOrder
-    endTime?: SortOrder
-    duration?: SortOrder
-    recordingUrl?: SortOrder
+    startedAt?: SortOrder
+    endedAt?: SortOrder
+    durationSeconds?: SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
   export type MeetingSumOrderByAggregateInput = {
-    duration?: SortOrder
+    durationSeconds?: SortOrder
   }
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -9467,147 +15066,396 @@ export namespace Prisma {
     isNot?: MeetingWhereInput
   }
 
+  export type ParticipantSessionListRelationFilter = {
+    every?: ParticipantSessionWhereInput
+    some?: ParticipantSessionWhereInput
+    none?: ParticipantSessionWhereInput
+  }
+
+  export type TranscriptSegmentListRelationFilter = {
+    every?: TranscriptSegmentWhereInput
+    some?: TranscriptSegmentWhereInput
+    none?: TranscriptSegmentWhereInput
+  }
+
+  export type ParticipantSessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TranscriptSegmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type ParticipantCountOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    joinTime?: SortOrder
-    leaveTime?: SortOrder
-    duration?: SortOrder
+    displayName?: SortOrder
     createdAt?: SortOrder
-  }
-
-  export type ParticipantAvgOrderByAggregateInput = {
-    duration?: SortOrder
   }
 
   export type ParticipantMaxOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    joinTime?: SortOrder
-    leaveTime?: SortOrder
-    duration?: SortOrder
+    displayName?: SortOrder
     createdAt?: SortOrder
   }
 
   export type ParticipantMinOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    name?: SortOrder
-    role?: SortOrder
-    joinTime?: SortOrder
-    leaveTime?: SortOrder
-    duration?: SortOrder
+    displayName?: SortOrder
     createdAt?: SortOrder
   }
 
-  export type ParticipantSumOrderByAggregateInput = {
-    duration?: SortOrder
+  export type ParticipantScalarRelationFilter = {
+    is?: ParticipantWhereInput
+    isNot?: ParticipantWhereInput
+  }
+
+  export type ParticipantSessionCountOrderByAggregateInput = {
+    id?: SortOrder
+    participantId?: SortOrder
+    joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
+    leftAt?: SortOrder
+    durationSeconds?: SortOrder
+    connectionId?: SortOrder
+  }
+
+  export type ParticipantSessionAvgOrderByAggregateInput = {
+    durationSeconds?: SortOrder
+  }
+
+  export type ParticipantSessionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    participantId?: SortOrder
+    joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
+    leftAt?: SortOrder
+    durationSeconds?: SortOrder
+    connectionId?: SortOrder
+  }
+
+  export type ParticipantSessionMinOrderByAggregateInput = {
+    id?: SortOrder
+    participantId?: SortOrder
+    joinedAt?: SortOrder
+    lastSeenAt?: SortOrder
+    leftAt?: SortOrder
+    durationSeconds?: SortOrder
+    connectionId?: SortOrder
+  }
+
+  export type ParticipantSessionSumOrderByAggregateInput = {
+    durationSeconds?: SortOrder
   }
 
   export type TranscriptCountOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    speakerName?: SortOrder
-    text?: SortOrder
-    timestamp?: SortOrder
+    fullTranscript?: SortOrder
+    language?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type TranscriptMaxOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    speakerName?: SortOrder
-    text?: SortOrder
-    timestamp?: SortOrder
+    fullTranscript?: SortOrder
+    language?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type TranscriptMinOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    speakerName?: SortOrder
+    fullTranscript?: SortOrder
+    language?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type TranscriptScalarRelationFilter = {
+    is?: TranscriptWhereInput
+    isNot?: TranscriptWhereInput
+  }
+
+  export type TranscriptSegmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    transcriptId?: SortOrder
+    participantId?: SortOrder
+    startTime?: SortOrder
+    endTime?: SortOrder
+    spokenAt?: SortOrder
     text?: SortOrder
-    timestamp?: SortOrder
+    confidence?: SortOrder
   }
 
-  export type SummaryCountOrderByAggregateInput = {
+  export type TranscriptSegmentAvgOrderByAggregateInput = {
+    startTime?: SortOrder
+    endTime?: SortOrder
+    confidence?: SortOrder
+  }
+
+  export type TranscriptSegmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    transcriptId?: SortOrder
+    participantId?: SortOrder
+    startTime?: SortOrder
+    endTime?: SortOrder
+    spokenAt?: SortOrder
+    text?: SortOrder
+    confidence?: SortOrder
+  }
+
+  export type TranscriptSegmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    transcriptId?: SortOrder
+    participantId?: SortOrder
+    startTime?: SortOrder
+    endTime?: SortOrder
+    spokenAt?: SortOrder
+    text?: SortOrder
+    confidence?: SortOrder
+  }
+
+  export type TranscriptSegmentSumOrderByAggregateInput = {
+    startTime?: SortOrder
+    endTime?: SortOrder
+    confidence?: SortOrder
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type MeetingSummaryCountOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    content?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
+    aiSummary?: SortOrder
+    editedSummary?: SortOrder
+    llmModel?: SortOrder
+    generatedAt?: SortOrder
+    editedAt?: SortOrder
   }
 
-  export type SummaryMaxOrderByAggregateInput = {
+  export type MeetingSummaryMaxOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    content?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
+    aiSummary?: SortOrder
+    editedSummary?: SortOrder
+    llmModel?: SortOrder
+    generatedAt?: SortOrder
+    editedAt?: SortOrder
   }
 
-  export type SummaryMinOrderByAggregateInput = {
+  export type MeetingSummaryMinOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
-    content?: SortOrder
+    aiSummary?: SortOrder
+    editedSummary?: SortOrder
+    llmModel?: SortOrder
+    generatedAt?: SortOrder
+    editedAt?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type BigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type RecordingCountOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    fileName?: SortOrder
+    objectKey?: SortOrder
+    durationSeconds?: SortOrder
+    fileSize?: SortOrder
+    mimeType?: SortOrder
     createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
-  export type RoomCreateNestedManyWithoutHostInput = {
-    create?: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput> | RoomCreateWithoutHostInput[] | RoomUncheckedCreateWithoutHostInput[]
-    connectOrCreate?: RoomCreateOrConnectWithoutHostInput | RoomCreateOrConnectWithoutHostInput[]
-    createMany?: RoomCreateManyHostInputEnvelope
-    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+  export type RecordingAvgOrderByAggregateInput = {
+    durationSeconds?: SortOrder
+    fileSize?: SortOrder
   }
 
-  export type RoomUncheckedCreateNestedManyWithoutHostInput = {
-    create?: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput> | RoomCreateWithoutHostInput[] | RoomUncheckedCreateWithoutHostInput[]
-    connectOrCreate?: RoomCreateOrConnectWithoutHostInput | RoomCreateOrConnectWithoutHostInput[]
-    createMany?: RoomCreateManyHostInputEnvelope
-    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+  export type RecordingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    fileName?: SortOrder
+    objectKey?: SortOrder
+    durationSeconds?: SortOrder
+    fileSize?: SortOrder
+    mimeType?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RecordingMinOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    fileName?: SortOrder
+    objectKey?: SortOrder
+    durationSeconds?: SortOrder
+    fileSize?: SortOrder
+    mimeType?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RecordingSumOrderByAggregateInput = {
+    durationSeconds?: SortOrder
+    fileSize?: SortOrder
+  }
+
+  export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type ExportCountOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    exportFormat?: SortOrder
+    filePath?: SortOrder
+    exportedAt?: SortOrder
+  }
+
+  export type ExportMaxOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    exportFormat?: SortOrder
+    filePath?: SortOrder
+    exportedAt?: SortOrder
+  }
+
+  export type ExportMinOrderByAggregateInput = {
+    id?: SortOrder
+    meetingId?: SortOrder
+    exportFormat?: SortOrder
+    filePath?: SortOrder
+    exportedAt?: SortOrder
+  }
+
+  export type MeetingRoomCreateNestedManyWithoutHostInput = {
+    create?: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput> | MeetingRoomCreateWithoutHostInput[] | MeetingRoomUncheckedCreateWithoutHostInput[]
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutHostInput | MeetingRoomCreateOrConnectWithoutHostInput[]
+    createMany?: MeetingRoomCreateManyHostInputEnvelope
+    connect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+  }
+
+  export type MeetingRoomUncheckedCreateNestedManyWithoutHostInput = {
+    create?: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput> | MeetingRoomCreateWithoutHostInput[] | MeetingRoomUncheckedCreateWithoutHostInput[]
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutHostInput | MeetingRoomCreateOrConnectWithoutHostInput[]
+    createMany?: MeetingRoomCreateManyHostInputEnvelope
+    connect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-  }
-
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
 
-  export type RoomUpdateManyWithoutHostNestedInput = {
-    create?: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput> | RoomCreateWithoutHostInput[] | RoomUncheckedCreateWithoutHostInput[]
-    connectOrCreate?: RoomCreateOrConnectWithoutHostInput | RoomCreateOrConnectWithoutHostInput[]
-    upsert?: RoomUpsertWithWhereUniqueWithoutHostInput | RoomUpsertWithWhereUniqueWithoutHostInput[]
-    createMany?: RoomCreateManyHostInputEnvelope
-    set?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    disconnect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    delete?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    update?: RoomUpdateWithWhereUniqueWithoutHostInput | RoomUpdateWithWhereUniqueWithoutHostInput[]
-    updateMany?: RoomUpdateManyWithWhereWithoutHostInput | RoomUpdateManyWithWhereWithoutHostInput[]
-    deleteMany?: RoomScalarWhereInput | RoomScalarWhereInput[]
+  export type MeetingRoomUpdateManyWithoutHostNestedInput = {
+    create?: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput> | MeetingRoomCreateWithoutHostInput[] | MeetingRoomUncheckedCreateWithoutHostInput[]
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutHostInput | MeetingRoomCreateOrConnectWithoutHostInput[]
+    upsert?: MeetingRoomUpsertWithWhereUniqueWithoutHostInput | MeetingRoomUpsertWithWhereUniqueWithoutHostInput[]
+    createMany?: MeetingRoomCreateManyHostInputEnvelope
+    set?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    disconnect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    delete?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    connect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    update?: MeetingRoomUpdateWithWhereUniqueWithoutHostInput | MeetingRoomUpdateWithWhereUniqueWithoutHostInput[]
+    updateMany?: MeetingRoomUpdateManyWithWhereWithoutHostInput | MeetingRoomUpdateManyWithWhereWithoutHostInput[]
+    deleteMany?: MeetingRoomScalarWhereInput | MeetingRoomScalarWhereInput[]
   }
 
-  export type RoomUncheckedUpdateManyWithoutHostNestedInput = {
-    create?: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput> | RoomCreateWithoutHostInput[] | RoomUncheckedCreateWithoutHostInput[]
-    connectOrCreate?: RoomCreateOrConnectWithoutHostInput | RoomCreateOrConnectWithoutHostInput[]
-    upsert?: RoomUpsertWithWhereUniqueWithoutHostInput | RoomUpsertWithWhereUniqueWithoutHostInput[]
-    createMany?: RoomCreateManyHostInputEnvelope
-    set?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    disconnect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    delete?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
-    update?: RoomUpdateWithWhereUniqueWithoutHostInput | RoomUpdateWithWhereUniqueWithoutHostInput[]
-    updateMany?: RoomUpdateManyWithWhereWithoutHostInput | RoomUpdateManyWithWhereWithoutHostInput[]
-    deleteMany?: RoomScalarWhereInput | RoomScalarWhereInput[]
+  export type MeetingRoomUncheckedUpdateManyWithoutHostNestedInput = {
+    create?: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput> | MeetingRoomCreateWithoutHostInput[] | MeetingRoomUncheckedCreateWithoutHostInput[]
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutHostInput | MeetingRoomCreateOrConnectWithoutHostInput[]
+    upsert?: MeetingRoomUpsertWithWhereUniqueWithoutHostInput | MeetingRoomUpsertWithWhereUniqueWithoutHostInput[]
+    createMany?: MeetingRoomCreateManyHostInputEnvelope
+    set?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    disconnect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    delete?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    connect?: MeetingRoomWhereUniqueInput | MeetingRoomWhereUniqueInput[]
+    update?: MeetingRoomUpdateWithWhereUniqueWithoutHostInput | MeetingRoomUpdateWithWhereUniqueWithoutHostInput[]
+    updateMany?: MeetingRoomUpdateManyWithWhereWithoutHostInput | MeetingRoomUpdateManyWithWhereWithoutHostInput[]
+    deleteMany?: MeetingRoomScalarWhereInput | MeetingRoomScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutRoomsInput = {
@@ -9674,10 +15522,10 @@ export namespace Prisma {
     deleteMany?: MeetingScalarWhereInput | MeetingScalarWhereInput[]
   }
 
-  export type RoomCreateNestedOneWithoutMeetingsInput = {
-    create?: XOR<RoomCreateWithoutMeetingsInput, RoomUncheckedCreateWithoutMeetingsInput>
-    connectOrCreate?: RoomCreateOrConnectWithoutMeetingsInput
-    connect?: RoomWhereUniqueInput
+  export type MeetingRoomCreateNestedOneWithoutMeetingsInput = {
+    create?: XOR<MeetingRoomCreateWithoutMeetingsInput, MeetingRoomUncheckedCreateWithoutMeetingsInput>
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutMeetingsInput
+    connect?: MeetingRoomWhereUniqueInput
   }
 
   export type ParticipantCreateNestedManyWithoutMeetingInput = {
@@ -9687,17 +15535,30 @@ export namespace Prisma {
     connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
   }
 
-  export type TranscriptCreateNestedManyWithoutMeetingInput = {
-    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput> | TranscriptCreateWithoutMeetingInput[] | TranscriptUncheckedCreateWithoutMeetingInput[]
-    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput | TranscriptCreateOrConnectWithoutMeetingInput[]
-    createMany?: TranscriptCreateManyMeetingInputEnvelope
-    connect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
+  export type TranscriptCreateNestedOneWithoutMeetingInput = {
+    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput
+    connect?: TranscriptWhereUniqueInput
   }
 
-  export type SummaryCreateNestedOneWithoutMeetingInput = {
-    create?: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
-    connectOrCreate?: SummaryCreateOrConnectWithoutMeetingInput
-    connect?: SummaryWhereUniqueInput
+  export type MeetingSummaryCreateNestedOneWithoutMeetingInput = {
+    create?: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: MeetingSummaryCreateOrConnectWithoutMeetingInput
+    connect?: MeetingSummaryWhereUniqueInput
+  }
+
+  export type RecordingCreateNestedManyWithoutMeetingInput = {
+    create?: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput> | RecordingCreateWithoutMeetingInput[] | RecordingUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutMeetingInput | RecordingCreateOrConnectWithoutMeetingInput[]
+    createMany?: RecordingCreateManyMeetingInputEnvelope
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+  }
+
+  export type ExportCreateNestedManyWithoutMeetingInput = {
+    create?: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput> | ExportCreateWithoutMeetingInput[] | ExportUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: ExportCreateOrConnectWithoutMeetingInput | ExportCreateOrConnectWithoutMeetingInput[]
+    createMany?: ExportCreateManyMeetingInputEnvelope
+    connect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
   }
 
   export type ParticipantUncheckedCreateNestedManyWithoutMeetingInput = {
@@ -9707,17 +15568,30 @@ export namespace Prisma {
     connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
   }
 
-  export type TranscriptUncheckedCreateNestedManyWithoutMeetingInput = {
-    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput> | TranscriptCreateWithoutMeetingInput[] | TranscriptUncheckedCreateWithoutMeetingInput[]
-    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput | TranscriptCreateOrConnectWithoutMeetingInput[]
-    createMany?: TranscriptCreateManyMeetingInputEnvelope
-    connect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
+  export type TranscriptUncheckedCreateNestedOneWithoutMeetingInput = {
+    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput
+    connect?: TranscriptWhereUniqueInput
   }
 
-  export type SummaryUncheckedCreateNestedOneWithoutMeetingInput = {
-    create?: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
-    connectOrCreate?: SummaryCreateOrConnectWithoutMeetingInput
-    connect?: SummaryWhereUniqueInput
+  export type MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput = {
+    create?: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: MeetingSummaryCreateOrConnectWithoutMeetingInput
+    connect?: MeetingSummaryWhereUniqueInput
+  }
+
+  export type RecordingUncheckedCreateNestedManyWithoutMeetingInput = {
+    create?: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput> | RecordingCreateWithoutMeetingInput[] | RecordingUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutMeetingInput | RecordingCreateOrConnectWithoutMeetingInput[]
+    createMany?: RecordingCreateManyMeetingInputEnvelope
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+  }
+
+  export type ExportUncheckedCreateNestedManyWithoutMeetingInput = {
+    create?: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput> | ExportCreateWithoutMeetingInput[] | ExportUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: ExportCreateOrConnectWithoutMeetingInput | ExportCreateOrConnectWithoutMeetingInput[]
+    createMany?: ExportCreateManyMeetingInputEnvelope
+    connect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -9732,12 +15606,12 @@ export namespace Prisma {
     divide?: number
   }
 
-  export type RoomUpdateOneRequiredWithoutMeetingsNestedInput = {
-    create?: XOR<RoomCreateWithoutMeetingsInput, RoomUncheckedCreateWithoutMeetingsInput>
-    connectOrCreate?: RoomCreateOrConnectWithoutMeetingsInput
-    upsert?: RoomUpsertWithoutMeetingsInput
-    connect?: RoomWhereUniqueInput
-    update?: XOR<XOR<RoomUpdateToOneWithWhereWithoutMeetingsInput, RoomUpdateWithoutMeetingsInput>, RoomUncheckedUpdateWithoutMeetingsInput>
+  export type MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput = {
+    create?: XOR<MeetingRoomCreateWithoutMeetingsInput, MeetingRoomUncheckedCreateWithoutMeetingsInput>
+    connectOrCreate?: MeetingRoomCreateOrConnectWithoutMeetingsInput
+    upsert?: MeetingRoomUpsertWithoutMeetingsInput
+    connect?: MeetingRoomWhereUniqueInput
+    update?: XOR<XOR<MeetingRoomUpdateToOneWithWhereWithoutMeetingsInput, MeetingRoomUpdateWithoutMeetingsInput>, MeetingRoomUncheckedUpdateWithoutMeetingsInput>
   }
 
   export type ParticipantUpdateManyWithoutMeetingNestedInput = {
@@ -9754,28 +15628,52 @@ export namespace Prisma {
     deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
   }
 
-  export type TranscriptUpdateManyWithoutMeetingNestedInput = {
-    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput> | TranscriptCreateWithoutMeetingInput[] | TranscriptUncheckedCreateWithoutMeetingInput[]
-    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput | TranscriptCreateOrConnectWithoutMeetingInput[]
-    upsert?: TranscriptUpsertWithWhereUniqueWithoutMeetingInput | TranscriptUpsertWithWhereUniqueWithoutMeetingInput[]
-    createMany?: TranscriptCreateManyMeetingInputEnvelope
-    set?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    disconnect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    delete?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    connect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    update?: TranscriptUpdateWithWhereUniqueWithoutMeetingInput | TranscriptUpdateWithWhereUniqueWithoutMeetingInput[]
-    updateMany?: TranscriptUpdateManyWithWhereWithoutMeetingInput | TranscriptUpdateManyWithWhereWithoutMeetingInput[]
-    deleteMany?: TranscriptScalarWhereInput | TranscriptScalarWhereInput[]
+  export type TranscriptUpdateOneWithoutMeetingNestedInput = {
+    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput
+    upsert?: TranscriptUpsertWithoutMeetingInput
+    disconnect?: TranscriptWhereInput | boolean
+    delete?: TranscriptWhereInput | boolean
+    connect?: TranscriptWhereUniqueInput
+    update?: XOR<XOR<TranscriptUpdateToOneWithWhereWithoutMeetingInput, TranscriptUpdateWithoutMeetingInput>, TranscriptUncheckedUpdateWithoutMeetingInput>
   }
 
-  export type SummaryUpdateOneWithoutMeetingNestedInput = {
-    create?: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
-    connectOrCreate?: SummaryCreateOrConnectWithoutMeetingInput
-    upsert?: SummaryUpsertWithoutMeetingInput
-    disconnect?: SummaryWhereInput | boolean
-    delete?: SummaryWhereInput | boolean
-    connect?: SummaryWhereUniqueInput
-    update?: XOR<XOR<SummaryUpdateToOneWithWhereWithoutMeetingInput, SummaryUpdateWithoutMeetingInput>, SummaryUncheckedUpdateWithoutMeetingInput>
+  export type MeetingSummaryUpdateOneWithoutMeetingNestedInput = {
+    create?: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: MeetingSummaryCreateOrConnectWithoutMeetingInput
+    upsert?: MeetingSummaryUpsertWithoutMeetingInput
+    disconnect?: MeetingSummaryWhereInput | boolean
+    delete?: MeetingSummaryWhereInput | boolean
+    connect?: MeetingSummaryWhereUniqueInput
+    update?: XOR<XOR<MeetingSummaryUpdateToOneWithWhereWithoutMeetingInput, MeetingSummaryUpdateWithoutMeetingInput>, MeetingSummaryUncheckedUpdateWithoutMeetingInput>
+  }
+
+  export type RecordingUpdateManyWithoutMeetingNestedInput = {
+    create?: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput> | RecordingCreateWithoutMeetingInput[] | RecordingUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutMeetingInput | RecordingCreateOrConnectWithoutMeetingInput[]
+    upsert?: RecordingUpsertWithWhereUniqueWithoutMeetingInput | RecordingUpsertWithWhereUniqueWithoutMeetingInput[]
+    createMany?: RecordingCreateManyMeetingInputEnvelope
+    set?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    disconnect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    delete?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    update?: RecordingUpdateWithWhereUniqueWithoutMeetingInput | RecordingUpdateWithWhereUniqueWithoutMeetingInput[]
+    updateMany?: RecordingUpdateManyWithWhereWithoutMeetingInput | RecordingUpdateManyWithWhereWithoutMeetingInput[]
+    deleteMany?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
+  }
+
+  export type ExportUpdateManyWithoutMeetingNestedInput = {
+    create?: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput> | ExportCreateWithoutMeetingInput[] | ExportUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: ExportCreateOrConnectWithoutMeetingInput | ExportCreateOrConnectWithoutMeetingInput[]
+    upsert?: ExportUpsertWithWhereUniqueWithoutMeetingInput | ExportUpsertWithWhereUniqueWithoutMeetingInput[]
+    createMany?: ExportCreateManyMeetingInputEnvelope
+    set?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    disconnect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    delete?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    connect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    update?: ExportUpdateWithWhereUniqueWithoutMeetingInput | ExportUpdateWithWhereUniqueWithoutMeetingInput[]
+    updateMany?: ExportUpdateManyWithWhereWithoutMeetingInput | ExportUpdateManyWithWhereWithoutMeetingInput[]
+    deleteMany?: ExportScalarWhereInput | ExportScalarWhereInput[]
   }
 
   export type ParticipantUncheckedUpdateManyWithoutMeetingNestedInput = {
@@ -9792,34 +15690,86 @@ export namespace Prisma {
     deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
   }
 
-  export type TranscriptUncheckedUpdateManyWithoutMeetingNestedInput = {
-    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput> | TranscriptCreateWithoutMeetingInput[] | TranscriptUncheckedCreateWithoutMeetingInput[]
-    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput | TranscriptCreateOrConnectWithoutMeetingInput[]
-    upsert?: TranscriptUpsertWithWhereUniqueWithoutMeetingInput | TranscriptUpsertWithWhereUniqueWithoutMeetingInput[]
-    createMany?: TranscriptCreateManyMeetingInputEnvelope
-    set?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    disconnect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    delete?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    connect?: TranscriptWhereUniqueInput | TranscriptWhereUniqueInput[]
-    update?: TranscriptUpdateWithWhereUniqueWithoutMeetingInput | TranscriptUpdateWithWhereUniqueWithoutMeetingInput[]
-    updateMany?: TranscriptUpdateManyWithWhereWithoutMeetingInput | TranscriptUpdateManyWithWhereWithoutMeetingInput[]
-    deleteMany?: TranscriptScalarWhereInput | TranscriptScalarWhereInput[]
+  export type TranscriptUncheckedUpdateOneWithoutMeetingNestedInput = {
+    create?: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutMeetingInput
+    upsert?: TranscriptUpsertWithoutMeetingInput
+    disconnect?: TranscriptWhereInput | boolean
+    delete?: TranscriptWhereInput | boolean
+    connect?: TranscriptWhereUniqueInput
+    update?: XOR<XOR<TranscriptUpdateToOneWithWhereWithoutMeetingInput, TranscriptUpdateWithoutMeetingInput>, TranscriptUncheckedUpdateWithoutMeetingInput>
   }
 
-  export type SummaryUncheckedUpdateOneWithoutMeetingNestedInput = {
-    create?: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
-    connectOrCreate?: SummaryCreateOrConnectWithoutMeetingInput
-    upsert?: SummaryUpsertWithoutMeetingInput
-    disconnect?: SummaryWhereInput | boolean
-    delete?: SummaryWhereInput | boolean
-    connect?: SummaryWhereUniqueInput
-    update?: XOR<XOR<SummaryUpdateToOneWithWhereWithoutMeetingInput, SummaryUpdateWithoutMeetingInput>, SummaryUncheckedUpdateWithoutMeetingInput>
+  export type MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput = {
+    create?: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+    connectOrCreate?: MeetingSummaryCreateOrConnectWithoutMeetingInput
+    upsert?: MeetingSummaryUpsertWithoutMeetingInput
+    disconnect?: MeetingSummaryWhereInput | boolean
+    delete?: MeetingSummaryWhereInput | boolean
+    connect?: MeetingSummaryWhereUniqueInput
+    update?: XOR<XOR<MeetingSummaryUpdateToOneWithWhereWithoutMeetingInput, MeetingSummaryUpdateWithoutMeetingInput>, MeetingSummaryUncheckedUpdateWithoutMeetingInput>
+  }
+
+  export type RecordingUncheckedUpdateManyWithoutMeetingNestedInput = {
+    create?: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput> | RecordingCreateWithoutMeetingInput[] | RecordingUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutMeetingInput | RecordingCreateOrConnectWithoutMeetingInput[]
+    upsert?: RecordingUpsertWithWhereUniqueWithoutMeetingInput | RecordingUpsertWithWhereUniqueWithoutMeetingInput[]
+    createMany?: RecordingCreateManyMeetingInputEnvelope
+    set?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    disconnect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    delete?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    update?: RecordingUpdateWithWhereUniqueWithoutMeetingInput | RecordingUpdateWithWhereUniqueWithoutMeetingInput[]
+    updateMany?: RecordingUpdateManyWithWhereWithoutMeetingInput | RecordingUpdateManyWithWhereWithoutMeetingInput[]
+    deleteMany?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
+  }
+
+  export type ExportUncheckedUpdateManyWithoutMeetingNestedInput = {
+    create?: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput> | ExportCreateWithoutMeetingInput[] | ExportUncheckedCreateWithoutMeetingInput[]
+    connectOrCreate?: ExportCreateOrConnectWithoutMeetingInput | ExportCreateOrConnectWithoutMeetingInput[]
+    upsert?: ExportUpsertWithWhereUniqueWithoutMeetingInput | ExportUpsertWithWhereUniqueWithoutMeetingInput[]
+    createMany?: ExportCreateManyMeetingInputEnvelope
+    set?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    disconnect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    delete?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    connect?: ExportWhereUniqueInput | ExportWhereUniqueInput[]
+    update?: ExportUpdateWithWhereUniqueWithoutMeetingInput | ExportUpdateWithWhereUniqueWithoutMeetingInput[]
+    updateMany?: ExportUpdateManyWithWhereWithoutMeetingInput | ExportUpdateManyWithWhereWithoutMeetingInput[]
+    deleteMany?: ExportScalarWhereInput | ExportScalarWhereInput[]
   }
 
   export type MeetingCreateNestedOneWithoutParticipantsInput = {
     create?: XOR<MeetingCreateWithoutParticipantsInput, MeetingUncheckedCreateWithoutParticipantsInput>
     connectOrCreate?: MeetingCreateOrConnectWithoutParticipantsInput
     connect?: MeetingWhereUniqueInput
+  }
+
+  export type ParticipantSessionCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput> | ParticipantSessionCreateWithoutParticipantInput[] | ParticipantSessionUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ParticipantSessionCreateOrConnectWithoutParticipantInput | ParticipantSessionCreateOrConnectWithoutParticipantInput[]
+    createMany?: ParticipantSessionCreateManyParticipantInputEnvelope
+    connect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+  }
+
+  export type TranscriptSegmentCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput> | TranscriptSegmentCreateWithoutParticipantInput[] | TranscriptSegmentUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutParticipantInput | TranscriptSegmentCreateOrConnectWithoutParticipantInput[]
+    createMany?: TranscriptSegmentCreateManyParticipantInputEnvelope
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+  }
+
+  export type ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput> | ParticipantSessionCreateWithoutParticipantInput[] | ParticipantSessionUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ParticipantSessionCreateOrConnectWithoutParticipantInput | ParticipantSessionCreateOrConnectWithoutParticipantInput[]
+    createMany?: ParticipantSessionCreateManyParticipantInputEnvelope
+    connect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+  }
+
+  export type TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput> | TranscriptSegmentCreateWithoutParticipantInput[] | TranscriptSegmentUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutParticipantInput | TranscriptSegmentCreateOrConnectWithoutParticipantInput[]
+    createMany?: TranscriptSegmentCreateManyParticipantInputEnvelope
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
   }
 
   export type MeetingUpdateOneRequiredWithoutParticipantsNestedInput = {
@@ -9830,18 +15780,166 @@ export namespace Prisma {
     update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutParticipantsInput, MeetingUpdateWithoutParticipantsInput>, MeetingUncheckedUpdateWithoutParticipantsInput>
   }
 
-  export type MeetingCreateNestedOneWithoutTranscriptsInput = {
-    create?: XOR<MeetingCreateWithoutTranscriptsInput, MeetingUncheckedCreateWithoutTranscriptsInput>
-    connectOrCreate?: MeetingCreateOrConnectWithoutTranscriptsInput
+  export type ParticipantSessionUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput> | ParticipantSessionCreateWithoutParticipantInput[] | ParticipantSessionUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ParticipantSessionCreateOrConnectWithoutParticipantInput | ParticipantSessionCreateOrConnectWithoutParticipantInput[]
+    upsert?: ParticipantSessionUpsertWithWhereUniqueWithoutParticipantInput | ParticipantSessionUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: ParticipantSessionCreateManyParticipantInputEnvelope
+    set?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    disconnect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    delete?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    connect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    update?: ParticipantSessionUpdateWithWhereUniqueWithoutParticipantInput | ParticipantSessionUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: ParticipantSessionUpdateManyWithWhereWithoutParticipantInput | ParticipantSessionUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: ParticipantSessionScalarWhereInput | ParticipantSessionScalarWhereInput[]
+  }
+
+  export type TranscriptSegmentUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput> | TranscriptSegmentCreateWithoutParticipantInput[] | TranscriptSegmentUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutParticipantInput | TranscriptSegmentCreateOrConnectWithoutParticipantInput[]
+    upsert?: TranscriptSegmentUpsertWithWhereUniqueWithoutParticipantInput | TranscriptSegmentUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: TranscriptSegmentCreateManyParticipantInputEnvelope
+    set?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    disconnect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    delete?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    update?: TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput | TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput | TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+  }
+
+  export type ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput> | ParticipantSessionCreateWithoutParticipantInput[] | ParticipantSessionUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ParticipantSessionCreateOrConnectWithoutParticipantInput | ParticipantSessionCreateOrConnectWithoutParticipantInput[]
+    upsert?: ParticipantSessionUpsertWithWhereUniqueWithoutParticipantInput | ParticipantSessionUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: ParticipantSessionCreateManyParticipantInputEnvelope
+    set?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    disconnect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    delete?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    connect?: ParticipantSessionWhereUniqueInput | ParticipantSessionWhereUniqueInput[]
+    update?: ParticipantSessionUpdateWithWhereUniqueWithoutParticipantInput | ParticipantSessionUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: ParticipantSessionUpdateManyWithWhereWithoutParticipantInput | ParticipantSessionUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: ParticipantSessionScalarWhereInput | ParticipantSessionScalarWhereInput[]
+  }
+
+  export type TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput> | TranscriptSegmentCreateWithoutParticipantInput[] | TranscriptSegmentUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutParticipantInput | TranscriptSegmentCreateOrConnectWithoutParticipantInput[]
+    upsert?: TranscriptSegmentUpsertWithWhereUniqueWithoutParticipantInput | TranscriptSegmentUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: TranscriptSegmentCreateManyParticipantInputEnvelope
+    set?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    disconnect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    delete?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    update?: TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput | TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput | TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+  }
+
+  export type ParticipantCreateNestedOneWithoutSessionsInput = {
+    create?: XOR<ParticipantCreateWithoutSessionsInput, ParticipantUncheckedCreateWithoutSessionsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutSessionsInput
+    connect?: ParticipantWhereUniqueInput
+  }
+
+  export type ParticipantUpdateOneRequiredWithoutSessionsNestedInput = {
+    create?: XOR<ParticipantCreateWithoutSessionsInput, ParticipantUncheckedCreateWithoutSessionsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutSessionsInput
+    upsert?: ParticipantUpsertWithoutSessionsInput
+    connect?: ParticipantWhereUniqueInput
+    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutSessionsInput, ParticipantUpdateWithoutSessionsInput>, ParticipantUncheckedUpdateWithoutSessionsInput>
+  }
+
+  export type MeetingCreateNestedOneWithoutTranscriptInput = {
+    create?: XOR<MeetingCreateWithoutTranscriptInput, MeetingUncheckedCreateWithoutTranscriptInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutTranscriptInput
     connect?: MeetingWhereUniqueInput
   }
 
-  export type MeetingUpdateOneRequiredWithoutTranscriptsNestedInput = {
-    create?: XOR<MeetingCreateWithoutTranscriptsInput, MeetingUncheckedCreateWithoutTranscriptsInput>
-    connectOrCreate?: MeetingCreateOrConnectWithoutTranscriptsInput
-    upsert?: MeetingUpsertWithoutTranscriptsInput
+  export type TranscriptSegmentCreateNestedManyWithoutTranscriptInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput> | TranscriptSegmentCreateWithoutTranscriptInput[] | TranscriptSegmentUncheckedCreateWithoutTranscriptInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutTranscriptInput | TranscriptSegmentCreateOrConnectWithoutTranscriptInput[]
+    createMany?: TranscriptSegmentCreateManyTranscriptInputEnvelope
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+  }
+
+  export type TranscriptSegmentUncheckedCreateNestedManyWithoutTranscriptInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput> | TranscriptSegmentCreateWithoutTranscriptInput[] | TranscriptSegmentUncheckedCreateWithoutTranscriptInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutTranscriptInput | TranscriptSegmentCreateOrConnectWithoutTranscriptInput[]
+    createMany?: TranscriptSegmentCreateManyTranscriptInputEnvelope
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+  }
+
+  export type MeetingUpdateOneRequiredWithoutTranscriptNestedInput = {
+    create?: XOR<MeetingCreateWithoutTranscriptInput, MeetingUncheckedCreateWithoutTranscriptInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutTranscriptInput
+    upsert?: MeetingUpsertWithoutTranscriptInput
     connect?: MeetingWhereUniqueInput
-    update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutTranscriptsInput, MeetingUpdateWithoutTranscriptsInput>, MeetingUncheckedUpdateWithoutTranscriptsInput>
+    update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutTranscriptInput, MeetingUpdateWithoutTranscriptInput>, MeetingUncheckedUpdateWithoutTranscriptInput>
+  }
+
+  export type TranscriptSegmentUpdateManyWithoutTranscriptNestedInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput> | TranscriptSegmentCreateWithoutTranscriptInput[] | TranscriptSegmentUncheckedCreateWithoutTranscriptInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutTranscriptInput | TranscriptSegmentCreateOrConnectWithoutTranscriptInput[]
+    upsert?: TranscriptSegmentUpsertWithWhereUniqueWithoutTranscriptInput | TranscriptSegmentUpsertWithWhereUniqueWithoutTranscriptInput[]
+    createMany?: TranscriptSegmentCreateManyTranscriptInputEnvelope
+    set?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    disconnect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    delete?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    update?: TranscriptSegmentUpdateWithWhereUniqueWithoutTranscriptInput | TranscriptSegmentUpdateWithWhereUniqueWithoutTranscriptInput[]
+    updateMany?: TranscriptSegmentUpdateManyWithWhereWithoutTranscriptInput | TranscriptSegmentUpdateManyWithWhereWithoutTranscriptInput[]
+    deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+  }
+
+  export type TranscriptSegmentUncheckedUpdateManyWithoutTranscriptNestedInput = {
+    create?: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput> | TranscriptSegmentCreateWithoutTranscriptInput[] | TranscriptSegmentUncheckedCreateWithoutTranscriptInput[]
+    connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutTranscriptInput | TranscriptSegmentCreateOrConnectWithoutTranscriptInput[]
+    upsert?: TranscriptSegmentUpsertWithWhereUniqueWithoutTranscriptInput | TranscriptSegmentUpsertWithWhereUniqueWithoutTranscriptInput[]
+    createMany?: TranscriptSegmentCreateManyTranscriptInputEnvelope
+    set?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    disconnect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    delete?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+    update?: TranscriptSegmentUpdateWithWhereUniqueWithoutTranscriptInput | TranscriptSegmentUpdateWithWhereUniqueWithoutTranscriptInput[]
+    updateMany?: TranscriptSegmentUpdateManyWithWhereWithoutTranscriptInput | TranscriptSegmentUpdateManyWithWhereWithoutTranscriptInput[]
+    deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+  }
+
+  export type TranscriptCreateNestedOneWithoutSegmentsInput = {
+    create?: XOR<TranscriptCreateWithoutSegmentsInput, TranscriptUncheckedCreateWithoutSegmentsInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutSegmentsInput
+    connect?: TranscriptWhereUniqueInput
+  }
+
+  export type ParticipantCreateNestedOneWithoutSegmentsInput = {
+    create?: XOR<ParticipantCreateWithoutSegmentsInput, ParticipantUncheckedCreateWithoutSegmentsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutSegmentsInput
+    connect?: ParticipantWhereUniqueInput
+  }
+
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type TranscriptUpdateOneRequiredWithoutSegmentsNestedInput = {
+    create?: XOR<TranscriptCreateWithoutSegmentsInput, TranscriptUncheckedCreateWithoutSegmentsInput>
+    connectOrCreate?: TranscriptCreateOrConnectWithoutSegmentsInput
+    upsert?: TranscriptUpsertWithoutSegmentsInput
+    connect?: TranscriptWhereUniqueInput
+    update?: XOR<XOR<TranscriptUpdateToOneWithWhereWithoutSegmentsInput, TranscriptUpdateWithoutSegmentsInput>, TranscriptUncheckedUpdateWithoutSegmentsInput>
+  }
+
+  export type ParticipantUpdateOneRequiredWithoutSegmentsNestedInput = {
+    create?: XOR<ParticipantCreateWithoutSegmentsInput, ParticipantUncheckedCreateWithoutSegmentsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutSegmentsInput
+    upsert?: ParticipantUpsertWithoutSegmentsInput
+    connect?: ParticipantWhereUniqueInput
+    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutSegmentsInput, ParticipantUpdateWithoutSegmentsInput>, ParticipantUncheckedUpdateWithoutSegmentsInput>
   }
 
   export type MeetingCreateNestedOneWithoutSummaryInput = {
@@ -9850,12 +15948,52 @@ export namespace Prisma {
     connect?: MeetingWhereUniqueInput
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type MeetingUpdateOneRequiredWithoutSummaryNestedInput = {
     create?: XOR<MeetingCreateWithoutSummaryInput, MeetingUncheckedCreateWithoutSummaryInput>
     connectOrCreate?: MeetingCreateOrConnectWithoutSummaryInput
     upsert?: MeetingUpsertWithoutSummaryInput
     connect?: MeetingWhereUniqueInput
     update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutSummaryInput, MeetingUpdateWithoutSummaryInput>, MeetingUncheckedUpdateWithoutSummaryInput>
+  }
+
+  export type MeetingCreateNestedOneWithoutRecordingsInput = {
+    create?: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutRecordingsInput
+    connect?: MeetingWhereUniqueInput
+  }
+
+  export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
+  export type MeetingUpdateOneRequiredWithoutRecordingsNestedInput = {
+    create?: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutRecordingsInput
+    upsert?: MeetingUpsertWithoutRecordingsInput
+    connect?: MeetingWhereUniqueInput
+    update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutRecordingsInput, MeetingUpdateWithoutRecordingsInput>, MeetingUncheckedUpdateWithoutRecordingsInput>
+  }
+
+  export type MeetingCreateNestedOneWithoutExportsInput = {
+    create?: XOR<MeetingCreateWithoutExportsInput, MeetingUncheckedCreateWithoutExportsInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutExportsInput
+    connect?: MeetingWhereUniqueInput
+  }
+
+  export type MeetingUpdateOneRequiredWithoutExportsNestedInput = {
+    create?: XOR<MeetingCreateWithoutExportsInput, MeetingUncheckedCreateWithoutExportsInput>
+    connectOrCreate?: MeetingCreateOrConnectWithoutExportsInput
+    upsert?: MeetingUpsertWithoutExportsInput
+    connect?: MeetingWhereUniqueInput
+    update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutExportsInput, MeetingUpdateWithoutExportsInput>, MeetingUncheckedUpdateWithoutExportsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -9870,20 +16008,6 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringFilter<$PrismaModel> | string
-  }
-
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -9923,34 +16047,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -10005,6 +16101,17 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -10046,70 +16153,147 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type RoomCreateWithoutHostInput = {
+  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type MeetingRoomCreateWithoutHostInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
     meetings?: MeetingCreateNestedManyWithoutRoomInput
   }
 
-  export type RoomUncheckedCreateWithoutHostInput = {
+  export type MeetingRoomUncheckedCreateWithoutHostInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
     meetings?: MeetingUncheckedCreateNestedManyWithoutRoomInput
   }
 
-  export type RoomCreateOrConnectWithoutHostInput = {
-    where: RoomWhereUniqueInput
-    create: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput>
+  export type MeetingRoomCreateOrConnectWithoutHostInput = {
+    where: MeetingRoomWhereUniqueInput
+    create: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput>
   }
 
-  export type RoomCreateManyHostInputEnvelope = {
-    data: RoomCreateManyHostInput | RoomCreateManyHostInput[]
+  export type MeetingRoomCreateManyHostInputEnvelope = {
+    data: MeetingRoomCreateManyHostInput | MeetingRoomCreateManyHostInput[]
     skipDuplicates?: boolean
   }
 
-  export type RoomUpsertWithWhereUniqueWithoutHostInput = {
-    where: RoomWhereUniqueInput
-    update: XOR<RoomUpdateWithoutHostInput, RoomUncheckedUpdateWithoutHostInput>
-    create: XOR<RoomCreateWithoutHostInput, RoomUncheckedCreateWithoutHostInput>
+  export type MeetingRoomUpsertWithWhereUniqueWithoutHostInput = {
+    where: MeetingRoomWhereUniqueInput
+    update: XOR<MeetingRoomUpdateWithoutHostInput, MeetingRoomUncheckedUpdateWithoutHostInput>
+    create: XOR<MeetingRoomCreateWithoutHostInput, MeetingRoomUncheckedCreateWithoutHostInput>
   }
 
-  export type RoomUpdateWithWhereUniqueWithoutHostInput = {
-    where: RoomWhereUniqueInput
-    data: XOR<RoomUpdateWithoutHostInput, RoomUncheckedUpdateWithoutHostInput>
+  export type MeetingRoomUpdateWithWhereUniqueWithoutHostInput = {
+    where: MeetingRoomWhereUniqueInput
+    data: XOR<MeetingRoomUpdateWithoutHostInput, MeetingRoomUncheckedUpdateWithoutHostInput>
   }
 
-  export type RoomUpdateManyWithWhereWithoutHostInput = {
-    where: RoomScalarWhereInput
-    data: XOR<RoomUpdateManyMutationInput, RoomUncheckedUpdateManyWithoutHostInput>
+  export type MeetingRoomUpdateManyWithWhereWithoutHostInput = {
+    where: MeetingRoomScalarWhereInput
+    data: XOR<MeetingRoomUpdateManyMutationInput, MeetingRoomUncheckedUpdateManyWithoutHostInput>
   }
 
-  export type RoomScalarWhereInput = {
-    AND?: RoomScalarWhereInput | RoomScalarWhereInput[]
-    OR?: RoomScalarWhereInput[]
-    NOT?: RoomScalarWhereInput | RoomScalarWhereInput[]
-    id?: StringFilter<"Room"> | string
-    slug?: StringFilter<"Room"> | string
-    name?: StringFilter<"Room"> | string
-    maxParticipants?: IntFilter<"Room"> | number
-    hostId?: StringFilter<"Room"> | string
-    createdAt?: DateTimeFilter<"Room"> | Date | string
-    updatedAt?: DateTimeFilter<"Room"> | Date | string
+  export type MeetingRoomScalarWhereInput = {
+    AND?: MeetingRoomScalarWhereInput | MeetingRoomScalarWhereInput[]
+    OR?: MeetingRoomScalarWhereInput[]
+    NOT?: MeetingRoomScalarWhereInput | MeetingRoomScalarWhereInput[]
+    id?: StringFilter<"MeetingRoom"> | string
+    hostId?: StringFilter<"MeetingRoom"> | string
+    roomName?: StringFilter<"MeetingRoom"> | string
+    roomHash?: StringFilter<"MeetingRoom"> | string
+    maxParticipants?: IntFilter<"MeetingRoom"> | number
+    status?: StringFilter<"MeetingRoom"> | string
+    createdAt?: DateTimeFilter<"MeetingRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"MeetingRoom"> | Date | string
   }
 
   export type UserCreateWithoutRoomsInput = {
     id?: string
     email: string
     password: string
-    name?: string | null
+    fullname: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -10118,7 +16302,7 @@ export namespace Prisma {
     id?: string
     email: string
     password: string
-    name?: string | null
+    fullname: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -10130,28 +16314,28 @@ export namespace Prisma {
 
   export type MeetingCreateWithoutRoomInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
     participants?: ParticipantCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptCreateNestedManyWithoutMeetingInput
-    summary?: SummaryCreateNestedOneWithoutMeetingInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingUncheckedCreateWithoutRoomInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
     participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptUncheckedCreateNestedManyWithoutMeetingInput
-    summary?: SummaryUncheckedCreateNestedOneWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingCreateOrConnectWithoutRoomInput = {
@@ -10179,7 +16363,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10188,7 +16372,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
+    fullname?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10215,57 +16399,53 @@ export namespace Prisma {
     NOT?: MeetingScalarWhereInput | MeetingScalarWhereInput[]
     id?: StringFilter<"Meeting"> | string
     roomId?: StringFilter<"Meeting"> | string
-    startTime?: DateTimeFilter<"Meeting"> | Date | string
-    endTime?: DateTimeNullableFilter<"Meeting"> | Date | string | null
-    duration?: IntNullableFilter<"Meeting"> | number | null
-    recordingUrl?: StringNullableFilter<"Meeting"> | string | null
+    startedAt?: DateTimeFilter<"Meeting"> | Date | string
+    endedAt?: DateTimeNullableFilter<"Meeting"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"Meeting"> | number | null
     createdAt?: DateTimeFilter<"Meeting"> | Date | string
-    updatedAt?: DateTimeFilter<"Meeting"> | Date | string
   }
 
-  export type RoomCreateWithoutMeetingsInput = {
+  export type MeetingRoomCreateWithoutMeetingsInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
     host: UserCreateNestedOneWithoutRoomsInput
   }
 
-  export type RoomUncheckedCreateWithoutMeetingsInput = {
+  export type MeetingRoomUncheckedCreateWithoutMeetingsInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
     hostId: string
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
-  export type RoomCreateOrConnectWithoutMeetingsInput = {
-    where: RoomWhereUniqueInput
-    create: XOR<RoomCreateWithoutMeetingsInput, RoomUncheckedCreateWithoutMeetingsInput>
+  export type MeetingRoomCreateOrConnectWithoutMeetingsInput = {
+    where: MeetingRoomWhereUniqueInput
+    create: XOR<MeetingRoomCreateWithoutMeetingsInput, MeetingRoomUncheckedCreateWithoutMeetingsInput>
   }
 
   export type ParticipantCreateWithoutMeetingInput = {
     id?: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
+    sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutMeetingInput = {
     id?: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
+    sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutMeetingInput = {
@@ -10280,16 +16460,18 @@ export namespace Prisma {
 
   export type TranscriptCreateWithoutMeetingInput = {
     id?: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+    segments?: TranscriptSegmentCreateNestedManyWithoutTranscriptInput
   }
 
   export type TranscriptUncheckedCreateWithoutMeetingInput = {
     id?: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutTranscriptInput
   }
 
   export type TranscriptCreateOrConnectWithoutMeetingInput = {
@@ -10297,57 +16479,112 @@ export namespace Prisma {
     create: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
   }
 
-  export type TranscriptCreateManyMeetingInputEnvelope = {
-    data: TranscriptCreateManyMeetingInput | TranscriptCreateManyMeetingInput[]
+  export type MeetingSummaryCreateWithoutMeetingInput = {
+    id?: string
+    aiSummary: string
+    editedSummary?: string | null
+    llmModel: string
+    generatedAt: Date | string
+    editedAt?: Date | string | null
+  }
+
+  export type MeetingSummaryUncheckedCreateWithoutMeetingInput = {
+    id?: string
+    aiSummary: string
+    editedSummary?: string | null
+    llmModel: string
+    generatedAt: Date | string
+    editedAt?: Date | string | null
+  }
+
+  export type MeetingSummaryCreateOrConnectWithoutMeetingInput = {
+    where: MeetingSummaryWhereUniqueInput
+    create: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+  }
+
+  export type RecordingCreateWithoutMeetingInput = {
+    id?: string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type RecordingUncheckedCreateWithoutMeetingInput = {
+    id?: string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type RecordingCreateOrConnectWithoutMeetingInput = {
+    where: RecordingWhereUniqueInput
+    create: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput>
+  }
+
+  export type RecordingCreateManyMeetingInputEnvelope = {
+    data: RecordingCreateManyMeetingInput | RecordingCreateManyMeetingInput[]
     skipDuplicates?: boolean
   }
 
-  export type SummaryCreateWithoutMeetingInput = {
+  export type ExportCreateWithoutMeetingInput = {
     id?: string
-    content: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
   }
 
-  export type SummaryUncheckedCreateWithoutMeetingInput = {
+  export type ExportUncheckedCreateWithoutMeetingInput = {
     id?: string
-    content: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
   }
 
-  export type SummaryCreateOrConnectWithoutMeetingInput = {
-    where: SummaryWhereUniqueInput
-    create: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
+  export type ExportCreateOrConnectWithoutMeetingInput = {
+    where: ExportWhereUniqueInput
+    create: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput>
   }
 
-  export type RoomUpsertWithoutMeetingsInput = {
-    update: XOR<RoomUpdateWithoutMeetingsInput, RoomUncheckedUpdateWithoutMeetingsInput>
-    create: XOR<RoomCreateWithoutMeetingsInput, RoomUncheckedCreateWithoutMeetingsInput>
-    where?: RoomWhereInput
+  export type ExportCreateManyMeetingInputEnvelope = {
+    data: ExportCreateManyMeetingInput | ExportCreateManyMeetingInput[]
+    skipDuplicates?: boolean
   }
 
-  export type RoomUpdateToOneWithWhereWithoutMeetingsInput = {
-    where?: RoomWhereInput
-    data: XOR<RoomUpdateWithoutMeetingsInput, RoomUncheckedUpdateWithoutMeetingsInput>
+  export type MeetingRoomUpsertWithoutMeetingsInput = {
+    update: XOR<MeetingRoomUpdateWithoutMeetingsInput, MeetingRoomUncheckedUpdateWithoutMeetingsInput>
+    create: XOR<MeetingRoomCreateWithoutMeetingsInput, MeetingRoomUncheckedCreateWithoutMeetingsInput>
+    where?: MeetingRoomWhereInput
   }
 
-  export type RoomUpdateWithoutMeetingsInput = {
+  export type MeetingRoomUpdateToOneWithWhereWithoutMeetingsInput = {
+    where?: MeetingRoomWhereInput
+    data: XOR<MeetingRoomUpdateWithoutMeetingsInput, MeetingRoomUncheckedUpdateWithoutMeetingsInput>
+  }
+
+  export type MeetingRoomUpdateWithoutMeetingsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     host?: UserUpdateOneRequiredWithoutRoomsNestedInput
   }
 
-  export type RoomUncheckedUpdateWithoutMeetingsInput = {
+  export type MeetingRoomUncheckedUpdateWithoutMeetingsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    maxParticipants?: IntFieldUpdateOperationsInput | number
     hostId?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
+    maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10374,95 +16611,210 @@ export namespace Prisma {
     NOT?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
     id?: StringFilter<"Participant"> | string
     meetingId?: StringFilter<"Participant"> | string
-    name?: StringFilter<"Participant"> | string
-    role?: StringFilter<"Participant"> | string
-    joinTime?: DateTimeFilter<"Participant"> | Date | string
-    leaveTime?: DateTimeNullableFilter<"Participant"> | Date | string | null
-    duration?: IntNullableFilter<"Participant"> | number | null
+    displayName?: StringFilter<"Participant"> | string
     createdAt?: DateTimeFilter<"Participant"> | Date | string
   }
 
-  export type TranscriptUpsertWithWhereUniqueWithoutMeetingInput = {
-    where: TranscriptWhereUniqueInput
+  export type TranscriptUpsertWithoutMeetingInput = {
     update: XOR<TranscriptUpdateWithoutMeetingInput, TranscriptUncheckedUpdateWithoutMeetingInput>
     create: XOR<TranscriptCreateWithoutMeetingInput, TranscriptUncheckedCreateWithoutMeetingInput>
+    where?: TranscriptWhereInput
   }
 
-  export type TranscriptUpdateWithWhereUniqueWithoutMeetingInput = {
-    where: TranscriptWhereUniqueInput
+  export type TranscriptUpdateToOneWithWhereWithoutMeetingInput = {
+    where?: TranscriptWhereInput
     data: XOR<TranscriptUpdateWithoutMeetingInput, TranscriptUncheckedUpdateWithoutMeetingInput>
   }
 
-  export type TranscriptUpdateManyWithWhereWithoutMeetingInput = {
-    where: TranscriptScalarWhereInput
-    data: XOR<TranscriptUpdateManyMutationInput, TranscriptUncheckedUpdateManyWithoutMeetingInput>
-  }
-
-  export type TranscriptScalarWhereInput = {
-    AND?: TranscriptScalarWhereInput | TranscriptScalarWhereInput[]
-    OR?: TranscriptScalarWhereInput[]
-    NOT?: TranscriptScalarWhereInput | TranscriptScalarWhereInput[]
-    id?: StringFilter<"Transcript"> | string
-    meetingId?: StringFilter<"Transcript"> | string
-    speakerName?: StringFilter<"Transcript"> | string
-    text?: StringFilter<"Transcript"> | string
-    timestamp?: DateTimeFilter<"Transcript"> | Date | string
-  }
-
-  export type SummaryUpsertWithoutMeetingInput = {
-    update: XOR<SummaryUpdateWithoutMeetingInput, SummaryUncheckedUpdateWithoutMeetingInput>
-    create: XOR<SummaryCreateWithoutMeetingInput, SummaryUncheckedCreateWithoutMeetingInput>
-    where?: SummaryWhereInput
-  }
-
-  export type SummaryUpdateToOneWithWhereWithoutMeetingInput = {
-    where?: SummaryWhereInput
-    data: XOR<SummaryUpdateWithoutMeetingInput, SummaryUncheckedUpdateWithoutMeetingInput>
-  }
-
-  export type SummaryUpdateWithoutMeetingInput = {
+  export type TranscriptUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    segments?: TranscriptSegmentUpdateManyWithoutTranscriptNestedInput
   }
 
-  export type SummaryUncheckedUpdateWithoutMeetingInput = {
+  export type TranscriptUncheckedUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    content?: StringFieldUpdateOperationsInput | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutTranscriptNestedInput
+  }
+
+  export type MeetingSummaryUpsertWithoutMeetingInput = {
+    update: XOR<MeetingSummaryUpdateWithoutMeetingInput, MeetingSummaryUncheckedUpdateWithoutMeetingInput>
+    create: XOR<MeetingSummaryCreateWithoutMeetingInput, MeetingSummaryUncheckedCreateWithoutMeetingInput>
+    where?: MeetingSummaryWhereInput
+  }
+
+  export type MeetingSummaryUpdateToOneWithWhereWithoutMeetingInput = {
+    where?: MeetingSummaryWhereInput
+    data: XOR<MeetingSummaryUpdateWithoutMeetingInput, MeetingSummaryUncheckedUpdateWithoutMeetingInput>
+  }
+
+  export type MeetingSummaryUpdateWithoutMeetingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type MeetingSummaryUncheckedUpdateWithoutMeetingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiSummary?: StringFieldUpdateOperationsInput | string
+    editedSummary?: NullableStringFieldUpdateOperationsInput | string | null
+    llmModel?: StringFieldUpdateOperationsInput | string
+    generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    editedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RecordingUpsertWithWhereUniqueWithoutMeetingInput = {
+    where: RecordingWhereUniqueInput
+    update: XOR<RecordingUpdateWithoutMeetingInput, RecordingUncheckedUpdateWithoutMeetingInput>
+    create: XOR<RecordingCreateWithoutMeetingInput, RecordingUncheckedCreateWithoutMeetingInput>
+  }
+
+  export type RecordingUpdateWithWhereUniqueWithoutMeetingInput = {
+    where: RecordingWhereUniqueInput
+    data: XOR<RecordingUpdateWithoutMeetingInput, RecordingUncheckedUpdateWithoutMeetingInput>
+  }
+
+  export type RecordingUpdateManyWithWhereWithoutMeetingInput = {
+    where: RecordingScalarWhereInput
+    data: XOR<RecordingUpdateManyMutationInput, RecordingUncheckedUpdateManyWithoutMeetingInput>
+  }
+
+  export type RecordingScalarWhereInput = {
+    AND?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
+    OR?: RecordingScalarWhereInput[]
+    NOT?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
+    id?: StringFilter<"Recording"> | string
+    meetingId?: StringFilter<"Recording"> | string
+    fileName?: StringFilter<"Recording"> | string
+    objectKey?: StringFilter<"Recording"> | string
+    durationSeconds?: IntNullableFilter<"Recording"> | number | null
+    fileSize?: BigIntFilter<"Recording"> | bigint | number
+    mimeType?: StringFilter<"Recording"> | string
+    createdAt?: DateTimeFilter<"Recording"> | Date | string
+  }
+
+  export type ExportUpsertWithWhereUniqueWithoutMeetingInput = {
+    where: ExportWhereUniqueInput
+    update: XOR<ExportUpdateWithoutMeetingInput, ExportUncheckedUpdateWithoutMeetingInput>
+    create: XOR<ExportCreateWithoutMeetingInput, ExportUncheckedCreateWithoutMeetingInput>
+  }
+
+  export type ExportUpdateWithWhereUniqueWithoutMeetingInput = {
+    where: ExportWhereUniqueInput
+    data: XOR<ExportUpdateWithoutMeetingInput, ExportUncheckedUpdateWithoutMeetingInput>
+  }
+
+  export type ExportUpdateManyWithWhereWithoutMeetingInput = {
+    where: ExportScalarWhereInput
+    data: XOR<ExportUpdateManyMutationInput, ExportUncheckedUpdateManyWithoutMeetingInput>
+  }
+
+  export type ExportScalarWhereInput = {
+    AND?: ExportScalarWhereInput | ExportScalarWhereInput[]
+    OR?: ExportScalarWhereInput[]
+    NOT?: ExportScalarWhereInput | ExportScalarWhereInput[]
+    id?: StringFilter<"Export"> | string
+    meetingId?: StringFilter<"Export"> | string
+    exportFormat?: StringFilter<"Export"> | string
+    filePath?: StringFilter<"Export"> | string
+    exportedAt?: DateTimeFilter<"Export"> | Date | string
   }
 
   export type MeetingCreateWithoutParticipantsInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
-    room: RoomCreateNestedOneWithoutMeetingsInput
-    transcripts?: TranscriptCreateNestedManyWithoutMeetingInput
-    summary?: SummaryCreateNestedOneWithoutMeetingInput
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingUncheckedCreateWithoutParticipantsInput = {
     id?: string
     roomId: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
-    transcripts?: TranscriptUncheckedCreateNestedManyWithoutMeetingInput
-    summary?: SummaryUncheckedCreateNestedOneWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingCreateOrConnectWithoutParticipantsInput = {
     where: MeetingWhereUniqueInput
     create: XOR<MeetingCreateWithoutParticipantsInput, MeetingUncheckedCreateWithoutParticipantsInput>
+  }
+
+  export type ParticipantSessionCreateWithoutParticipantInput = {
+    id?: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+  }
+
+  export type ParticipantSessionUncheckedCreateWithoutParticipantInput = {
+    id?: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+  }
+
+  export type ParticipantSessionCreateOrConnectWithoutParticipantInput = {
+    where: ParticipantSessionWhereUniqueInput
+    create: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type ParticipantSessionCreateManyParticipantInputEnvelope = {
+    data: ParticipantSessionCreateManyParticipantInput | ParticipantSessionCreateManyParticipantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TranscriptSegmentCreateWithoutParticipantInput = {
+    id?: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+    transcript: TranscriptCreateNestedOneWithoutSegmentsInput
+  }
+
+  export type TranscriptSegmentUncheckedCreateWithoutParticipantInput = {
+    id?: string
+    transcriptId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type TranscriptSegmentCreateOrConnectWithoutParticipantInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    create: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type TranscriptSegmentCreateManyParticipantInputEnvelope = {
+    data: TranscriptSegmentCreateManyParticipantInput | TranscriptSegmentCreateManyParticipantInput[]
+    skipDuplicates?: boolean
   }
 
   export type MeetingUpsertWithoutParticipantsInput = {
@@ -10478,122 +16830,371 @@ export namespace Prisma {
 
   export type MeetingUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    room?: RoomUpdateOneRequiredWithoutMeetingsNestedInput
-    transcripts?: TranscriptUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUpdateOneWithoutMeetingNestedInput
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingUncheckedUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    transcripts?: TranscriptUncheckedUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
   }
 
-  export type MeetingCreateWithoutTranscriptsInput = {
+  export type ParticipantSessionUpsertWithWhereUniqueWithoutParticipantInput = {
+    where: ParticipantSessionWhereUniqueInput
+    update: XOR<ParticipantSessionUpdateWithoutParticipantInput, ParticipantSessionUncheckedUpdateWithoutParticipantInput>
+    create: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type ParticipantSessionUpdateWithWhereUniqueWithoutParticipantInput = {
+    where: ParticipantSessionWhereUniqueInput
+    data: XOR<ParticipantSessionUpdateWithoutParticipantInput, ParticipantSessionUncheckedUpdateWithoutParticipantInput>
+  }
+
+  export type ParticipantSessionUpdateManyWithWhereWithoutParticipantInput = {
+    where: ParticipantSessionScalarWhereInput
+    data: XOR<ParticipantSessionUpdateManyMutationInput, ParticipantSessionUncheckedUpdateManyWithoutParticipantInput>
+  }
+
+  export type ParticipantSessionScalarWhereInput = {
+    AND?: ParticipantSessionScalarWhereInput | ParticipantSessionScalarWhereInput[]
+    OR?: ParticipantSessionScalarWhereInput[]
+    NOT?: ParticipantSessionScalarWhereInput | ParticipantSessionScalarWhereInput[]
+    id?: StringFilter<"ParticipantSession"> | string
+    participantId?: StringFilter<"ParticipantSession"> | string
+    joinedAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    lastSeenAt?: DateTimeFilter<"ParticipantSession"> | Date | string
+    leftAt?: DateTimeNullableFilter<"ParticipantSession"> | Date | string | null
+    durationSeconds?: IntNullableFilter<"ParticipantSession"> | number | null
+    connectionId?: StringFilter<"ParticipantSession"> | string
+  }
+
+  export type TranscriptSegmentUpsertWithWhereUniqueWithoutParticipantInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    update: XOR<TranscriptSegmentUpdateWithoutParticipantInput, TranscriptSegmentUncheckedUpdateWithoutParticipantInput>
+    create: XOR<TranscriptSegmentCreateWithoutParticipantInput, TranscriptSegmentUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    data: XOR<TranscriptSegmentUpdateWithoutParticipantInput, TranscriptSegmentUncheckedUpdateWithoutParticipantInput>
+  }
+
+  export type TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput = {
+    where: TranscriptSegmentScalarWhereInput
+    data: XOR<TranscriptSegmentUpdateManyMutationInput, TranscriptSegmentUncheckedUpdateManyWithoutParticipantInput>
+  }
+
+  export type TranscriptSegmentScalarWhereInput = {
+    AND?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+    OR?: TranscriptSegmentScalarWhereInput[]
+    NOT?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+    id?: StringFilter<"TranscriptSegment"> | string
+    transcriptId?: StringFilter<"TranscriptSegment"> | string
+    participantId?: StringFilter<"TranscriptSegment"> | string
+    startTime?: FloatFilter<"TranscriptSegment"> | number
+    endTime?: FloatFilter<"TranscriptSegment"> | number
+    spokenAt?: DateTimeFilter<"TranscriptSegment"> | Date | string
+    text?: StringFilter<"TranscriptSegment"> | string
+    confidence?: FloatFilter<"TranscriptSegment"> | number
+  }
+
+  export type ParticipantCreateWithoutSessionsInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    displayName: string
     createdAt?: Date | string
-    updatedAt?: Date | string
-    room: RoomCreateNestedOneWithoutMeetingsInput
-    participants?: ParticipantCreateNestedManyWithoutMeetingInput
-    summary?: SummaryCreateNestedOneWithoutMeetingInput
+    meeting: MeetingCreateNestedOneWithoutParticipantsInput
+    segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
   }
 
-  export type MeetingUncheckedCreateWithoutTranscriptsInput = {
+  export type ParticipantUncheckedCreateWithoutSessionsInput = {
+    id?: string
+    meetingId: string
+    displayName: string
+    createdAt?: Date | string
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+  }
+
+  export type ParticipantCreateOrConnectWithoutSessionsInput = {
+    where: ParticipantWhereUniqueInput
+    create: XOR<ParticipantCreateWithoutSessionsInput, ParticipantUncheckedCreateWithoutSessionsInput>
+  }
+
+  export type ParticipantUpsertWithoutSessionsInput = {
+    update: XOR<ParticipantUpdateWithoutSessionsInput, ParticipantUncheckedUpdateWithoutSessionsInput>
+    create: XOR<ParticipantCreateWithoutSessionsInput, ParticipantUncheckedCreateWithoutSessionsInput>
+    where?: ParticipantWhereInput
+  }
+
+  export type ParticipantUpdateToOneWithWhereWithoutSessionsInput = {
+    where?: ParticipantWhereInput
+    data: XOR<ParticipantUpdateWithoutSessionsInput, ParticipantUncheckedUpdateWithoutSessionsInput>
+  }
+
+  export type ParticipantUpdateWithoutSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
+    segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+  }
+
+  export type ParticipantUncheckedUpdateWithoutSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
+  }
+
+  export type MeetingCreateWithoutTranscriptInput = {
+    id?: string
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    createdAt?: Date | string
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
+    participants?: ParticipantCreateNestedManyWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
+  }
+
+  export type MeetingUncheckedCreateWithoutTranscriptInput = {
     id?: string
     roomId: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
     participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
-    summary?: SummaryUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
   }
 
-  export type MeetingCreateOrConnectWithoutTranscriptsInput = {
+  export type MeetingCreateOrConnectWithoutTranscriptInput = {
     where: MeetingWhereUniqueInput
-    create: XOR<MeetingCreateWithoutTranscriptsInput, MeetingUncheckedCreateWithoutTranscriptsInput>
+    create: XOR<MeetingCreateWithoutTranscriptInput, MeetingUncheckedCreateWithoutTranscriptInput>
   }
 
-  export type MeetingUpsertWithoutTranscriptsInput = {
-    update: XOR<MeetingUpdateWithoutTranscriptsInput, MeetingUncheckedUpdateWithoutTranscriptsInput>
-    create: XOR<MeetingCreateWithoutTranscriptsInput, MeetingUncheckedCreateWithoutTranscriptsInput>
+  export type TranscriptSegmentCreateWithoutTranscriptInput = {
+    id?: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+    participant: ParticipantCreateNestedOneWithoutSegmentsInput
+  }
+
+  export type TranscriptSegmentUncheckedCreateWithoutTranscriptInput = {
+    id?: string
+    participantId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type TranscriptSegmentCreateOrConnectWithoutTranscriptInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    create: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput>
+  }
+
+  export type TranscriptSegmentCreateManyTranscriptInputEnvelope = {
+    data: TranscriptSegmentCreateManyTranscriptInput | TranscriptSegmentCreateManyTranscriptInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MeetingUpsertWithoutTranscriptInput = {
+    update: XOR<MeetingUpdateWithoutTranscriptInput, MeetingUncheckedUpdateWithoutTranscriptInput>
+    create: XOR<MeetingCreateWithoutTranscriptInput, MeetingUncheckedCreateWithoutTranscriptInput>
     where?: MeetingWhereInput
   }
 
-  export type MeetingUpdateToOneWithWhereWithoutTranscriptsInput = {
+  export type MeetingUpdateToOneWithWhereWithoutTranscriptInput = {
     where?: MeetingWhereInput
-    data: XOR<MeetingUpdateWithoutTranscriptsInput, MeetingUncheckedUpdateWithoutTranscriptsInput>
+    data: XOR<MeetingUpdateWithoutTranscriptInput, MeetingUncheckedUpdateWithoutTranscriptInput>
   }
 
-  export type MeetingUpdateWithoutTranscriptsInput = {
+  export type MeetingUpdateWithoutTranscriptInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    room?: RoomUpdateOneRequiredWithoutMeetingsNestedInput
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
     participants?: ParticipantUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
   }
 
-  export type MeetingUncheckedUpdateWithoutTranscriptsInput = {
+  export type MeetingUncheckedUpdateWithoutTranscriptInput = {
     id?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type TranscriptSegmentUpsertWithWhereUniqueWithoutTranscriptInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    update: XOR<TranscriptSegmentUpdateWithoutTranscriptInput, TranscriptSegmentUncheckedUpdateWithoutTranscriptInput>
+    create: XOR<TranscriptSegmentCreateWithoutTranscriptInput, TranscriptSegmentUncheckedCreateWithoutTranscriptInput>
+  }
+
+  export type TranscriptSegmentUpdateWithWhereUniqueWithoutTranscriptInput = {
+    where: TranscriptSegmentWhereUniqueInput
+    data: XOR<TranscriptSegmentUpdateWithoutTranscriptInput, TranscriptSegmentUncheckedUpdateWithoutTranscriptInput>
+  }
+
+  export type TranscriptSegmentUpdateManyWithWhereWithoutTranscriptInput = {
+    where: TranscriptSegmentScalarWhereInput
+    data: XOR<TranscriptSegmentUpdateManyMutationInput, TranscriptSegmentUncheckedUpdateManyWithoutTranscriptInput>
+  }
+
+  export type TranscriptCreateWithoutSegmentsInput = {
+    id?: string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutTranscriptInput
+  }
+
+  export type TranscriptUncheckedCreateWithoutSegmentsInput = {
+    id?: string
+    meetingId: string
+    fullTranscript: string
+    language: string
+    createdAt?: Date | string
+  }
+
+  export type TranscriptCreateOrConnectWithoutSegmentsInput = {
+    where: TranscriptWhereUniqueInput
+    create: XOR<TranscriptCreateWithoutSegmentsInput, TranscriptUncheckedCreateWithoutSegmentsInput>
+  }
+
+  export type ParticipantCreateWithoutSegmentsInput = {
+    id?: string
+    displayName: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutParticipantsInput
+    sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
+  }
+
+  export type ParticipantUncheckedCreateWithoutSegmentsInput = {
+    id?: string
+    meetingId: string
+    displayName: string
+    createdAt?: Date | string
+    sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
+  }
+
+  export type ParticipantCreateOrConnectWithoutSegmentsInput = {
+    where: ParticipantWhereUniqueInput
+    create: XOR<ParticipantCreateWithoutSegmentsInput, ParticipantUncheckedCreateWithoutSegmentsInput>
+  }
+
+  export type TranscriptUpsertWithoutSegmentsInput = {
+    update: XOR<TranscriptUpdateWithoutSegmentsInput, TranscriptUncheckedUpdateWithoutSegmentsInput>
+    create: XOR<TranscriptCreateWithoutSegmentsInput, TranscriptUncheckedCreateWithoutSegmentsInput>
+    where?: TranscriptWhereInput
+  }
+
+  export type TranscriptUpdateToOneWithWhereWithoutSegmentsInput = {
+    where?: TranscriptWhereInput
+    data: XOR<TranscriptUpdateWithoutSegmentsInput, TranscriptUncheckedUpdateWithoutSegmentsInput>
+  }
+
+  export type TranscriptUpdateWithoutSegmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutTranscriptNestedInput
+  }
+
+  export type TranscriptUncheckedUpdateWithoutSegmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    fullTranscript?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantUpsertWithoutSegmentsInput = {
+    update: XOR<ParticipantUpdateWithoutSegmentsInput, ParticipantUncheckedUpdateWithoutSegmentsInput>
+    create: XOR<ParticipantCreateWithoutSegmentsInput, ParticipantUncheckedCreateWithoutSegmentsInput>
+    where?: ParticipantWhereInput
+  }
+
+  export type ParticipantUpdateToOneWithWhereWithoutSegmentsInput = {
+    where?: ParticipantWhereInput
+    data: XOR<ParticipantUpdateWithoutSegmentsInput, ParticipantUncheckedUpdateWithoutSegmentsInput>
+  }
+
+  export type ParticipantUpdateWithoutSegmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
+    sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
+  }
+
+  export type ParticipantUncheckedUpdateWithoutSegmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type MeetingCreateWithoutSummaryInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
-    room: RoomCreateNestedOneWithoutMeetingsInput
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
     participants?: ParticipantCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingUncheckedCreateWithoutSummaryInput = {
     id?: string
     roomId: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
     participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
-    transcripts?: TranscriptUncheckedCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
   }
 
   export type MeetingCreateOrConnectWithoutSummaryInput = {
@@ -10614,180 +17215,460 @@ export namespace Prisma {
 
   export type MeetingUpdateWithoutSummaryInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    room?: RoomUpdateOneRequiredWithoutMeetingsNestedInput
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
     participants?: ParticipantUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingUncheckedUpdateWithoutSummaryInput = {
     id?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUncheckedUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
   }
 
-  export type RoomCreateManyHostInput = {
+  export type MeetingCreateWithoutRecordingsInput = {
     id?: string
-    slug: string
-    name: string
-    maxParticipants?: number
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    createdAt?: Date | string
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
+    participants?: ParticipantCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    exports?: ExportCreateNestedManyWithoutMeetingInput
+  }
+
+  export type MeetingUncheckedCreateWithoutRecordingsInput = {
+    id?: string
+    roomId: string
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    createdAt?: Date | string
+    participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    exports?: ExportUncheckedCreateNestedManyWithoutMeetingInput
+  }
+
+  export type MeetingCreateOrConnectWithoutRecordingsInput = {
+    where: MeetingWhereUniqueInput
+    create: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
+  }
+
+  export type MeetingUpsertWithoutRecordingsInput = {
+    update: XOR<MeetingUpdateWithoutRecordingsInput, MeetingUncheckedUpdateWithoutRecordingsInput>
+    create: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
+    where?: MeetingWhereInput
+  }
+
+  export type MeetingUpdateToOneWithWhereWithoutRecordingsInput = {
+    where?: MeetingWhereInput
+    data: XOR<MeetingUpdateWithoutRecordingsInput, MeetingUncheckedUpdateWithoutRecordingsInput>
+  }
+
+  export type MeetingUpdateWithoutRecordingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
+    participants?: ParticipantUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type MeetingUncheckedUpdateWithoutRecordingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roomId?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type MeetingCreateWithoutExportsInput = {
+    id?: string
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    createdAt?: Date | string
+    room: MeetingRoomCreateNestedOneWithoutMeetingsInput
+    participants?: ParticipantCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingCreateNestedManyWithoutMeetingInput
+  }
+
+  export type MeetingUncheckedCreateWithoutExportsInput = {
+    id?: string
+    roomId: string
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
+    createdAt?: Date | string
+    participants?: ParticipantUncheckedCreateNestedManyWithoutMeetingInput
+    transcript?: TranscriptUncheckedCreateNestedOneWithoutMeetingInput
+    summary?: MeetingSummaryUncheckedCreateNestedOneWithoutMeetingInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutMeetingInput
+  }
+
+  export type MeetingCreateOrConnectWithoutExportsInput = {
+    where: MeetingWhereUniqueInput
+    create: XOR<MeetingCreateWithoutExportsInput, MeetingUncheckedCreateWithoutExportsInput>
+  }
+
+  export type MeetingUpsertWithoutExportsInput = {
+    update: XOR<MeetingUpdateWithoutExportsInput, MeetingUncheckedUpdateWithoutExportsInput>
+    create: XOR<MeetingCreateWithoutExportsInput, MeetingUncheckedCreateWithoutExportsInput>
+    where?: MeetingWhereInput
+  }
+
+  export type MeetingUpdateToOneWithWhereWithoutExportsInput = {
+    where?: MeetingWhereInput
+    data: XOR<MeetingUpdateWithoutExportsInput, MeetingUncheckedUpdateWithoutExportsInput>
+  }
+
+  export type MeetingUpdateWithoutExportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    room?: MeetingRoomUpdateOneRequiredWithoutMeetingsNestedInput
+    participants?: ParticipantUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type MeetingUncheckedUpdateWithoutExportsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roomId?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type MeetingRoomCreateManyHostInput = {
+    id?: string
+    roomName: string
+    roomHash: string
+    maxParticipants: number
+    status: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
-  export type RoomUpdateWithoutHostInput = {
+  export type MeetingRoomUpdateWithoutHostInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meetings?: MeetingUpdateManyWithoutRoomNestedInput
   }
 
-  export type RoomUncheckedUpdateWithoutHostInput = {
+  export type MeetingRoomUncheckedUpdateWithoutHostInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meetings?: MeetingUncheckedUpdateManyWithoutRoomNestedInput
   }
 
-  export type RoomUncheckedUpdateManyWithoutHostInput = {
+  export type MeetingRoomUncheckedUpdateManyWithoutHostInput = {
     id?: StringFieldUpdateOperationsInput | string
-    slug?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
+    roomName?: StringFieldUpdateOperationsInput | string
+    roomHash?: StringFieldUpdateOperationsInput | string
     maxParticipants?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MeetingCreateManyRoomInput = {
     id?: string
-    startTime?: Date | string
-    endTime?: Date | string | null
-    duration?: number | null
-    recordingUrl?: string | null
+    startedAt?: Date | string
+    endedAt?: Date | string | null
+    durationSeconds?: number | null
     createdAt?: Date | string
-    updatedAt?: Date | string
   }
 
   export type MeetingUpdateWithoutRoomInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: ParticipantUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUpdateOneWithoutMeetingNestedInput
+    transcript?: TranscriptUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingUncheckedUpdateWithoutRoomInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: ParticipantUncheckedUpdateManyWithoutMeetingNestedInput
-    transcripts?: TranscriptUncheckedUpdateManyWithoutMeetingNestedInput
-    summary?: SummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
+    summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutMeetingNestedInput
+    exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
   }
 
   export type MeetingUncheckedUpdateManyWithoutRoomInput = {
     id?: StringFieldUpdateOperationsInput | string
-    startTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
-    recordingUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ParticipantCreateManyMeetingInput = {
     id?: string
-    name: string
-    role: string
-    joinTime?: Date | string
-    leaveTime?: Date | string | null
-    duration?: number | null
+    displayName: string
     createdAt?: Date | string
   }
 
-  export type TranscriptCreateManyMeetingInput = {
+  export type RecordingCreateManyMeetingInput = {
     id?: string
-    speakerName: string
-    text: string
-    timestamp?: Date | string
+    fileName: string
+    objectKey: string
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type ExportCreateManyMeetingInput = {
+    id?: string
+    exportFormat: string
+    filePath: string
+    exportedAt: Date | string
   }
 
   export type ParticipantUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateManyWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    joinTime?: DateTimeFieldUpdateOperationsInput | Date | string
-    leaveTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    duration?: NullableIntFieldUpdateOperationsInput | number | null
+    displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TranscriptUpdateWithoutMeetingInput = {
+  export type RecordingUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TranscriptUncheckedUpdateWithoutMeetingInput = {
+  export type RecordingUncheckedUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TranscriptUncheckedUpdateManyWithoutMeetingInput = {
+  export type RecordingUncheckedUpdateManyWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
-    speakerName?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportUpdateWithoutMeetingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportUncheckedUpdateWithoutMeetingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ExportUncheckedUpdateManyWithoutMeetingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    exportFormat?: StringFieldUpdateOperationsInput | string
+    filePath?: StringFieldUpdateOperationsInput | string
+    exportedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantSessionCreateManyParticipantInput = {
+    id?: string
+    joinedAt: Date | string
+    lastSeenAt?: Date | string
+    leftAt?: Date | string | null
+    durationSeconds?: number | null
+    connectionId: string
+  }
+
+  export type TranscriptSegmentCreateManyParticipantInput = {
+    id?: string
+    transcriptId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type ParticipantSessionUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ParticipantSessionUncheckedUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ParticipantSessionUncheckedUpdateManyWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastSeenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    leftAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    connectionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type TranscriptSegmentUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     text?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    transcript?: TranscriptUpdateOneRequiredWithoutSegmentsNestedInput
+  }
+
+  export type TranscriptSegmentUncheckedUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    transcriptId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type TranscriptSegmentUncheckedUpdateManyWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    transcriptId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type TranscriptSegmentCreateManyTranscriptInput = {
+    id?: string
+    participantId: string
+    startTime: number
+    endTime: number
+    spokenAt: Date | string
+    text: string
+    confidence: number
+  }
+
+  export type TranscriptSegmentUpdateWithoutTranscriptInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+    participant?: ParticipantUpdateOneRequiredWithoutSegmentsNestedInput
+  }
+
+  export type TranscriptSegmentUncheckedUpdateWithoutTranscriptInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type TranscriptSegmentUncheckedUpdateManyWithoutTranscriptInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    startTime?: FloatFieldUpdateOperationsInput | number
+    endTime?: FloatFieldUpdateOperationsInput | number
+    spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    text?: StringFieldUpdateOperationsInput | string
+    confidence?: FloatFieldUpdateOperationsInput | number
   }
 
 

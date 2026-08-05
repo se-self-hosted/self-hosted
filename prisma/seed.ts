@@ -19,7 +19,7 @@ async function main() {
   const user = await prisma.user.create({
     data: {
       email,
-      name: 'self-hosted owner',
+      fullname: 'self-hosted owner',
       password: hashedPassword,
     },
   });

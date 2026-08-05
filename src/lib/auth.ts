@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/db";
 
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET;
@@ -36,4 +38,25 @@ export const verifyJwtToken = async (token: string) => {
   } catch (error) {
     return null;
   }
+};
+
+/**
+ * Reads the auth_token cookie (set on login), verifies it, and returns the
+ * currently logged-in user from the database — or null if not authenticated.
+ * Use this inside API route handlers instead of parsing cookies manually.
+ */
+export const getUserFromRequest = async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  if (!token) return null;
+
+  const payload = await verifyJwtToken(token);
+  if (!payload || typeof payload.sub !== "string") return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { id: true, email: true, fullname: true },
+  });
+
+  return user;
 };
