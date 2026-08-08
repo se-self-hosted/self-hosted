@@ -165,31 +165,36 @@ export function MeetingRoomView({
       const tokenData = tokenContentType?.includes("application/json") ? await tokenRes.json() : {};
 
       if (!tokenRes.ok || !tokenData.token) {
-        console.warn("LiveKit token generation failed, fallback to local room mode");
-      } else {
-        // Step C: Connect to LiveKit Room
-        const lkRoom = new Room({
-          adaptiveStream: true,
+        setJoinError(tokenData.error || "ไม่สามารถขอรับ Token สำหรับ LiveKit ได้");
+        setIsJoining(false);
+        return;
+      }
+
+      // Step C: Connect to LiveKit Room
+      const lkRoom = new Room({
+        adaptiveStream: true,
+      });
+
+      // Set up LiveKit Room Event listeners
+      setupLivekitEventListeners(lkRoom, dbData.participantId);
+
+      try {
+        await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
+        // Populate remote participants already in the room upon connection
+        lkRoom.remoteParticipants.forEach((participant) => {
+          updateRemoteParticipant(participant);
         });
-
-        // Set up LiveKit Room Event listeners
-        setupLivekitEventListeners(lkRoom, dbData.participantId);
-
-        try {
-          await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
-          // Populate remote participants already in the room upon connection
-          lkRoom.remoteParticipants.forEach((participant) => {
-            updateRemoteParticipant(participant);
-          });
-          // Publish local audio track if mic not muted
-          if (!isMicrophoneMuted) {
-            await lkRoom.localParticipant.setMicrophoneEnabled(true);
-          }
-          setLivekitRoom(lkRoom);
-          setConnectionStatus("connected");
-        } catch (lkErr) {
-          console.error("LiveKit connection error:", lkErr);
+        // Publish local audio track if mic not muted
+        if (!isMicrophoneMuted) {
+          await lkRoom.localParticipant.setMicrophoneEnabled(true);
         }
+        setLivekitRoom(lkRoom);
+        setConnectionStatus("connected");
+      } catch (lkErr: any) {
+        console.error("LiveKit connection error:", lkErr);
+        setJoinError(`ไม่สามารถเชื่อมต่อกับ LiveKit Server ได้ (${lkErr?.message || "Connection failed"})`);
+        setIsJoining(false);
+        return;
       }
 
       setHasJoined(true);

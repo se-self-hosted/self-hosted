@@ -12,11 +12,15 @@ export const HEARTBEAT_INTERVAL_MS = 5_000;
 export const STALE_AFTER_MS = 15_000;
 
 export function isSessionActive(session: {
-  leftAt: Date | null;
-  lastSeenAt: Date;
+  leftAt: Date | null | string;
+  lastSeenAt: Date | string;
 }): boolean {
   if (session.leftAt) return false;
-  return Date.now() - session.lastSeenAt.getTime() < STALE_AFTER_MS;
+  const lastSeenMs =
+    session.lastSeenAt instanceof Date
+      ? session.lastSeenAt.getTime()
+      : new Date(session.lastSeenAt).getTime();
+  return Date.now() - lastSeenMs < STALE_AFTER_MS;
 }
 
 /**

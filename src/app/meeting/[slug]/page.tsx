@@ -21,10 +21,14 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
   const { slug } = use(params);
   const searchParams = useSearchParams();
   const isHost = searchParams.get("role") === "host";
-  const { user } = useAuthStore();
+  const { user, checkAuth } = useAuthStore();
 
   const [room, setRoom] = useState<Room | null>();
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     let isCancelled = false;

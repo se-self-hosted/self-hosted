@@ -59,13 +59,22 @@ services:
       - "7882:7882/udp"
 
   coturn:
-    image: coturn/coturn
-    command: >
-      -n --log-file=stdout --min-port=49152 --max-port=65535
-      --realm=turn.example.com --user=user:password
+    image: coturn/coturn:latest
+    container_name: coturn
+    restart: unless-stopped
     ports:
       - "3478:3478"
       - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+      - "49152-49200:49152-49200/udp"
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    environment:
+      TURN_USER: ${TURN_USER:-meetuser}
+      TURN_PASSWORD: ${TURN_PASSWORD:-meetsync-turn-secret}
+      TURN_REALM: ${TURN_REALM:-turn.meetsync.local}
+    command: ["-c", "/etc/coturn/turnserver.conf"]
 
 volumes:
   postgres_data:

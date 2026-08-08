@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
 import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
 const tokenSchema = z.object({
   roomHash: z.string().min(1, "roomHash is required"),
@@ -18,7 +20,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { roomHash, identity, displayName, isHost } = result.data;
+    const { roomHash, identity, displayName } = result.data;
+    let isHost = result.data.isHost;
+
+    const room = await prisma.meetingRoom.findUnique({
+      where: { roomHash },
+    });
+
+    if (!room) {
+      return NextResponse.json({ error: "Meeting room not found" }, { status: 404 });
+    }
+
+    if (room.status !== "active") {
+      return NextResponse.json({ error: "Meeting room is not active" }, { status: 400 });
+    }
+
+    const user = await getUserFromRequest();
+    if (user && user.id === room.hostId) {
+      isHost = true;
+    }
 
     const apiKey = process.env.LIVEKIT_API_KEY || "devkey";
     const apiSecret = process.env.LIVEKIT_API_SECRET || "secret";
@@ -26,7 +46,7 @@ export async function POST(req: Request) {
     const at = new AccessToken(apiKey, apiSecret, {
       identity,
       name: displayName,
-      metadata: JSON.stringify({ isHost }),
+      metadata: JSON.stringify({ isHost, roomHash, displayName }),
     });
 
     at.addGrant({
@@ -35,11 +55,13 @@ export async function POST(req: Request) {
       canPublish: true,
       canSubscribe: true,
       canPublishData: true,
+      roomAdmin: isHost,
     });
 
     const token = await at.toJwt();
+    const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880";
 
-    return NextResponse.json({ token, wsUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880" });
+    return NextResponse.json({ token, wsUrl });
   } catch (error) {
     console.error("LiveKit Token Error:", error);
     return NextResponse.json({ error: "Failed to generate LiveKit token" }, { status: 500 });
