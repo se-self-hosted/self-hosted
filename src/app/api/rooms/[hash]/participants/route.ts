@@ -14,7 +14,11 @@ export async function GET(
     });
 
     if (!room) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+      return NextResponse.json({ error: "Room not found", roomStatus: "invalid" }, { status: 404 });
+    }
+
+    if (room.status !== "active") {
+      return NextResponse.json({ error: "Room is closed", roomStatus: room.status, participants: [] });
     }
 
     const meeting = await prisma.meeting.findFirst({

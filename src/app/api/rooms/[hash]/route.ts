@@ -89,6 +89,20 @@ export async function PATCH(
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
+    if (result.data.status === "ended") {
+      const ongoingMeetings = await prisma.meeting.findMany({
+        where: { roomId: room.id, endedAt: null },
+      });
+      const now = new Date();
+      for (const m of ongoingMeetings) {
+        const durationSeconds = Math.round((now.getTime() - m.startedAt.getTime()) / 1000);
+        await prisma.meeting.update({
+          where: { id: m.id },
+          data: { endedAt: now, durationSeconds },
+        });
+      }
+    }
+
     const updatedRoom = await prisma.meetingRoom.update({
       where: { roomHash: hash },
       data: result.data,

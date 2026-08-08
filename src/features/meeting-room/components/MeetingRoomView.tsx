@@ -65,6 +65,7 @@ export function MeetingRoomView({
   const [hasJoined, setHasJoined] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [roomStatusState, setRoomStatusState] = useState<string>(room?.status || "active");
 
   // 1. Microphone Permission state
   const [micPermissionState, setMicPermissionState] = useState<
@@ -360,6 +361,12 @@ export function MeetingRoomView({
         const data = await response.json();
         if (!isMounted) return;
 
+        if (data.roomStatus && data.roomStatus !== "active") {
+          setRoomStatusState(data.roomStatus);
+          if (livekitRoom) livekitRoom.disconnect();
+          return;
+        }
+
         setDbParticipants(data.participants || []);
       } catch (err) {
         // Silently handle temporary polling network hiccups
@@ -468,7 +475,22 @@ export function MeetingRoomView({
     }
   };
 
-  if (!room || room.status !== "active") {
+  const handleHostEndRoom = async () => {
+    if (!isHost || !room) return;
+    try {
+      await fetch(`/api/rooms/${room.roomHash}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ended" }),
+      });
+      if (livekitRoom) livekitRoom.disconnect();
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("End room error:", err);
+    }
+  };
+
+  if (!room || roomStatusState !== "active") {
     return (
       <main className="meeting-unavailable">
         <div className="meeting-unavailable__card">
@@ -476,12 +498,12 @@ export function MeetingRoomView({
             <AlertTriangle aria-hidden="true" className="icon-20" />
           </span>
           <h1 className="meeting-unavailable__title">
-            {room ? "ห้องประชุมนี้สิ้นสุดแล้ว" : "ไม่พบห้องประชุม"}
+            {!room || roomStatusState === "invalid" ? "ไม่พบห้องประชุม" : "ห้องประชุมนี้สิ้นสุดแล้ว"}
           </h1>
           <p className="meeting-unavailable__description">
-            {room
-              ? "ห้องที่สิ้นสุดหรือปิดแล้วไม่สามารถเข้าร่วมได้"
-              : `ไม่พบห้องสำหรับรหัส ${requestedSlug}`}
+            {!room || roomStatusState === "invalid"
+              ? `ไม่พบห้องสำหรับรหัส ${requestedSlug}`
+              : "ห้องประชุมสิ้นสุดการใช้งานหรือถูกปิดโดย Host แล้ว"}
           </p>
           <Link href="/dashboard" className="meeting-unavailable__link focus-ring">
             กลับไปที่แดชบอร์ด
@@ -852,6 +874,17 @@ export function MeetingRoomView({
         <button type="button" aria-label="ผู้เข้าร่วม" className="meeting-control focus-ring">
           <Users aria-hidden="true" className="icon-20" />
         </button>
+
+        {isHost && (
+          <button
+            type="button"
+            onClick={handleHostEndRoom}
+            title="ปิดการประชุมสำหรับทุกคน"
+            className="rounded-lg bg-red-600/80 px-3 py-2 text-xs font-semibold text-white hover:bg-red-600 focus-ring"
+          >
+            ปิดการประชุม
+          </button>
+        )}
 
         <Link
           href="/dashboard"
