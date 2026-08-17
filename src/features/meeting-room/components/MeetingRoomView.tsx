@@ -1,5 +1,7 @@
 "use client";
 
+import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
+
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -174,6 +176,18 @@ export function MeetingRoomView({
       // Step C: Connect to LiveKit Room
       const lkRoom = new Room({
         adaptiveStream: true,
+        publishDefaults: {
+          audioPreset: { maxBitrate: 64000 },
+          dtx: false,
+          red: true,
+        },
+        audioCaptureDefaults: {
+          echoCancellation: true,
+          noiseSuppression: false, // Turn off browser's native noise suppression for RNNoise
+          autoGainControl: true,
+          sampleRate: 48000,
+          processor: new RNNoiseProcessor(),
+        },
       });
 
       // Set up LiveKit Room Event listeners
