@@ -52,18 +52,20 @@ export async function POST(
 
     const isHost = Boolean(user && room.hostId === user.id);
 
-    // Close out any previous active session under the same name or host identity in this meeting
-    const searchNames = Array.from(
-      new Set([displayName, user?.fullname, user?.email].filter(Boolean) as string[]),
-    );
+    // Only close out previous active sessions for authenticated users to avoid kicking out guests with the same name
+    const searchNames = user
+      ? Array.from(new Set([displayName, user.fullname, user.email].filter(Boolean) as string[]))
+      : [];
 
-    const existingParticipants = await prisma.participant.findMany({
-      where: {
-        meetingId: meeting.id,
-        displayName: { in: searchNames },
-      },
-      include: { sessions: true },
-    });
+    const existingParticipants = searchNames.length > 0 
+      ? await prisma.participant.findMany({
+          where: {
+            meetingId: meeting.id,
+            displayName: { in: searchNames },
+          },
+          include: { sessions: true },
+        })
+      : [];
 
     const activePreviousSessions = existingParticipants.flatMap((participant) =>
       participant.sessions.filter((session) => isSessionActive(session)),
