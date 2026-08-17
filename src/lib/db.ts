@@ -7,7 +7,18 @@ const globalForPrisma = globalThis as unknown as {
   pool: Pool | undefined;
 };
 
-const pool = globalForPrisma.pool ?? new Pool({ connectionString: process.env.DATABASE_URL });
+import fs from "fs";
+
+function getConnectionString(): string {
+  let url = process.env.DATABASE_URL || "postgresql://user:password@localhost:5432/meeting_db?schema=public";
+  const isDocker = fs.existsSync("/.dockerenv");
+  if (!isDocker && url.includes("@postgres:")) {
+    url = url.replace("@postgres:", "@localhost:");
+  }
+  return url;
+}
+
+const pool = globalForPrisma.pool ?? new Pool({ connectionString: getConnectionString() });
 const adapter = new PrismaPg(pool);
 
 export const prisma =

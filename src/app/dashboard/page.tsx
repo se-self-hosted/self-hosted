@@ -24,6 +24,7 @@ type Room = {
   status: "active" | "ended";
   participants?: number;
   capacity: number;
+  isHostInRoom?: boolean;
 };
 
 const initialRooms: Room[] = [
@@ -93,35 +94,55 @@ export default function DashboardPage() {
   }, [checkAuth]);
 
   useEffect(() => {
-    // Redirect if completely finished checking and no user is found
-    if (!isChecking && !isLoading && user) {
-      fetchRooms();
+    if (!isChecking && !isLoading && !user) {
+      router.push("/");
     }
   }, [isChecking, isLoading, user, router]);
 
-  async function fetchRooms() {
-    try {
-      const response = await fetch("/api/rooms");
-      const data = await response.json();
+  useEffect(() => {
+    // Fetch rooms if completely finished checking and user is authenticated
+    if (!isChecking && !isLoading && user) {
+      let isMounted = true;
+      const controller = new AbortController();
 
-      console.log("fetchRooms response:", response.status, data);
-  
-      if (!response.ok) return;
-  
-      const loadedRooms: Room[] = data.rooms.map((room: any) => ({
-        id: room.id,
-        slug: room.roomHash,
-        name: room.roomName,
-        capacity: room.maxParticipants,
-        participants: 0,
-        status: room.status,
-      }));
+      async function loadRooms() {
+        try {
+          const response = await fetch("/api/rooms", { signal: controller.signal });
+          const contentType = response.headers.get("content-type");
 
-        setRooms(loadedRooms);
-    } catch (error) {
-      console.error("Fetch rooms error:", error);
+          if (!response.ok || !contentType?.includes("application/json")) return;
+
+          const data = await response.json();
+          if (!isMounted) return;
+
+          const loadedRooms: Room[] = data.rooms.map((room: any) => ({
+            id: room.id,
+            slug: room.roomHash,
+            name: room.roomName,
+            capacity: room.maxParticipants,
+            participants: room.activeParticipantCount ?? 0,
+            status: room.status,
+            isHostInRoom: room.isHostInRoom ?? false,
+          }));
+
+          setRooms(loadedRooms);
+        } catch (error: any) {
+          if (error.name !== "AbortError") {
+            // Silently handle temporary network failures during polling
+          }
+        }
+      }
+
+      loadRooms();
+      const interval = setInterval(loadRooms, 3000);
+
+      return () => {
+        isMounted = false;
+        controller.abort();
+        clearInterval(interval);
+      };
     }
-  }
+  }, [isChecking, isLoading, user]);
 
   const closeModal = () => {
     setModalMode(null);
@@ -183,7 +204,8 @@ export default function DashboardPage() {
           }),
         });
     
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        const data = contentType?.includes("application/json") ? await response.json() : {};
     
         if (!response.ok) {
           setFormError(data.error || "ไม่สามารถสร้างห้องได้");
@@ -192,8 +214,8 @@ export default function DashboardPage() {
     
         const newRoom: Room = {
           id: data.room.id,
-          slug: data.room.roomHash,      // ← แก้ data.room.slug → data.room.roomHash
-          name: data.room.roomName,      // ← แก้ data.room.name → data.room.roomName
+          slug: data.room.roomHash,
+          name: data.room.roomName,
           capacity: data.room.maxParticipants,
           participants: 0,
           status: "active",
@@ -220,7 +242,8 @@ export default function DashboardPage() {
           }),
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        const data = contentType?.includes("application/json") ? await response.json() : {};
 
         if (!response.ok) {
           setFormError(data.error || "ไม่สามารถแก้ไขห้องได้");
@@ -254,7 +277,8 @@ export default function DashboardPage() {
       });
   
       if (!response.ok) {
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        const data = contentType?.includes("application/json") ? await response.json() : {};
         setFormError(data.error || "ไม่สามารถลบห้องได้");
         return;
       }
@@ -369,6 +393,7 @@ export default function DashboardPage() {
             {rooms.map((room) => {
               const isActive = room.status === "active";
               const wasCopied = copiedRoomId === room.slug;
+              const isAlreadyInRoom = Boolean(room.isHostInRoom);
 
               return (
                 <article key={room.id} className="room-card">
@@ -378,7 +403,7 @@ export default function DashboardPage() {
                     </span>
                     <span className={isActive ? "room-card__badge--active" : "room-card__badge"}>
                       {isActive && <span aria-hidden="true" className="icon-8 room-card__badge-dot" />}
-                      {isActive ? "Active" : "Ended"}
+                      {isActive ? (isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "Active") : "Ended"}
                     </span>
                   </div>
 
@@ -401,11 +426,12 @@ export default function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => router.push(`/meeting/${room.slug}?role=host`)}
-                      disabled={!isActive}
+                      disabled={!isActive || isAlreadyInRoom}
+                      title={isAlreadyInRoom ? "คุณอยู่ในห้องประชุมนี้แล้ว" : undefined}
                       className="room-card__join-btn focus-ring"
                     >
                       <DoorOpen aria-hidden="true" className="icon-16" />
-                      เข้าห้อง
+                      {isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "เข้าห้อง"}
                     </button>
                     <button
                       type="button"

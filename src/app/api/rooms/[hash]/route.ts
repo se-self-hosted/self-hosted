@@ -24,13 +24,34 @@ export async function GET(
 
     const room = await prisma.meetingRoom.findUnique({
       where: { roomHash: hash },
+      include: {
+        meetings: {
+          where: { endedAt: null },
+          orderBy: { startedAt: "desc" },
+          take: 1,
+          include: {
+            participants: {
+              include: { sessions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ room });
+    const { isSessionActive } = await import("@/lib/presence");
+    const ongoingMeeting = room.meetings[0];
+    const activeParticipantCount = ongoingMeeting
+      ? ongoingMeeting.participants.filter((participant) =>
+          participant.sessions.some((session) => isSessionActive(session)),
+        ).length
+      : 0;
+
+    const { meetings, ...roomFields } = room;
+    return NextResponse.json({ room: { ...roomFields, activeParticipantCount } });
   } catch (error) {
     console.error("Get Room By Hash Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -66,6 +87,20 @@ export async function PATCH(
 
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
+    }
+
+    if (result.data.status === "ended") {
+      const ongoingMeetings = await prisma.meeting.findMany({
+        where: { roomId: room.id, endedAt: null },
+      });
+      const now = new Date();
+      for (const m of ongoingMeetings) {
+        const durationSeconds = Math.round((now.getTime() - m.startedAt.getTime()) / 1000);
+        await prisma.meeting.update({
+          where: { id: m.id },
+          data: { endedAt: now, durationSeconds },
+        });
+      }
     }
 
     const updatedRoom = await prisma.meetingRoom.update({

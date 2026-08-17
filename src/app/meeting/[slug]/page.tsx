@@ -21,10 +21,14 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
   const { slug } = use(params);
   const searchParams = useSearchParams();
   const isHost = searchParams.get("role") === "host";
-  const { user } = useAuthStore();
+  const { user, checkAuth } = useAuthStore();
 
   const [room, setRoom] = useState<Room | null>();
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -40,11 +44,12 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
           return;
         }
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Room request failed");
+        const contentType = response.headers.get("content-type");
+        if (!response.ok || !contentType?.includes("application/json")) {
+          throw new Error("Room request failed");
         }
+
+        const data = await response.json();
 
         if (!isCancelled) setRoom(data.room);
       } catch {
