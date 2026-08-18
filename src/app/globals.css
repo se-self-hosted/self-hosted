@@ -324,6 +324,145 @@
     @apply bg-red-600 hover:bg-red-500;
   }
 
+  /* ---------- transcript viewer ---------- */
+  .transcript-page {
+    @apply min-h-screen bg-[#0d172b] text-slate-100 lg:flex;
+  }
+  .transcript-sidebar {
+    @apply border-b border-[#202c42] bg-[#0e182c] lg:fixed lg:inset-y-0 lg:left-0 lg:w-[236px] lg:border-r lg:border-b-0;
+  }
+  .transcript-sidebar__inner {
+    @apply flex h-full flex-col;
+  }
+  .transcript-sidebar__brand {
+    @apply m-5 w-fit rounded-lg;
+  }
+  .transcript-sidebar__nav {
+    @apply grid grid-cols-2 gap-2 px-2 pb-4 lg:block lg:space-y-1;
+  }
+  .transcript-sidebar__nav .sidebar__nav-label {
+    @apply col-span-2;
+  }
+  .transcript-page__main {
+    @apply min-h-screen w-full;
+  }
+  @media (min-width: 1024px) {
+    .transcript-page__main {
+      margin-left: var(--sidebar-width);
+    }
+  }
+  .transcript-page__body {
+    @apply min-h-screen;
+  }
+  .transcript-header {
+    @apply border-b border-[#202c42] px-5 pt-6 pb-7 sm:px-8 lg:px-9;
+  }
+  .transcript-header__back {
+    @apply inline-flex items-center gap-1 rounded text-xs text-[#7183a2] transition-colors hover:text-white;
+  }
+  .transcript-header__title {
+    @apply mt-5 text-2xl font-bold tracking-[-0.03em] text-white;
+  }
+  .transcript-header__meta {
+    @apply mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[#7183a2];
+  }
+  .transcript-avatars {
+    @apply flex -space-x-1.5;
+  }
+  .transcript-avatar,
+  .transcript-row__avatar {
+    @apply flex shrink-0 items-center justify-center rounded-full font-bold text-white ring-2 ring-[#0d172b];
+  }
+  .transcript-avatar {
+    @apply size-7 text-[10px];
+  }
+  .transcript-row__avatar {
+    @apply size-9 text-xs ring-0;
+  }
+  .transcript-avatar--indigo {
+    @apply bg-[#5145e5];
+  }
+  .transcript-avatar--cyan {
+    @apply bg-[#089bbd];
+  }
+  .transcript-avatar--violet {
+    @apply bg-[#7c3aed];
+  }
+  .transcript-avatar--amber {
+    @apply bg-[#e98a06];
+  }
+  .transcript-avatar--emerald {
+    @apply bg-[#0d9f78];
+  }
+  .transcript-avatar--more {
+    @apply bg-[#243249] text-[#9dabc0];
+  }
+  .transcript-tabs {
+    @apply flex h-[50px] items-end gap-1 border-b border-[#202c42] px-5 sm:px-8 lg:px-9;
+  }
+  .transcript-tab {
+    @apply flex h-full items-center gap-1.5 border-b-2 border-transparent px-5 text-xs font-medium text-[#7183a2];
+  }
+  .transcript-tab--active {
+    @apply border-[#685cff] text-[#685cff];
+  }
+  .transcript-panel {
+    @apply px-5 py-8 sm:px-8 lg:px-9;
+  }
+  .transcript-list {
+    @apply max-w-[920px] space-y-5;
+  }
+  .transcript-row {
+    @apply flex items-start gap-3.5;
+  }
+  .transcript-row__content {
+    @apply min-w-0;
+  }
+  .transcript-row__heading {
+    @apply flex items-baseline gap-2;
+  }
+  .transcript-row__speaker {
+    @apply text-sm font-bold text-white;
+  }
+  .transcript-row__time {
+    @apply text-[10px] text-[#52627e];
+  }
+  .transcript-row__text {
+    @apply mt-1.5 w-fit max-w-full rounded-r-xl rounded-bl-xl bg-[#1c293d] px-4 py-3 text-sm leading-6 text-[#e5eaf2] shadow-[0_8px_24px_rgba(2,8,23,0.08)];
+  }
+  .transcript-empty,
+  .transcript-state {
+    @apply mx-auto flex min-h-[360px] max-w-md flex-col items-center justify-center px-5 text-center;
+  }
+  .transcript-empty__icon {
+    @apply flex size-11 items-center justify-center rounded-full bg-[#1c293d] text-[#685cff];
+  }
+  .transcript-empty__title,
+  .transcript-state__title {
+    @apply mt-4 text-base font-bold text-white;
+  }
+  .transcript-empty__description,
+  .transcript-state__description {
+    @apply mt-2 text-sm leading-6 text-[#7183a2];
+  }
+  .transcript-state {
+    @apply min-h-screen;
+  }
+  .transcript-state__spinner {
+    @apply size-8 animate-spin rounded-full border-2 border-[#32415a] border-t-[#685cff];
+  }
+  .transcript-state__link {
+    @apply mt-5 rounded-lg bg-[#5145e5] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#6054ef];
+  }
+  @media (max-width: 639px) {
+    .transcript-tab {
+      @apply px-3;
+    }
+    .transcript-row__text {
+      @apply text-[13px];
+    }
+  }
+
   @media (max-width: 639px) {
     .meeting-lobby__card,
     .meeting-unavailable__card {
