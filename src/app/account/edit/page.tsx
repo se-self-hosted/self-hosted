@@ -3,14 +3,12 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  Bell,
   Camera,
   Check,
   Eye,
   EyeOff,
   KeyRound,
   Mail,
-  Settings,
   UserRound,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";

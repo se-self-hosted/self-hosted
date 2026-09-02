@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await getUserFromRequest();
     if (!user) {
@@ -105,7 +105,16 @@ export async function GET(req: Request) {
           )
         : false;
 
-      const { meetings, ...roomFields } = room;
+      const roomFields = {
+        id: room.id,
+        hostId: room.hostId,
+        roomName: room.roomName,
+        roomHash: room.roomHash,
+        maxParticipants: room.maxParticipants,
+        status: room.status,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+      };
       return { ...roomFields, activeParticipantCount, isHostInRoom };
     });
 

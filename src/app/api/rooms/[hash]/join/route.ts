@@ -50,8 +50,6 @@ export async function POST(
       });
     }
 
-    const isHost = Boolean(user && room.hostId === user.id);
-
     // Only close out previous active sessions for authenticated users to avoid kicking out guests with the same name
     const searchNames = user
       ? Array.from(new Set([displayName, user.fullname, user.email].filter(Boolean) as string[]))
