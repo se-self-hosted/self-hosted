@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuthStore } from "@/store/useAuthStore";
 
 
@@ -324,14 +325,14 @@ export default function DashboardPage() {
           <nav aria-label="เมนูหลัก" className="sidebar__nav">
             <p className="sidebar__nav-label">เมนู</p>
             <div className="sidebar__nav-grid">
-              <a href="#rooms" aria-current="page" className="sidebar__nav-link--active">
+              <Link href="/dashboard" aria-current="page" className="sidebar__nav-link--active">
                 <LayoutGrid aria-hidden="true" className="icon-16" />
                 แดชบอร์ด
-              </a>
-              <a href="#history" className="sidebar__nav-link">
+              </Link>
+              <Link href="/history" className="sidebar__nav-link">
                 <Clock3 aria-hidden="true" className="icon-16" />
                 ประวัติการประชุม
-              </a>
+              </Link>
             </div>
           </nav>
 
@@ -430,7 +431,6 @@ export default function DashboardPage() {
             })}
           </section>
 
-          <span id="history" className="sr-only">ประวัติการประชุม</span>
         </div>
       </main>
 

@@ -60,7 +60,7 @@ function ViewerSidebar() {
             <LayoutGrid aria-hidden="true" className="icon-16" />
             แดชบอร์ด
           </Link>
-          <Link href="/dashboard#history" className="sidebar__nav-link--active focus-ring">
+          <Link href="/history" className="sidebar__nav-link--active focus-ring">
             <Clock3 aria-hidden="true" className="icon-16" />
             ประวัติการประชุม
           </Link>
@@ -82,7 +82,7 @@ function ViewerStateMessage({ state }: TranscriptViewerProps) {
       </h1>
       {isError ? <p className="transcript-state__description">{state.message}</p> : null}
       {isError ? (
-        <Link href="/dashboard#history" className="transcript-state__link focus-ring">
+        <Link href="/history" className="transcript-state__link focus-ring">
           กลับไปประวัติการประชุม
         </Link>
       ) : null}
@@ -96,7 +96,7 @@ function MeetingHeader({ meeting }: { meeting: TranscriptMeetingViewModel }) {
 
   return (
     <header className="transcript-header">
-      <Link href="/dashboard#history" className="transcript-header__back focus-ring">
+      <Link href="/history" className="transcript-header__back focus-ring">
         <ChevronLeft aria-hidden="true" className="icon-14" />
         ประวัติการประชุม
       </Link>

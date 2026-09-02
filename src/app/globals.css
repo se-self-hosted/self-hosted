@@ -181,6 +181,63 @@
   .room-card__edit-btn {
     @apply flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#35465f] text-[#8fa0b9] transition-colors hover:border-[#526581] hover:bg-[#223149] hover:text-white;
   }
+
+  /* ---------- meeting history ---------- */
+  .meeting-history {
+    @apply scroll-mt-8;
+  }
+  .meeting-history__header {
+    @apply mb-5;
+  }
+  .meeting-history__filters {
+    @apply mb-5 grid gap-3 rounded-xl border border-[#32415a] bg-[#162237] p-4 md:grid-cols-[minmax(220px,1fr)_auto_auto_auto] md:items-end;
+  }
+  .meeting-history__search {
+    @apply flex h-10 items-center gap-2 rounded-lg border border-[#3a4b65] bg-[#0f1930] px-3 text-[#7183a2] focus-within:border-[#675cf0];
+  }
+  .meeting-history__search input {
+    @apply min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#596b88];
+  }
+  .meeting-history__date {
+    @apply grid gap-1 text-[11px] font-medium text-[#8493ac];
+  }
+  .meeting-history__date input {
+    @apply h-10 rounded-lg border border-[#3a4b65] bg-[#0f1930] px-3 text-sm text-white outline-none focus:border-[#675cf0];
+    color-scheme: dark;
+  }
+  .meeting-history__submit {
+    @apply h-10 rounded-lg bg-[#5145e5] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#6054ef];
+  }
+  .meeting-history__results {
+    @apply min-h-32 overflow-hidden rounded-xl border border-[#32415a] bg-[#1c293d];
+  }
+  .meeting-history__state {
+    @apply flex min-h-32 items-center justify-center gap-2 p-6 text-sm text-[#8493ac];
+  }
+  .meeting-history__table-wrap {
+    @apply overflow-x-auto;
+  }
+  .meeting-history__table {
+    @apply w-full min-w-[720px] border-collapse text-left text-sm;
+  }
+  .meeting-history__table th {
+    @apply border-b border-[#3a4a63] bg-[#172338] px-6 py-3.5 text-sm font-semibold text-[#c2cede];
+  }
+  .meeting-history__table td {
+    @apply border-b border-[#2a3850] px-6 py-5 text-[#9fb0c8];
+  }
+  .meeting-history__table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .meeting-history__table strong {
+    @apply block font-semibold text-white;
+  }
+  .meeting-history__table small {
+    @apply mt-1 block text-xs text-[#7183a2];
+  }
+  .meeting-history__link {
+    @apply inline-flex size-9 items-center justify-center rounded-lg border border-[#3b4b65] bg-[#26354b] text-[#c4d0e1] shadow-sm transition-colors hover:border-[#596d8d] hover:bg-[#3a4d6a] hover:text-white;
+  }
   /* ---------- meeting room lobby ---------- */
   .meeting-lobby,
   .meeting-unavailable {
