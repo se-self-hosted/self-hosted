@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "HOST=0.0.0.0 npx --yes prisma studio --port 5555 --browser none & next dev",
+    "postinstall": "node -e \"const fs=require('fs'); const p='./node_modules/purify-voice/package.json'; if(fs.existsSync(p)){const c=JSON.parse(fs.readFileSync(p)); delete c.module; delete c.exports; fs.writeFileSync(p,JSON.stringify(c,null,2))}\"",
+    "dev": "HOST=0.0.0.0 npx --yes prisma studio --port 5555 --browser none & next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

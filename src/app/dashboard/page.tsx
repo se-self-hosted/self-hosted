@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import Link from "next/link";
 
 
 type Room = {
@@ -354,18 +355,20 @@ export default function DashboardPage() {
 
           <div className="sidebar__footer">
             <div className="sidebar__user-row">
-              <span className="sidebar__avatar">
-                {(user.name || user.email).charAt(0).toUpperCase()}
-              </span>
-              <span className="sidebar__user-info">
-                <span className="sidebar__user-name">{user.name || "Host"}</span>
-                <span className="sidebar__user-email">{user.email}</span>
-              </span>
+              <Link href="/account/edit" className="flex items-center gap-3 min-w-0 flex-1 rounded-md transition-opacity hover:opacity-80">
+                <span className="sidebar__avatar">
+                  {(user.name || user.email).charAt(0).toUpperCase()}
+                </span>
+                <span className="sidebar__user-info">
+                  <span className="sidebar__user-name">{user.name || "Host"}</span>
+                  <span className="sidebar__user-email">{user.email}</span>
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => logout()}
                 aria-label="ออกจากระบบ"
-                className="sidebar__logout-desktop"
+                className="sidebar__logout-desktop shrink-0"
               >
                 <LogOut aria-hidden="true" className="icon-16" />
               </button>

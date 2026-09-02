@@ -7,29 +7,26 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
-  LogOut,
   Mic,
   MicOff,
   Phone,
-  Radio,
   RefreshCw,
   Signal,
   Users,
   Video,
-  Volume2,
   VolumeX,
 } from "lucide-react";
 import {
   Room,
   RoomEvent,
   ConnectionState,
-  LocalParticipant,
   RemoteParticipant,
   Participant,
   Track,
   ConnectionQuality,
   RemoteTrackPublication,
   RemoteTrack,
+  LocalAudioTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 
@@ -118,6 +115,23 @@ export function MeetingRoomView({
     }
   }
 
+  // Apply RNNoise noise cancellation processor to audio track
+  async function applyNoiseCancellation(audioTrack?: LocalAudioTrack) {
+    if (!audioTrack) return;
+    try {
+      if (!audioTrack.getProcessor()) {
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx({ sampleRate: 48000 });
+          audioTrack.setAudioContext(ctx);
+        }
+        await audioTrack.setProcessor(new RNNoiseProcessor());
+      }
+    } catch (err) {
+      console.warn("Failed to apply RNNoise processor:", err);
+    }
+  }
+
   // Attempt joining room (db presence + LiveKit token)
   async function attemptJoin(name: string) {
     if (!room) return;
@@ -125,11 +139,14 @@ export function MeetingRoomView({
     setIsJoining(true);
     setJoinError(null);
 
+    let shouldMute = isMicrophoneMuted;
+
     // Try requesting mic permission, mute if denied
     if (micPermissionState !== "granted") {
       const granted = await requestMicrophonePermission();
       if (!granted) {
         setIsMicrophoneMuted(true);
+        shouldMute = true;
       }
     }
 
@@ -176,6 +193,7 @@ export function MeetingRoomView({
       // Step C: Connect to LiveKit Room
       const lkRoom = new Room({
         adaptiveStream: true,
+        webAudioMix: true,
         publishDefaults: {
           audioPreset: { maxBitrate: 64000 },
           dtx: false,
@@ -186,7 +204,6 @@ export function MeetingRoomView({
           noiseSuppression: false, // Turn off browser's native noise suppression for RNNoise
           autoGainControl: true,
           sampleRate: 48000,
-          processor: new RNNoiseProcessor(),
         },
       });
 
@@ -200,14 +217,17 @@ export function MeetingRoomView({
           updateRemoteParticipant(participant);
         });
         // Publish local audio track if mic not muted
-        if (!isMicrophoneMuted) {
+        if (!shouldMute) {
           await lkRoom.localParticipant.setMicrophoneEnabled(true);
+          const audioTrack = lkRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
+          await applyNoiseCancellation(audioTrack);
         }
         setLivekitRoom(lkRoom);
         setConnectionStatus("connected");
-      } catch (lkErr: any) {
+      } catch (lkErr: unknown) {
         console.error("LiveKit connection error:", lkErr);
-        setJoinError(`ไม่สามารถเชื่อมต่อกับ LiveKit Server ได้ (${lkErr?.message || "Connection failed"})`);
+        const errMsg = lkErr instanceof Error ? lkErr.message : "Connection failed";
+        setJoinError(`ไม่สามารถเชื่อมต่อกับ LiveKit Server ได้ (${errMsg})`);
         setIsJoining(false);
         return;
       }
@@ -250,6 +270,8 @@ export function MeetingRoomView({
       // Restore mic state on reconnected
       if (!isMicrophoneMuted) {
         await lkRoom.localParticipant.setMicrophoneEnabled(true);
+        const audioTrack = lkRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
+        await applyNoiseCancellation(audioTrack);
       }
     });
 
@@ -305,7 +327,7 @@ export function MeetingRoomView({
     });
 
     // Data Received (Host Mute Remote Command)
-    lkRoom.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: Participant) => {
+    lkRoom.on(RoomEvent.DataReceived, (payload: Uint8Array) => {
       try {
         const decoder = new TextDecoder();
         const data = JSON.parse(decoder.decode(payload));
@@ -382,7 +404,7 @@ export function MeetingRoomView({
         }
 
         setDbParticipants(data.participants || []);
-      } catch (err) {
+      } catch {
         // Silently handle temporary polling network hiccups
       }
     }
@@ -394,14 +416,17 @@ export function MeetingRoomView({
       isMounted = false;
       clearInterval(interval);
     };
-  }, [hasJoined, room]);
+  }, [hasJoined, room, livekitRoom]);
 
   // Host auto-join
   useEffect(() => {
     if (!isHost || !hostName || !room || hasJoined || isJoining || joinError) return;
-    void attemptJoin(hostName);
+    const timer = setTimeout(() => {
+      void attemptJoin(hostName);
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, hostName, room]);
+  }, [isHost, hostName, room, hasJoined, isJoining, joinError]);
 
   // Heartbeat presence call
   useEffect(() => {
@@ -467,6 +492,11 @@ export function MeetingRoomView({
     if (livekitRoom?.localParticipant) {
       try {
         await livekitRoom.localParticipant.setMicrophoneEnabled(!nextMuted);
+        
+        if (!nextMuted) {
+          const audioTrack = livekitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
+          await applyNoiseCancellation(audioTrack);
+        }
       } catch (err) {
         console.error("Set microphone enabled error:", err);
       }
