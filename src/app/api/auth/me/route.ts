@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
         createdAt: user.createdAt,
       },
     }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

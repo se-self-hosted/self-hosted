@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       } else {
         set({ user: null, isLoading: false });
       }
-    } catch (err) {
+    } catch {
       set({ user: null, isLoading: false, error: 'Failed to authenticate' });
     }
   },
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isLoading: false, error: null });
       // Redirect to login page at root /
       window.location.href = '/';
-    } catch (err) {
+    } catch {
       set({ isLoading: false, error: 'Failed to logout' });
     }
   },

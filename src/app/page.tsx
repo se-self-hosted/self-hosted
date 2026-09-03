@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import Link from "next/link";
 import { Video } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { user, isLoading, checkAuth, setUser } = useAuthStore();
   
   const [email, setEmail] = useState("");
@@ -37,7 +34,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: any = {};
+      let data: Record<string, unknown> = {};
       try {
         const text = await res.text();
         data = text ? JSON.parse(text) : {};
@@ -46,13 +43,13 @@ export default function LoginPage() {
       }
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to login");
+        throw new Error(typeof data.error === "string" ? data.error : "Failed to login");
       }
 
-      setUser(data.user);
+      setUser(data.user as Parameters<typeof setUser>[0]);
       window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
       setLoading(false);
     }
   };

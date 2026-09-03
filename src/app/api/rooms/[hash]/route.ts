@@ -50,7 +50,16 @@ export async function GET(
         ).length
       : 0;
 
-    const { meetings, ...roomFields } = room;
+    const roomFields = {
+      id: room.id,
+      hostId: room.hostId,
+      roomName: room.roomName,
+      roomHash: room.roomHash,
+      maxParticipants: room.maxParticipants,
+      status: room.status,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
+    };
     return NextResponse.json({ room: { ...roomFields, activeParticipantCount } });
   } catch (error) {
     console.error("Get Room By Hash Error:", error);
