@@ -157,9 +157,16 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                   <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#666' }}>{formatDuration(rec.durationSeconds)} • {(parseInt(rec.fileSize) / (1024*1024)).toFixed(2)} MB</p>
                 </div>
                 {rec.presignedUrl && (
-                  <a href={rec.presignedUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#0066cc', color: '#fff', textDecoration: 'none', borderRadius: '4px', fontSize: '0.875rem' }}>
-                    <Download className="icon-16" /> ดาวน์โหลด
-                  </a>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    {rec.mimeType.startsWith("video") ? (
+                      <video controls src={rec.presignedUrl} style={{ height: "40px", borderRadius: "4px" }} />
+                    ) : (
+                      <audio controls src={rec.presignedUrl} />
+                    )}
+                    <a href={rec.presignedUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#0066cc', color: '#fff', textDecoration: 'none', borderRadius: '4px', fontSize: '0.875rem' }}>
+                      <Download className="icon-16" /> ดาวน์โหลด
+                    </a>
+                  </div>
                 )}
               </li>
             ))}
