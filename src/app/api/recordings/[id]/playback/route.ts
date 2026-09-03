@@ -47,9 +47,9 @@ export async function GET(
         }
 
         const chunkLength = end - start + 1;
-        const bodyStream = s3Response.Body.transformToWebStream();
+        const bodyStream = s3Response.Body as ReadableStream<Uint8Array>;
 
-        return new NextResponse(bodyStream as ReadableStream, {
+        return new NextResponse(bodyStream, {
           status: 206,
           headers: {
             "Content-Type": mimeType,
@@ -62,7 +62,7 @@ export async function GET(
       }
 
       // Full stream response
-      const bodyStream = s3Response.Body.transformToWebStream();
+      const bodyStream = s3Response.Body as ReadableStream<Uint8Array>;
       return new NextResponse(bodyStream as ReadableStream, {
         status: 200,
         headers: {
