@@ -66,12 +66,8 @@ export async function GET() {
         startedAt: m.startedAt,
         endedAt: m.endedAt,
         durationSeconds: m.durationSeconds,
-        participantsCount: m.participants.length,
-        participants: m.participants.map((p) => ({
-          id: p.id,
-          displayName: p.displayName,
-          sessionCount: p.sessions.length,
-        })),
+        participantCount: m.participants.length,
+        participantNames: m.participants.map((p) => p.displayName),
         recordings: m.recordings.map((r) => ({
           id: r.id,
           fileName: r.fileName,
