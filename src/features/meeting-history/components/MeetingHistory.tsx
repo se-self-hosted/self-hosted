@@ -15,7 +15,7 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeZone: "Asia/Bangkok",
 });
 
-function formatDuration(totalSeconds: number) {
+function formatDuration(totalSeconds: number | null) {
   if (totalSeconds == null) return "0s";
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -67,15 +67,30 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
         <label className="meeting-history__search">
           <span className="sr-only">ค้นหาชื่อห้องหรือผู้เข้าร่วม</span>
           <Search aria-hidden="true" className="icon-16" />
-          <input value={draftFilters.query} maxLength={100} onChange={(event) => setDraftFilters((filters) => ({ ...filters, query: event.target.value }))} placeholder="ค้นหาชื่อห้องหรือผู้เข้าร่วม" />
+          <input
+            value={draftFilters.query}
+            maxLength={100}
+            onChange={(event) => setDraftFilters((filters) => ({ ...filters, query: event.target.value }))}
+            placeholder="ค้นหาชื่อห้องหรือผู้เข้าร่วม"
+          />
         </label>
         <label className="meeting-history__date">
           <span>ตั้งแต่</span>
-          <input type="date" value={draftFilters.from} max={draftFilters.to || undefined} onChange={(event) => setDraftFilters((filters) => ({ ...filters, from: event.target.value }))} />
+          <input
+            type="date"
+            value={draftFilters.from}
+            max={draftFilters.to || undefined}
+            onChange={(event) => setDraftFilters((filters) => ({ ...filters, from: event.target.value }))}
+          />
         </label>
         <label className="meeting-history__date">
           <span>ถึง</span>
-          <input type="date" value={draftFilters.to} min={draftFilters.from || undefined} onChange={(event) => setDraftFilters((filters) => ({ ...filters, to: event.target.value }))} />
+          <input
+            type="date"
+            value={draftFilters.to}
+            min={draftFilters.from || undefined}
+            onChange={(event) => setDraftFilters((filters) => ({ ...filters, to: event.target.value }))}
+          />
         </label>
         <button type="submit" className="meeting-history__submit focus-ring" disabled={isLoading}>ค้นหา</button>
       </form>
@@ -88,16 +103,40 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
         ) : (
           <div className="meeting-history__table-wrap">
             <table className="meeting-history__table">
-              <thead><tr><th>ชื่อห้องประชุม</th><th>เริ่มประชุม</th><th>ระยะเวลา</th><th>ผู้เข้าร่วม</th><th><span className="sr-only">ดูรายละเอียด</span></th></tr></thead>
-              <tbody>{filteredMeetings.map((meeting) => (
-                <tr key={meeting.id}>
-                  <td><strong>{meeting.roomName}</strong><small>{meeting.participantNames.slice(0, 3).join(" · ") || "ไม่มีข้อมูลผู้เข้าร่วม"}{meeting.participantNames.length > 3 ? ` +${meeting.participantNames.length - 3}` : ""}</small></td>
-                  <td>{dateFormatter.format(new Date(meeting.startedAt))}</td>
-                  <td>{formatDuration(meeting.durationSeconds)}</td>
-                  <td>{meeting.participantCount}</td>
-                  <td><Link href={`/history/${meeting.id}`} aria-label={`ดูรายละเอียดการประชุม ${meeting.roomName}`} className="meeting-history__link focus-ring"><ChevronRight aria-hidden="true" className="icon-16" /></Link></td>
+              <thead>
+                <tr>
+                  <th>ชื่อห้องประชุม</th>
+                  <th>เริ่มประชุม</th>
+                  <th>ระยะเวลา</th>
+                  <th>ผู้เข้าร่วม</th>
+                  <th><span className="sr-only">ดูรายละเอียด</span></th>
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody>
+                {filteredMeetings.map((meeting) => (
+                  <tr key={meeting.id}>
+                    <td>
+                      <strong>{meeting.roomName}</strong>
+                      <small>
+                        {meeting.participantNames.slice(0, 3).join(" · ") || "ไม่มีข้อมูลผู้เข้าร่วม"}
+                        {meeting.participantNames.length > 3 ? ` +${meeting.participantNames.length - 3}` : ""}
+                      </small>
+                    </td>
+                    <td>{dateFormatter.format(new Date(meeting.startedAt))}</td>
+                    <td>{formatDuration(meeting.durationSeconds)}</td>
+                    <td>{meeting.participantCount}</td>
+                    <td>
+                      <Link
+                        href={`/history/${meeting.id}`}
+                        aria-label={`ดูรายละเอียดการประชุม ${meeting.roomName}`}
+                        className="meeting-history__link focus-ring"
+                      >
+                        <ChevronRight aria-hidden="true" className="icon-16" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         )}

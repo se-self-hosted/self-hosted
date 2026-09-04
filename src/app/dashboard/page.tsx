@@ -214,22 +214,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (currentTab === "history" && user) {
-      let active = true;
-      fetch("/api/meetings")
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data: { meetings?: PastMeeting[] } | null) => {
-          if (active && data?.meetings) {
-            setMeetings(data.meetings);
-          }
-        })
-        .catch((e) => {
-          console.error("Load meetings history error:", e);
-        });
-
-      return () => {
-        active = false;
-      };
+      void loadMeetingsHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTab, user]);
 
   // Open Meeting Details / Playback
@@ -424,7 +411,7 @@ export default function DashboardPage() {
     }
   };
 
-  const copyRoomLink = async (roomId: string, roomSlug: string) => {
+  const copyRoomLink = async (_roomId: string, roomSlug: string) => {
     const meetingUrl = `${window.location.origin}/meeting/${roomSlug}`;
 
     try {

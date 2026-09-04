@@ -1,3 +1,4 @@
+import fs from "fs";
 import { PrismaClient } from "../generated/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
@@ -6,8 +7,6 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
 };
-
-import fs from "fs";
 
 function getConnectionString(): string {
   let url = process.env.DATABASE_URL || "postgresql://user:password@localhost:5432/meeting_db?schema=public";
