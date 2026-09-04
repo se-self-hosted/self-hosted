@@ -1,8 +1,15 @@
-<!-- BEGIN:nextjs-agent-rules -->
+<goldenrule>
+1. NEVER run: git reset --hard, git checkout ., git restore ., git clean -fd
+2. ALWAYS ask permission before any destructive git operation
+3. If you need the original file: use git show HEAD:filename
+4. Back up before overwrite: cp file file.bak
+</goldenrule>
+
+<nextjs-agent-rules>
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+</nextjs-agent-rules>
 
 
 # AGENTS.md
@@ -296,70 +303,3 @@ The system shall support exporting meeting data in:
 - Automatic requirement extraction from meetings
 - AI-generated action items
 - AI-powered meeting analytics
-
----
-
-# Development Workflow
-
-## Branch Strategy
-
-- `main`
-- `develop`
-- `feature/*`
-- `bugfix/*`
-- `hotfix/*`
-
----
-
-## Pull Request Rules
-
-- All new features must be developed in `feature/*` branches.
-- Every pull request must pass code review by at least one team member.
-- Automated tests must pass before merging.
-- Direct commits to `main` are prohibited.
-
----
-
-# Team Roles
-
-## Project Manager
-
-Responsibilities:
-
-- Sprint planning
-- Requirement management
-- Progress tracking
-- DevOps coordination
-
----
-
-## Software Architect
-
-Responsibilities:
-
-- System architecture design
-- Database design
-- Backend architecture
-- Development of core features
-
----
-
-## Developer
-
-Responsibilities:
-
-- Frontend development
-- Backend development
-- Unit testing
-- Bug fixing
-
----
-
-## QA / Testing Manager
-
-Responsibilities:
-
-- System testing
-- CI/CD maintenance
-- Software quality assurance
-- Deployment management
