@@ -5,7 +5,7 @@ services:
     image: nextjs-dev
     ports:
       - "3000:3000"
-      - "5555:5555"
+      - "5555:5556"
     volumes:
       - .:/app
       - /app/node_modules
@@ -52,7 +52,7 @@ services:
 
   livekit:
     image: livekit/livekit-server:latest
-    command: --dev --bind 0.0.0.0
+    command: --dev --bind 0.0.0.0 --node-ip 172.20.10.5
     ports:
       - "7880:7880"
       - "7881:7881"

@@ -137,11 +137,6 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#5B4EFA] focus:border-[#5B4EFA] outline-none transition"
                 placeholder="••••••••"
               />
-              {/* <div className="flex justify-end mt-3">
-                <Link href="#" className="text-[14px] text-[#5B4EFA] hover:underline">
-                  ลืมรหัสผ่าน?
-                </Link>
-              </div> */}
             </div>
             <button
               type="submit"
@@ -151,10 +146,6 @@ export default function LoginPage() {
               {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </button>
           </form>
-          
-          {/* <p className="mt-10 text-center text-[15px] text-gray-500">
-            ยังไม่มีบัญชี? <Link href="/register" className="text-[#5B4EFA] font-semibold hover:underline">สมัครสมาชิก</Link>
-          </p> */}
         </div>
       </div>
     </div>

@@ -24,12 +24,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 7.9.1
- * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
+ * Prisma Client JS version: 7.8.0
+ * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
  */
 Prisma.prismaVersion = {
-  client: "7.9.1",
-  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
+  client: "7.8.0",
+  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -124,19 +124,17 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   password: 'password',
-  fullname: 'fullname',
   name: 'name',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.MeetingRoomScalarFieldEnum = {
+exports.Prisma.RoomScalarFieldEnum = {
   id: 'id',
-  hostId: 'hostId',
-  roomName: 'roomName',
-  roomHash: 'roomHash',
+  slug: 'slug',
+  name: 'name',
   maxParticipants: 'maxParticipants',
-  status: 'status',
+  hostId: 'hostId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -144,75 +142,39 @@ exports.Prisma.MeetingRoomScalarFieldEnum = {
 exports.Prisma.MeetingScalarFieldEnum = {
   id: 'id',
   roomId: 'roomId',
-  startedAt: 'startedAt',
-  endedAt: 'endedAt',
-  durationSeconds: 'durationSeconds',
-  createdAt: 'createdAt'
+  startTime: 'startTime',
+  endTime: 'endTime',
+  duration: 'duration',
+  recordingUrl: 'recordingUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ParticipantScalarFieldEnum = {
   id: 'id',
   meetingId: 'meetingId',
-  displayName: 'displayName',
+  name: 'name',
+  role: 'role',
+  joinTime: 'joinTime',
+  leaveTime: 'leaveTime',
+  duration: 'duration',
   createdAt: 'createdAt'
-};
-
-exports.Prisma.ParticipantSessionScalarFieldEnum = {
-  id: 'id',
-  participantId: 'participantId',
-  joinedAt: 'joinedAt',
-  lastSeenAt: 'lastSeenAt',
-  leftAt: 'leftAt',
-  durationSeconds: 'durationSeconds',
-  connectionId: 'connectionId'
 };
 
 exports.Prisma.TranscriptScalarFieldEnum = {
   id: 'id',
   meetingId: 'meetingId',
-  fullTranscript: 'fullTranscript',
-  language: 'language',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.TranscriptSegmentScalarFieldEnum = {
-  id: 'id',
-  transcriptId: 'transcriptId',
-  participantId: 'participantId',
-  startTime: 'startTime',
-  endTime: 'endTime',
-  spokenAt: 'spokenAt',
+  speakerName: 'speakerName',
   text: 'text',
-  confidence: 'confidence'
+  timestamp: 'timestamp'
 };
 
-exports.Prisma.MeetingSummaryScalarFieldEnum = {
+exports.Prisma.SummaryScalarFieldEnum = {
   id: 'id',
   meetingId: 'meetingId',
-  aiSummary: 'aiSummary',
-  editedSummary: 'editedSummary',
-  llmModel: 'llmModel',
-  generatedAt: 'generatedAt',
-  editedAt: 'editedAt'
-};
-
-exports.Prisma.RecordingScalarFieldEnum = {
-  id: 'id',
-  meetingId: 'meetingId',
-  fileName: 'fileName',
-  objectKey: 'objectKey',
-  durationSeconds: 'durationSeconds',
-  fileSize: 'fileSize',
-  mimeType: 'mimeType',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.ExportScalarFieldEnum = {
-  id: 'id',
-  meetingId: 'meetingId',
-  exportFormat: 'exportFormat',
-  filePath: 'filePath',
-  exportedAt: 'exportedAt'
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -233,15 +195,11 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
-  MeetingRoom: 'MeetingRoom',
+  Room: 'Room',
   Meeting: 'Meeting',
   Participant: 'Participant',
-  ParticipantSession: 'ParticipantSession',
   Transcript: 'Transcript',
-  TranscriptSegment: 'TranscriptSegment',
-  MeetingSummary: 'MeetingSummary',
-  Recording: 'Recording',
-  Export: 'Export'
+  Summary: 'Summary'
 };
 
 /**
