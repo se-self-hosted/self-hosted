@@ -2,7 +2,7 @@
 
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -622,7 +622,7 @@ export function MeetingRoomView({
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
@@ -632,7 +632,7 @@ export function MeetingRoomView({
       recordingTimerRef.current = null;
     }
     setIsRecording(false);
-  };
+  }, []);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -647,9 +647,9 @@ export function MeetingRoomView({
     if (!room) return;
 
     function notifyLeave() {
-      if (isRecording) {
-        stopRecording();
-      }
+      // Read the current recorder via refs; recording UI changes must not
+      // trigger this effect's leave/disconnect cleanup.
+      stopRecording();
       if (livekitRoom) {
         livekitRoom.disconnect();
       }
@@ -665,7 +665,7 @@ export function MeetingRoomView({
       window.removeEventListener("beforeunload", notifyLeave);
       notifyLeave();
     };
-  }, [connectionId, room, livekitRoom, isRecording]);
+  }, [connectionId, room, livekitRoom, stopRecording]);
 
   // Show Toast notification popup
   function showToast(msg: string) {
