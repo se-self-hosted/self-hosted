@@ -14,7 +14,6 @@ async function runTests() {
       email: "test_history_host@example.com",
       password: await bcrypt.hash("password123", 10),
       fullname: "History Host",
-      name: "History Host",
     },
   });
 

@@ -13,7 +13,6 @@ model User {
   email     String   @unique
   password  String
   fullname  String   @default("")
-  name      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

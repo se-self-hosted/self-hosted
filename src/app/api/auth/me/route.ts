@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
-        name: user.fullname,
+        fullname: user.fullname,
         createdAt: user.createdAt,
       },
     }, { status: 200 });

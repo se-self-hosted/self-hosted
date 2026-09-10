@@ -505,10 +505,10 @@ export default function DashboardPage() {
             <div className="sidebar__user-row">
               <Link href="/account/edit" className="flex items-center gap-3 min-w-0 flex-1 rounded-md transition-opacity hover:opacity-80">
                 <span className="sidebar__avatar">
-                  {(user.name || user.email).charAt(0).toUpperCase()}
+                  {(user.fullname || user.email).charAt(0).toUpperCase()}
                 </span>
                 <span className="sidebar__user-info">
-                  <span className="sidebar__user-name">{user.name || "Host"}</span>
+                  <span className="sidebar__user-name">{user.fullname || "Host"}</span>
                   <span className="sidebar__user-email">{user.email}</span>
                 </span>
               </Link>

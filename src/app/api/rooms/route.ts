@@ -99,8 +99,7 @@ export async function GET() {
         ? ongoingMeeting.participants.some(
             (participant) =>
               (participant.displayName === user.fullname ||
-                participant.displayName === user.email ||
-                (user.name && participant.displayName === user.name)) &&
+                participant.displayName === user.email) &&
               participant.sessions.some((session) => isSessionActive(session)),
           )
         : false;

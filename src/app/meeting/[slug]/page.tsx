@@ -88,7 +88,7 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
       room={room}
       requestedSlug={slug}
       isHost={isHost}
-      hostName={user?.name || user?.email}
+      hostName={user?.fullname || user?.email}
     />
   );
 }
