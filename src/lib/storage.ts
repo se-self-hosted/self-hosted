@@ -195,13 +195,14 @@ export function getRecordingPresignedUrl(
   return `${endpoint}${canonicalUri}?${queryParams}&X-Amz-Signature=${signature}`;
 }
 
-export async function getRecordingObject(key: string) {
+export async function getRecordingObject(key: string, range?: string) {
   const cleanKey = key.startsWith("/") ? key.slice(1) : key;
-  const response = await sendS3Request("GET", `/${BUCKET_NAME}/${cleanKey}`);
+  const response = await sendS3Request("GET", `/${BUCKET_NAME}/${cleanKey}`, undefined, undefined, range ? { range } : {});
   return {
     Body: response.body,
     ContentType: response.headers.get("content-type") || "audio/webm",
     ContentLength: response.headers.get("content-length") ? parseInt(response.headers.get("content-length")!, 10) : undefined,
+    ContentRange: response.headers.get("content-range"),
     status: response.status,
   };
 }

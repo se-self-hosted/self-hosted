@@ -31,7 +31,7 @@ type Recording = {
   durationSeconds: number | null;
   fileSize: string;
   mimeType: string;
-  presignedUrl?: string;
+  playbackUrl: string;
 };
 
 type MeetingData = {
@@ -68,6 +68,28 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   const [meeting, setMeeting] = useState<MeetingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>({});
+
+  function handlePlaybackError(id: string, media: HTMLMediaElement) {
+    const messages: Record<number, string> = {
+      1: "การโหลดเสียงถูกยกเลิก กรุณารีเฟรชแล้วลองอีกครั้ง",
+      2: "โหลดไฟล์เสียงไม่สำเร็จ กรุณาตรวจการเชื่อมต่อแล้วลองอีกครั้ง",
+      3: "เบราว์เซอร์ถอดรหัสไฟล์เสียงนี้ไม่ได้ ไฟล์อาจไม่สมบูรณ์",
+      4: "ไม่สามารถเปิดไฟล์เสียงได้ แหล่งไฟล์หรือรูปแบบเสียงอาจไม่รองรับ",
+    };
+    setPlaybackErrors((previous) => ({
+      ...previous,
+      [id]: messages[media.error?.code ?? 0] || "ไม่สามารถเล่นไฟล์เสียงนี้ได้",
+    }));
+  }
+
+  function clearPlaybackError(id: string) {
+    setPlaybackErrors((previous) => {
+      const next = { ...previous };
+      delete next[id];
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetch(`/api/meetings/${meetingId}`)
@@ -212,15 +234,27 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                     {formatDuration(rec.durationSeconds)} • {(parseInt(rec.fileSize) / (1024 * 1024)).toFixed(2)} MB
                   </p>
                 </div>
-                {rec.presignedUrl && (
+                {rec.playbackUrl && (
                   <div className="recordings-list__actions">
                     {rec.mimeType.startsWith("video") ? (
-                      <video controls src={rec.presignedUrl} className="recordings-list__preview" />
+                      <video
+                        controls src={rec.playbackUrl} className="recordings-list__preview"
+                        onError={(event) => handlePlaybackError(rec.id, event.currentTarget)}
+                        onCanPlay={() => clearPlaybackError(rec.id)}
+                      />
                     ) : (
-                      <audio controls src={rec.presignedUrl} />
+                      <audio
+                        controls preload="metadata" src={rec.playbackUrl}
+                        aria-label={`เล่นเสียง ${rec.fileName}`}
+                        onError={(event) => handlePlaybackError(rec.id, event.currentTarget)}
+                        onCanPlay={() => clearPlaybackError(rec.id)}
+                      />
+                    )}
+                    {playbackErrors[rec.id] && (
+                      <p role="alert" className="text-sm text-red-600">{playbackErrors[rec.id]}</p>
                     )}
                     <a
-                      href={rec.presignedUrl}
+                      href={rec.playbackUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="recordings-list__download"

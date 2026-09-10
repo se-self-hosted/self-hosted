@@ -137,6 +137,7 @@ export default function DashboardPage() {
   // Audio Player State
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [selectedRecordingIndex, setSelectedRecordingIndex] = useState(0);
@@ -227,6 +228,7 @@ export default function DashboardPage() {
     setCurrentTime(0);
     setDuration(0);
     setSelectedRecordingIndex(0);
+    setAudioError("");
 
     try {
       const res = await fetch(`/api/meetings/${meetingId}`);
@@ -250,11 +252,27 @@ export default function DashboardPage() {
     setIsPlaying(false);
   };
 
+  const reportAudioError = (error?: unknown) => {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    setIsPlaying(false);
+    setAudioError("เล่นไฟล์เสียงไม่สำเร็จ กรุณาลองใหม่หรือดาวน์โหลดไฟล์เสียง");
+    console.error("Recording playback failed:", error);
+  };
+
+  const playAudio = () => {
+    const player = audioPlayerRef.current;
+    if (!player) return;
+    setAudioError("");
+    void player.play().catch((error: unknown) => {
+      if (audioPlayerRef.current === player) reportAudioError(error);
+    });
+  };
+
   const seekAudioToTime = (seconds: number) => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.currentTime = seconds;
       if (!isPlaying) {
-        audioPlayerRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+        playAudio();
       }
     }
   };
@@ -265,7 +283,7 @@ export default function DashboardPage() {
       audioPlayerRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioPlayerRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      playAudio();
     }
   };
 
@@ -772,7 +790,14 @@ export default function DashboardPage() {
                         {meetingDetails.recordings.length > 1 && (
                           <select
                             value={selectedRecordingIndex}
-                            onChange={(e) => setSelectedRecordingIndex(Number(e.target.value))}
+                            onChange={(e) => {
+                              audioPlayerRef.current?.pause();
+                              setSelectedRecordingIndex(Number(e.target.value));
+                              setIsPlaying(false);
+                              setCurrentTime(0);
+                              setDuration(0);
+                              setAudioError("");
+                            }}
                             className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 border border-slate-700"
                           >
                             {meetingDetails.recordings.map((rec, idx) => (
@@ -785,16 +810,31 @@ export default function DashboardPage() {
                       </div>
 
                       <audio
+                        key={meetingDetails.recordings[selectedRecordingIndex]?.id}
                         ref={audioPlayerRef}
+                        preload="metadata"
                         src={
-                          meetingDetails.recordings[selectedRecordingIndex]?.presignedUrl ||
                           meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
                         }
                         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                        onLoadedMetadata={(e) => {
+                          const length = e.currentTarget.duration;
+                          setDuration(Number.isFinite(length) ? length : 0);
+                        }}
+                        onDurationChange={(e) => {
+                          const length = e.currentTarget.duration;
+                          if (Number.isFinite(length)) setDuration(length);
+                        }}
+                        onPlaying={() => setIsPlaying(true)}
+                        onPause={() => setIsPlaying(false)}
+                        onError={(e) => reportAudioError(e.currentTarget.error)}
                         onEnded={() => setIsPlaying(false)}
                         className="hidden"
                       />
+
+                      {audioError && (
+                        <p role="alert" className="mb-3 text-sm text-red-400">{audioError}</p>
+                      )}
 
                       {/* Custom Audio Controls */}
                       <div className="space-y-3">
@@ -802,6 +842,7 @@ export default function DashboardPage() {
                           <button
                             type="button"
                             onClick={toggleAudioPlay}
+                            aria-label={isPlaying ? "หยุดเสียงชั่วคราว" : "เล่นเสียงบันทึก"}
                             className="flex size-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow hover:bg-indigo-500 transition"
                           >
                             {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
@@ -830,7 +871,6 @@ export default function DashboardPage() {
                           </span>
                           <a
                             href={
-                              meetingDetails.recordings[selectedRecordingIndex]?.presignedUrl ||
                               meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
                             }
                             download
