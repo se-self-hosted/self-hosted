@@ -1,5 +1,6 @@
 "use client";
 
+import { startLiveTranscription, type SpeechRecognizer } from "@/features/meeting-room/lib/live-transcription";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -13,9 +14,7 @@ import {
   MicOff,
   Phone,
   RefreshCw,
-  Send,
   Signal,
-  Sparkles,
   Square,
   Users,
   Video,
@@ -127,9 +126,8 @@ export function MeetingRoomView({
   // 6. Transcript Timeline State
   const [transcriptSegments, setTranscriptSegments] = useState<LiveTranscriptSegment[]>([]);
   const [showTranscriptPanel, setShowTranscriptPanel] = useState(false);
-  const [speechTestInput, setSpeechTestInput] = useState("");
   const transcriptBottomRef = useRef<HTMLDivElement>(null);
-  const speechRecognitionRef = useRef<{ stop: () => void } | null>(null);
+  const [interimTranscript, setInterimTranscript] = useState("");
 
   // Container ref for attaching remote audio elements
   const audioContainerRef = useRef<HTMLDivElement>(null);
@@ -674,11 +672,11 @@ export function MeetingRoomView({
   }
 
   // Add and broadcast transcript segment with start and end time
-  const addTranscriptSegment = async (
+  const addTranscriptSegment = useCallback(async (
     text: string,
     startTimeOffset?: number,
     durationSec?: number,
-    confidence = 0.98,
+    confidence = 0,
   ) => {
     if (!text.trim()) return;
     const now = Date.now();
@@ -725,105 +723,46 @@ export function MeetingRoomView({
         ? `/api/meetings/${meetingId}/transcript`
         : `/api/rooms/${room?.roomHash}/transcript`;
 
-      await fetch(targetUrl, {
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSegment),
       });
+      if (!response.ok) throw new Error(`Transcript save failed: ${response.status}`);
     } catch (err) {
       console.error("Save transcript segment error:", err);
     }
-  };
+  }, [participantId, displayName, livekitRoom, meetingId, room]);
 
-  // Web Speech API continuous speech recognition
+  // Recognition consumes the same cleaned local audio used in the meeting.
   useEffect(() => {
-    if (!hasJoined || isMicrophoneMuted) {
-      if (speechRecognitionRef.current) {
-        try {
-          (speechRecognitionRef.current as { stop: () => void }).stop();
-        } catch {}
-        speechRecognitionRef.current = null;
-      }
+    if (!hasJoined || isMicrophoneMuted || !livekitRoom) return;
+    const speechWindow = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognizer;
+      webkitSpeechRecognition?: new () => SpeechRecognizer;
+    };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("This browser does not support live transcription.");
       return;
     }
-
-    type SpeechRecConstructor = new () => {
-      continuous: boolean;
-      interimResults: boolean;
-      lang: string;
-      onspeechstart: (() => void) | null;
-      onresult: ((event: {
-        resultIndex: number;
-        results: {
-          length: number;
-          [index: number]: {
-            isFinal: boolean;
-            [index: number]: { transcript: string; confidence?: number };
-          };
-        };
-      }) => void) | null;
-      onerror: (() => void) | null;
-      onend: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-    };
-
-    const SpeechRec = ((window as unknown as { SpeechRecognition?: SpeechRecConstructor; webkitSpeechRecognition?: SpeechRecConstructor }).SpeechRecognition ||
-      (window as unknown as { SpeechRecognition?: SpeechRecConstructor; webkitSpeechRecognition?: SpeechRecConstructor }).webkitSpeechRecognition);
-
-    if (!SpeechRec) return;
-
-    try {
-      const recognition = new SpeechRec();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = "th-TH";
-
-      let speechStartSec = (Date.now() - meetingStartTimeRef.current) / 1000;
-
-      recognition.onspeechstart = () => {
-        speechStartSec = (Date.now() - meetingStartTimeRef.current) / 1000;
-      };
-
-      recognition.onresult = (event) => {
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            const transcript = event.results[i][0]?.transcript || "";
-            const confidence = event.results[i][0]?.confidence || 0.95;
-            const duration = Math.max(1.5, (Date.now() - meetingStartTimeRef.current) / 1000 - speechStartSec);
-            if (transcript.trim()) {
-              void addTranscriptSegment(transcript.trim(), speechStartSec, duration, confidence);
-            }
-          }
-        }
-      };
-
-      recognition.onerror = () => {};
-      recognition.onend = () => {
-        if (!isMicrophoneMuted && hasJoined && speechRecognitionRef.current) {
-          try { recognition.start(); } catch {}
-        }
-      };
-
-      recognition.start();
-      speechRecognitionRef.current = recognition;
-    } catch {}
-
-    return () => {
-      if (speechRecognitionRef.current) {
-        try {
-          (speechRecognitionRef.current as { stop: () => void }).stop();
-        } catch {}
-        speechRecognitionRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJoined, isMicrophoneMuted]);
+    return startLiveTranscription(new SpeechRecognition(), {
+      language: "th-TH",
+      getAudioTrack: () => livekitRoom.localParticipant
+        .getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack,
+      elapsedSeconds: () => Math.max(0, (Date.now() - meetingStartTimeRef.current) / 1000),
+      onFinal: (text, start, duration, confidence) => {
+        void addTranscriptSegment(text, start, duration, confidence);
+      },
+      onInterim: setInterimTranscript,
+      onStatus: (message) => console.debug("Live transcription:", message),
+    });
+  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment]);
 
   // 3. Toggle local Microphone
   const toggleMicrophone = async () => {
     const nextMuted = !isMicrophoneMuted;
-    setIsMicrophoneMuted(nextMuted);
+    if (nextMuted) setIsMicrophoneMuted(true);
 
     if (livekitRoom?.localParticipant) {
       try {
@@ -832,21 +771,14 @@ export function MeetingRoomView({
         if (!nextMuted) {
           const audioTrack = livekitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
           await applyNoiseCancellation(audioTrack);
+          setIsMicrophoneMuted(false);
         }
       } catch (err) {
+        setIsMicrophoneMuted(!nextMuted);
         console.error("Set microphone enabled error:", err);
       }
     }
   };
-
-  const handleManualTranscriptSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!speechTestInput.trim()) return;
-    void addTranscriptSegment(speechTestInput.trim());
-    setSpeechTestInput("");
-  };
-
-
 
   // 8. Host Mute Remote Participant
   const hostMuteParticipant = async (targetIdentity: string) => {
@@ -1281,53 +1213,27 @@ export function MeetingRoomView({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {transcriptSegments.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
-                <Sparkles className="size-8 text-indigo-400/50 mb-2" />
-                <p className="text-xs font-medium">ยังไม่มีข้อความการสนทนา</p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  เปิดไมค์เพื่อถอดเสียงพูด หรือพิมพ์ทดสอบด้านล่าง
-                </p>
-              </div>
-            ) : (
-              transcriptSegments.map((seg) => (
-                <div
-                  key={seg.id}
-                  className="rounded-lg border border-slate-800/80 bg-slate-800/40 p-2.5 transition hover:border-indigo-500/30"
-                >
-                  <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="text-indigo-300">{seg.speakerName}</span>
-                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
-                      {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-200 leading-relaxed">{seg.text}</p>
+            {transcriptSegments.map((seg) => (
+              <div
+                key={seg.id}
+                className="rounded-lg border border-slate-800/80 bg-slate-800/40 p-2.5 transition hover:border-indigo-500/30"
+              >
+                <div className="flex items-center justify-between text-[11px] font-semibold">
+                  <span className="text-indigo-300">{seg.speakerName}</span>
+                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
+                    {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
+                  </span>
                 </div>
-              ))
+                <p className="mt-1 text-xs text-slate-200 leading-relaxed">{seg.text}</p>
+              </div>
+            ))}
+            {interimTranscript && !isMicrophoneMuted && (
+              <div aria-label="ข้อความถอดเสียงที่ยังไม่ยืนยัน" className="rounded-lg border border-dashed border-indigo-400/40 p-2.5 text-xs text-slate-400">
+                <p>{interimTranscript}</p>
+              </div>
             )}
             <div ref={transcriptBottomRef} />
           </div>
-
-          {/* Manual Speech Test / Caption Input */}
-          <form
-            onSubmit={handleManualTranscriptSubmit}
-            className="border-t border-slate-800 p-2.5 flex items-center gap-2 bg-slate-950/60 rounded-b-xl"
-          >
-            <input
-              type="text"
-              value={speechTestInput}
-              onChange={(e) => setSpeechTestInput(e.target.value)}
-              placeholder="พิมพ์ข้อความเสียง / ทดสอบ Timeline..."
-              className="flex-1 rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!speechTestInput.trim()}
-              className="rounded-md bg-indigo-600 px-2.5 py-1.5 text-white hover:bg-indigo-500 disabled:opacity-50"
-            >
-              <Send className="size-3.5" />
-            </button>
-          </form>
         </section>
       )}
 
