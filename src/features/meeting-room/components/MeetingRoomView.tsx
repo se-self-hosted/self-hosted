@@ -747,7 +747,6 @@ export function MeetingRoomView({
       return;
     }
     return startLiveTranscription(new SpeechRecognition(), {
-      language: "th-TH",
       getAudioTrack: () => livekitRoom.localParticipant
         .getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack,
       elapsedSeconds: () => Math.max(0, (Date.now() - meetingStartTimeRef.current) / 1000),

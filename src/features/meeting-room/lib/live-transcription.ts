@@ -17,7 +17,6 @@ export type SpeechRecognizer = {
 };
 
 type Options = {
-  language: string;
   getAudioTrack: () => MediaStreamTrack | undefined;
   elapsedSeconds: () => number;
   onFinal: (text: string, startTime: number, duration: number, confidence: number) => void;
@@ -37,7 +36,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
 
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = options.language;
+  recognition.lang = "th-TH";
 
   const detach = () => {
     clearTimeout(drainTimer);
@@ -120,7 +119,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
       active = false;
       clearTimeout(retryTimer);
       options.onStatus(error === "language-not-supported"
-        ? "เบราว์เซอร์ไม่รองรับภาษาที่เลือก กรุณาเปลี่ยนภาษา"
+        ? "เบราว์เซอร์ไม่รองรับการถอดเสียงภาษาไทย"
         : "ถอดเสียงไม่ได้ กรุณาตรวจสอบสิทธิ์ไมโครโฟนแล้วกดเริ่มใหม่");
     } else if (error !== "no-speech") {
       options.onStatus("การถอดเสียงขัดข้อง บางคำอาจหายไป กำลังเชื่อมต่อใหม่...");

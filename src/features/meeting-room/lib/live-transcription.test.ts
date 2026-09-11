@@ -17,7 +17,7 @@ function setup(track?: MediaStreamTrack) {
     stop: () => { stops += 1; },
   };
   const stop = startLiveTranscription(recognition, {
-    language: "th-TH", getAudioTrack: () => track, elapsedSeconds: () => elapsed,
+    getAudioTrack: () => track, elapsedSeconds: () => elapsed,
     onFinal: (...result) => finals.push(result), onInterim: (text) => drafts.push(text),
     onStatus: (message) => statuses.push(message),
   });
@@ -29,7 +29,7 @@ function result(text: string, isFinal: boolean, confidence?: number): Recognitio
   return { isFinal, 0: { transcript: text, confidence } };
 }
 
-test("uses the processed microphone track and selected language", () => {
+test("uses the processed microphone track with Thai recognition", () => {
   const track = { kind: "audio", readyState: "live" } as MediaStreamTrack;
   const h = setup(track);
   assert.equal(h.starts[0], track);
