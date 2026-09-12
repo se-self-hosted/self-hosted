@@ -59,7 +59,7 @@ export function getTranscriptFixture(meetingId: string): TranscriptViewerState {
       },
       {
         id: "segment-4",
-        speaker: { ...participants[0], color: "amber" },
+        speaker: participants[0],
         spokenAt: "2026-07-18T17:08:00+07:00",
         text: "เห็นด้วยครับ งั้นเราลองโฟกัสที่ onboarding flow ใหม่ก่อนดีกว่า มีใครอยากรับผิดชอบส่วนนี้บ้างไหมครับ",
       },

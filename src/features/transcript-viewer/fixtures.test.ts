@@ -7,11 +7,40 @@ test("returns speaker, text, and timestamp for transcript rows", () => {
   const state = getTranscriptFixture("meeting-1");
   assert.equal(state.status, "ready");
   if (state.status !== "ready") return;
+
+  const expectedSpeakers = [
+    { id: "thanakorn", displayName: "Thanakorn P." },
+    { id: "siriporn", displayName: "Siriporn L." },
+    { id: "wichai", displayName: "Wichai A." },
+    { id: "thanakorn", displayName: "Thanakorn P." },
+    { id: "nattaya", displayName: "Nattaya S." },
+  ];
+
   assert.ok(state.segments.length > 0);
-  for (const segment of state.segments) {
-    assert.ok(segment.speaker.displayName);
+  assert.equal(state.segments.length, expectedSpeakers.length);
+
+  for (const [index, segment] of state.segments.entries()) {
+    assert.deepEqual(
+      { id: segment.speaker.id, displayName: segment.speaker.displayName },
+      expectedSpeakers[index],
+    );
     assert.ok(segment.text);
     assert.equal(Number.isNaN(new Date(segment.spokenAt).getTime()), false);
+  }
+});
+
+test("keeps presentation attributes stable for repeated speakers", () => {
+  const state = getTranscriptFixture("meeting-1");
+  assert.equal(state.status, "ready");
+  if (state.status !== "ready") return;
+
+  const thanakornSegments = state.segments.filter(
+    (segment) => segment.speaker.id === "thanakorn",
+  );
+
+  assert.equal(thanakornSegments.length, 2);
+  for (const segment of thanakornSegments) {
+    assert.deepEqual(segment.speaker, state.meeting.participants[0]);
   }
 });
 
