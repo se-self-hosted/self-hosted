@@ -29,7 +29,7 @@ test("returns speaker, text, and timestamp for transcript rows", () => {
   }
 });
 
-test("keeps presentation attributes stable for repeated speakers", () => {
+test("keeps identity attributes stable for repeated Thanakorn segments", () => {
   const state = getTranscriptFixture("meeting-1");
   assert.equal(state.status, "ready");
   if (state.status !== "ready") return;
@@ -40,7 +40,20 @@ test("keeps presentation attributes stable for repeated speakers", () => {
 
   assert.equal(thanakornSegments.length, 2);
   for (const segment of thanakornSegments) {
-    assert.deepEqual(segment.speaker, state.meeting.participants[0]);
+    assert.deepEqual(
+      {
+        id: segment.speaker.id,
+        displayName: segment.speaker.displayName,
+        initials: segment.speaker.initials,
+        color: segment.speaker.color,
+      },
+      {
+        id: "thanakorn",
+        displayName: "Thanakorn P.",
+        initials: "TP",
+        color: "indigo",
+      },
+    );
   }
 });
 
