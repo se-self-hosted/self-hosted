@@ -168,15 +168,15 @@ export function MeetingRoomView({
 
   // Attempt joining room (db presence + LiveKit token)
   async function attemptJoin(name: string) {
-    if (!room) return;
+    if (!room || isJoining || hasJoined) return;
 
     setIsJoining(true);
     setJoinError(null);
 
     let shouldMute = isMicrophoneMuted;
 
-    // Try requesting mic permission, mute if denied
-    if (micPermissionState !== "granted") {
+    // Joining muted must not request or capture microphone audio.
+    if (!shouldMute && micPermissionState !== "granted") {
       const granted = await requestMicrophonePermission();
       if (!granted) {
         setIsMicrophoneMuted(true);
@@ -479,16 +479,6 @@ export function MeetingRoomView({
       .catch(() => {});
   }, [hasJoined, room, meetingId]);
 
-  // Host auto-join
-  useEffect(() => {
-    if (!isHost || !hostName || !room || hasJoined || isJoining || joinError) return;
-    const timer = setTimeout(() => {
-      void attemptJoin(hostName);
-    }, 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, hostName, room, hasJoined, isJoining, joinError]);
-
   // Heartbeat presence call
   useEffect(() => {
     if (!hasJoined || !room || !connectionId) return;
@@ -680,7 +670,7 @@ export function MeetingRoomView({
     const segEndTime = Math.max(segStartTime + 0.5, elapsedSec);
 
     const newSegment: LiveTranscriptSegment = {
-      id: `seg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `seg-${crypto.randomUUID()}`,
       participantId: participantId || undefined,
       speakerName: displayName || "คุณ",
       startTime: Number(segStartTime.toFixed(2)),
@@ -840,7 +830,7 @@ export function MeetingRoomView({
 
   const handleJoinSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedName = displayName.trim();
+    const trimmedName = (isHost ? hostName ?? "" : displayName).trim();
 
     if (!trimmedName) {
       setNameError("กรุณากรอกชื่อของคุณ");
@@ -850,31 +840,7 @@ export function MeetingRoomView({
     void attemptJoin(trimmedName);
   };
 
-  // Host auto-join screen
-  if (isHost && !hasJoined) {
-    return (
-      <main className="meeting-unavailable">
-        <div className="meeting-unavailable__card">
-          {joinError ? (
-            <>
-              <span className="meeting-unavailable__icon">
-                <AlertTriangle aria-hidden="true" className="icon-20" />
-              </span>
-              <h1 className="meeting-unavailable__title">เข้าร่วมห้องไม่สำเร็จ</h1>
-              <p className="meeting-unavailable__description">{joinError}</p>
-              <Link href="/dashboard" className="meeting-unavailable__link focus-ring">
-                กลับไปที่แดชบอร์ด
-              </Link>
-            </>
-          ) : (
-            <p className="dashboard-loading__text">กำลังเข้าร่วมห้องประชุม...</p>
-          )}
-        </div>
-      </main>
-    );
-  }
-
-  // Lobby Screen
+  // Both roles enter from a user gesture so browser audio activation is available.
   if (!hasJoined) {
     return (
       <main className="meeting-lobby">
@@ -887,7 +853,7 @@ export function MeetingRoomView({
             รองรับผู้เข้าร่วมสูงสุด {room.maxParticipants} คน
           </p>
 
-          {/* Mic Permission Banner in Lobby */}
+          {/* Both roles see permission status independently of their mute choice. */}
           <div className="my-3 rounded-lg border border-slate-700 bg-slate-800/80 p-3 text-left">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
               <span className="flex items-center gap-1.5">
@@ -903,6 +869,12 @@ export function MeetingRoomView({
                   <AlertTriangle className="size-3.5" /> ถูกปฏิเสธ
                 </span>
               )}
+              {micPermissionState === "prompt" && (
+                <span className="text-[11px] text-slate-500">ยังไม่ได้ตรวจสอบ</span>
+              )}
+              {micPermissionState === "requesting" && (
+                <span className="text-[11px] text-slate-400">กำลังตรวจสอบ...</span>
+              )}
             </div>
 
             {micPermissionState === "denied" && (
@@ -913,6 +885,7 @@ export function MeetingRoomView({
                 <button
                   type="button"
                   onClick={requestMicrophonePermission}
+                  disabled={isJoining}
                   className="mt-2 text-xs font-semibold text-indigo-400 hover:underline"
                 >
                   ขอสิทธิ์ไมโครโฟนอีกครั้ง
@@ -921,37 +894,66 @@ export function MeetingRoomView({
             )}
           </div>
 
-          <div className="meeting-lobby__field">
-            <label htmlFor="meeting-display-name" className="meeting-lobby__label">
-              ชื่อผู้เข้าร่วม (Display Name)
-            </label>
-            <input
-              id="meeting-display-name"
-              type="text"
-              value={displayName}
-              onChange={(event) => {
-                setDisplayName(event.target.value);
-                setNameError("");
-              }}
-              placeholder="ชื่อของคุณ"
-              autoComplete="name"
-              autoFocus
-              disabled={isJoining}
-              className="meeting-lobby__input"
-            />
-            {nameError && (
-              <p role="alert" className="meeting-lobby__error">
-                {nameError}
-              </p>
-            )}
-            {joinError && (
-              <p role="alert" className="meeting-lobby__error">
-                {joinError}
-              </p>
-            )}
+          {!isHost && (
+            <div className="meeting-lobby__field">
+              <label htmlFor="meeting-display-name" className="meeting-lobby__label">
+                ชื่อผู้เข้าร่วม (Display Name)
+              </label>
+              <input
+                id="meeting-display-name"
+                type="text"
+                value={displayName}
+                onChange={(event) => {
+                  setDisplayName(event.target.value);
+                  setNameError("");
+                }}
+                placeholder="ชื่อของคุณ"
+                autoComplete="name"
+                autoFocus
+                disabled={isJoining}
+                className="meeting-lobby__input"
+              />
+              {nameError && (
+                <p role="alert" className="meeting-lobby__error">
+                  {nameError}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-5 flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMicrophoneMuted((muted) => !muted)}
+              disabled={isJoining || micPermissionState === "requesting"}
+              aria-label="ไมโครโฟนก่อนเข้าห้อง"
+              aria-pressed={!isMicrophoneMuted}
+              aria-describedby="lobby-microphone-status"
+              title={isMicrophoneMuted ? "เปิดไมค์ก่อนเข้าห้อง" : "ปิดไมค์ก่อนเข้าห้อง"}
+              className={`flex size-12 items-center justify-center rounded-full border shadow-sm transition-colors focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                isMicrophoneMuted
+                  ? "border-red-500 bg-red-500 text-white hover:bg-red-600"
+                  : "border-slate-600 bg-slate-700 text-white hover:bg-slate-600"
+              }`}
+            >
+              {isMicrophoneMuted ? <MicOff aria-hidden="true" className="size-5" /> : <Mic aria-hidden="true" className="size-5" />}
+            </button>
+            <p id="lobby-microphone-status" aria-live="polite" className="text-xs text-slate-400">
+              {isMicrophoneMuted ? "เข้าห้องโดยปิดไมค์" : "เข้าห้องโดยเปิดไมค์"}
+            </p>
           </div>
 
-          <button type="submit" disabled={isJoining} className="meeting-lobby__join focus-ring">
+          {joinError && (
+            <p role="alert" className="meeting-lobby__error">
+              {joinError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isJoining || micPermissionState === "requesting" || (isHost && !hostName?.trim())}
+            className="meeting-lobby__join focus-ring"
+          >
             {isJoining ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องประชุม"}
           </button>
         </form>

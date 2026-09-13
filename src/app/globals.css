@@ -83,10 +83,10 @@
     @apply grid grid-cols-2 gap-2 lg:block lg:space-y-1;
   }
   .sidebar__nav-link {
-    @apply flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-[#8493ac] transition-colors hover:bg-[#18243a] hover:text-white;
+    @apply flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-[#8493ac] transition-colors hover:bg-[#18243a] hover:text-white;
   }
   .sidebar__nav-link--active {
-    @apply flex h-10 items-center gap-3 rounded-lg bg-[#5145e5] px-3 text-sm font-semibold text-white;
+    @apply flex h-10 w-full items-center gap-3 rounded-lg bg-[#5145e5] px-3 text-sm font-semibold text-white;
   }
   .sidebar__footer {
     @apply mt-auto hidden border-t border-[#202c42] p-3 lg:block;
