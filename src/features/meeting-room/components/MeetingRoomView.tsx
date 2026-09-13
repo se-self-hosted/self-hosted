@@ -1,6 +1,7 @@
 "use client";
 
 import { startLiveTranscription, type SpeechRecognizer } from "@/features/meeting-room/lib/live-transcription";
+import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -113,8 +114,8 @@ export function MeetingRoomView({
   const [meetingId, setMeetingId] = useState<string | null>(null);
   const [dbParticipants, setDbParticipants] = useState<{ id: string; displayName: string }[]>([]);
 
-  // Meeting start time for relative timeline calculation
-  const meetingStartTimeRef = useRef<number>(0);
+  // All participants use the persisted meeting start, including late joins/rejoins.
+  const meetingClockRef = useRef<ReturnType<typeof createMeetingClock> | null>(null);
 
   // 5. Audio Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -199,6 +200,7 @@ export function MeetingRoomView({
         return;
       }
 
+      meetingClockRef.current = createMeetingClock(dbData.meetingStartedAt, dbData.serverNow);
       setConnectionId(dbData.connectionId);
       setParticipantId(dbData.participantId);
       setMeetingId(dbData.meetingId);
@@ -515,13 +517,6 @@ export function MeetingRoomView({
     };
   }, [hasJoined, room, connectionId]);
 
-  // Initialize meeting start time on join
-  useEffect(() => {
-    if (hasJoined) {
-      meetingStartTimeRef.current = Date.now();
-    }
-  }, [hasJoined]);
-
   // Auto-scroll transcript when new segments arrive
   useEffect(() => {
     if (showTranscriptPanel && transcriptBottomRef.current) {
@@ -678,12 +673,11 @@ export function MeetingRoomView({
     durationSec?: number,
     confidence = 0,
   ) => {
-    if (!text.trim()) return;
-    const now = Date.now();
-    const elapsedSec = Math.max(0, (now - meetingStartTimeRef.current) / 1000);
+    const clock = meetingClockRef.current;
+    if (!text.trim() || !clock) return;
+    const { elapsedSeconds: elapsedSec, spokenAt } = clock();
     const segStartTime = startTimeOffset !== undefined ? startTimeOffset : Math.max(0, elapsedSec - (durationSec || 2));
     const segEndTime = Math.max(segStartTime + 0.5, elapsedSec);
-    const spokenAt = new Date().toISOString();
 
     const newSegment: LiveTranscriptSegment = {
       id: `seg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -737,6 +731,8 @@ export function MeetingRoomView({
   // Recognition consumes the same cleaned local audio used in the meeting.
   useEffect(() => {
     if (!hasJoined || isMicrophoneMuted || !livekitRoom) return;
+    const clock = meetingClockRef.current;
+    if (!clock) return;
     const speechWindow = window as unknown as {
       SpeechRecognition?: new () => SpeechRecognizer;
       webkitSpeechRecognition?: new () => SpeechRecognizer;
@@ -749,7 +745,7 @@ export function MeetingRoomView({
     return startLiveTranscription(new SpeechRecognition(), {
       getAudioTrack: () => livekitRoom.localParticipant
         .getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack,
-      elapsedSeconds: () => Math.max(0, (Date.now() - meetingStartTimeRef.current) / 1000),
+      elapsedSeconds: () => clock().elapsedSeconds,
       onFinal: (text, start, duration, confidence) => {
         void addTranscriptSegment(text, start, duration, confidence);
       },

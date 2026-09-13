@@ -136,7 +136,13 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { participantId: targetParticipantId, meetingId: meeting.id, connectionId },
+      {
+        participantId: targetParticipantId,
+        meetingId: meeting.id,
+        connectionId,
+        meetingStartedAt: meeting.startedAt.toISOString(),
+        serverNow: new Date().toISOString(),
+      },
       { status: 201 },
     );
   } catch (error) {
