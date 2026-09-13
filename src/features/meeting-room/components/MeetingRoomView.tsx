@@ -109,7 +109,23 @@ export function MeetingRoomView({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Session & database presence tracking
-  const [connectionId, setConnectionId] = useState<string | null>(null);
+  const joiningRef = useRef(false);
+  const mountedRef = useRef(true);
+  const activeSessionRef = useRef<{ connectionId: string; roomHash: string; room?: Room } | null>(null);
+
+  const releaseSession = useCallback(async () => {
+    const session = activeSessionRef.current;
+    activeSessionRef.current = null;
+    if (!session) return;
+    // Start the keepalive request before yielding, including during tab unload.
+    const leaving = fetch(`/api/rooms/${session.roomHash}/leave`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ connectionId: session.connectionId }),
+      keepalive: true,
+    });
+    await Promise.all([session.room?.disconnect(), leaving]);
+  }, []);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [meetingId, setMeetingId] = useState<string | null>(null);
   const [dbParticipants, setDbParticipants] = useState<{ id: string; displayName: string }[]>([]);
@@ -168,23 +184,25 @@ export function MeetingRoomView({
 
   // Attempt joining room (db presence + LiveKit token)
   async function attemptJoin(name: string) {
-    if (!room || isJoining || hasJoined) return;
+    if (!room || joiningRef.current || isJoining || hasJoined) return;
+    joiningRef.current = true;
+    let joined = false;
 
     setIsJoining(true);
     setJoinError(null);
 
     let shouldMute = isMicrophoneMuted;
 
-    // Joining muted must not request or capture microphone audio.
-    if (!shouldMute && micPermissionState !== "granted") {
-      const granted = await requestMicrophonePermission();
-      if (!granted) {
-        setIsMicrophoneMuted(true);
-        shouldMute = true;
-      }
-    }
-
     try {
+      // Joining muted must not request or capture microphone audio.
+      if (!shouldMute && micPermissionState !== "granted") {
+        const granted = await requestMicrophonePermission();
+        if (!granted) {
+          setIsMicrophoneMuted(true);
+          shouldMute = true;
+        }
+      }
+      if (!mountedRef.current) return;
       // Step A: DB Join API
       const response = await fetch(`/api/rooms/${room.roomHash}/join`, {
         method: "POST",
@@ -196,15 +214,16 @@ export function MeetingRoomView({
 
       if (!response.ok) {
         setJoinError(dbData.error || "ไม่สามารถเข้าร่วมห้องประชุมได้");
-        setIsJoining(false);
         return;
       }
 
+      const session = { connectionId: dbData.connectionId, roomHash: room.roomHash, room: undefined as Room | undefined };
+      activeSessionRef.current = session;
+      if (!mountedRef.current) return;
       meetingClockRef.current = createMeetingClock(dbData.meetingStartedAt, dbData.serverNow);
-      setConnectionId(dbData.connectionId);
       setParticipantId(dbData.participantId);
       setMeetingId(dbData.meetingId);
-      setDisplayName(name);
+      setDisplayName(dbData.displayName || name);
 
       // Step B: Fetch LiveKit JWT Token
       const tokenRes = await fetch("/api/livekit/token", {
@@ -213,16 +232,17 @@ export function MeetingRoomView({
         body: JSON.stringify({
           roomHash: room.roomHash,
           identity: dbData.participantId,
+          connectionId: dbData.connectionId,
           displayName: name,
           isHost,
         }),
       });
       const tokenContentType = tokenRes.headers.get("content-type");
       const tokenData = tokenContentType?.includes("application/json") ? await tokenRes.json() : {};
+      if (!mountedRef.current || activeSessionRef.current !== session) return;
 
       if (!tokenRes.ok || !tokenData.token) {
         setJoinError(tokenData.error || "ไม่สามารถขอรับ Token สำหรับ LiveKit ได้");
-        setIsJoining(false);
         return;
       }
 
@@ -243,11 +263,14 @@ export function MeetingRoomView({
         },
       });
 
+      session.room = lkRoom;
+
       // Set up LiveKit Room Event listeners
       setupLivekitEventListeners(lkRoom, dbData.participantId);
 
       try {
         await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
+        if (!mountedRef.current || activeSessionRef.current !== session) return;
         // Populate remote participants already in the room upon connection
         lkRoom.remoteParticipants.forEach((participant) => {
           updateRemoteParticipant(participant);
@@ -258,21 +281,26 @@ export function MeetingRoomView({
           const audioTrack = lkRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
           await applyNoiseCancellation(audioTrack);
         }
+        if (!mountedRef.current || activeSessionRef.current !== session) return;
         setLivekitRoom(lkRoom);
         setConnectionStatus("connected");
       } catch (lkErr: unknown) {
         console.error("LiveKit connection error:", lkErr);
         const errMsg = lkErr instanceof Error ? lkErr.message : "Connection failed";
         setJoinError(`ไม่สามารถเชื่อมต่อกับ LiveKit Server ได้ (${errMsg})`);
-        setIsJoining(false);
         return;
       }
 
+      joined = true;
       setHasJoined(true);
-      setIsJoining(false);
     } catch (error) {
       console.error("Join meeting error:", error);
       setJoinError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      if (!joined) {
+        await releaseSession().catch((error) => console.error("Release session error:", error));
+      }
+      joiningRef.current = false;
       setIsJoining(false);
     }
   }
@@ -292,6 +320,16 @@ export function MeetingRoomView({
       } else if (state === ConnectionState.Connecting) {
         setConnectionStatus("connecting");
       }
+    });
+
+    lkRoom.on(RoomEvent.Disconnected, () => {
+      if (activeSessionRef.current?.room !== lkRoom) return;
+      stopRecording();
+      void releaseSession().catch((error) => console.error("Release session error:", error));
+      setHasJoined(false);
+      setLivekitRoom(null);
+      setRemoteParticipantsMap(new Map());
+      setJoinError("การเชื่อมต่อสิ้นสุดแล้ว คุณสามารถกดเข้าร่วมห้องประชุมอีกครั้งได้");
     });
 
     // Reconnecting / Reconnected events
@@ -479,33 +517,44 @@ export function MeetingRoomView({
       .catch(() => {});
   }, [hasJoined, room, meetingId]);
 
-  // Heartbeat presence call
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+  }, []);
+
+  // Keep the admission alive while connecting as well as during the meeting.
   useEffect(() => {
-    if (!hasJoined || !room || !connectionId) return;
-
     let cancelled = false;
-
     async function sendHeartbeat() {
+      const session = activeSessionRef.current;
+      if (!session) return;
       try {
-        await fetch(`/api/rooms/${room!.roomHash}/heartbeat`, {
+        const response = await fetch(`/api/rooms/${session.roomHash}/heartbeat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ connectionId }),
+          body: JSON.stringify({ connectionId: session.connectionId }),
         });
+        if (response.status === 409 && !cancelled && activeSessionRef.current === session) {
+          stopRecording();
+          await releaseSession();
+          setHasJoined(false);
+          setLivekitRoom(null);
+          setJoinError("การเชื่อมต่อห้องประชุมนี้สิ้นสุดแล้ว กรุณาเข้าห้องใหม่");
+        }
       } catch (error) {
         console.error("Heartbeat error:", error);
       }
     }
-
-    const interval = setInterval(() => {
-      if (!cancelled) void sendHeartbeat();
-    }, HEARTBEAT_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [hasJoined, room, connectionId]);
+    const interval = setInterval(() => { void sendHeartbeat(); }, HEARTBEAT_INTERVAL_MS);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [releaseSession, stopRecording]);
 
   // Auto-scroll transcript when new segments arrive
   useEffect(() => {
@@ -605,18 +654,6 @@ export function MeetingRoomView({
     }
   };
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    setIsRecording(false);
-  }, []);
-
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -625,30 +662,20 @@ export function MeetingRoomView({
     }
   };
 
-  // Handle leave on window unload or unmount
+  // Read the active connection from a ref: state changes must never end a session.
   useEffect(() => {
-    if (!room) return;
-
+    mountedRef.current = true;
     function notifyLeave() {
-      // Read the current recorder via refs; recording UI changes must not
-      // trigger this effect's leave/disconnect cleanup.
+      mountedRef.current = false;
       stopRecording();
-      if (livekitRoom) {
-        livekitRoom.disconnect();
-      }
-      if (!connectionId) return;
-      const payload = JSON.stringify({ connectionId });
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon?.(`/api/rooms/${room!.roomHash}/leave`, blob);
+      void releaseSession().catch((error) => console.error("Leave room error:", error));
     }
-
     window.addEventListener("beforeunload", notifyLeave);
-
     return () => {
       window.removeEventListener("beforeunload", notifyLeave);
       notifyLeave();
     };
-  }, [connectionId, room, livekitRoom, stopRecording]);
+  }, [releaseSession, stopRecording]);
 
   // Show Toast notification popup
   function showToast(msg: string) {
@@ -1295,13 +1322,18 @@ export function MeetingRoomView({
           </button>
         )}
 
-        <Link
-          href="/dashboard"
+        <button
+          type="button"
+          onClick={async () => {
+            stopRecording();
+            await releaseSession().catch((error) => console.error("Leave room error:", error));
+            window.location.href = "/dashboard";
+          }}
           aria-label="ออกจากห้อง"
           className="meeting-control meeting-control--leave focus-ring"
         >
           <Phone aria-hidden="true" className="icon-20" />
-        </Link>
+        </button>
       </footer>
     </main>
   );

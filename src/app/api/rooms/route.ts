@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateSlug } from "@/lib/slug";
 import { isSessionActive } from "@/lib/presence";
+import { AdmissionError, getActiveUserRoom } from "@/lib/meeting-admission";
 import { MIN_ROOM_PARTICIPANTS, MAX_ROOM_PARTICIPANTS } from "@/lib/constants";
 import { z } from "zod";
 
@@ -83,6 +84,7 @@ export async function GET() {
       },
     });
 
+    const activeRoom = await getActiveUserRoom(user.id);
     const roomsWithCounts = rooms.map((room) => {
       const ongoingMeeting = room.meetings[0];
 
@@ -95,14 +97,7 @@ export async function GET() {
           ).length
         : 0;
 
-      const isHostInRoom = ongoingMeeting
-        ? ongoingMeeting.participants.some(
-            (participant) =>
-              (participant.displayName === user.fullname ||
-                participant.displayName === user.email) &&
-              participant.sessions.some((session) => isSessionActive(session)),
-          )
-        : false;
+      const isHostInRoom = activeRoom?.id === room.id;
 
       const roomFields = {
         id: room.id,
@@ -117,8 +112,11 @@ export async function GET() {
       return { ...roomFields, activeParticipantCount, isHostInRoom };
     });
 
-    return NextResponse.json({ rooms: roomsWithCounts });
+    return NextResponse.json({ rooms: roomsWithCounts, activeRoomId: activeRoom?.id ?? null });
   } catch (error) {
+    if (error instanceof AdmissionError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+    }
     console.error("List Rooms Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -17,7 +17,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rooms MeetingRoom[]
+  rooms        MeetingRoom[]
+  participants Participant[]
 }
 
 model MeetingRoom {
@@ -55,16 +56,20 @@ model Meeting {
 }
 
 model Participant {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   meetingId String
+  userId    String?
 
   displayName String
 
   createdAt DateTime @default(now())
 
   meeting  Meeting              @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user     User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
   sessions ParticipantSession[]
   segments TranscriptSegment[]
+
+  @@index([userId])
 }
 
 model ParticipantSession {

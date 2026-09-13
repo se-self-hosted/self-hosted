@@ -152,6 +152,7 @@ exports.Prisma.MeetingScalarFieldEnum = {
 exports.Prisma.ParticipantScalarFieldEnum = {
   id: 'id',
   meetingId: 'meetingId',
+  userId: 'userId',
   displayName: 'displayName',
   createdAt: 'createdAt'
 };

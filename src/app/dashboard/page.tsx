@@ -118,6 +118,7 @@ export default function DashboardPage() {
   const [currentTab, setCurrentTab] = useState<"rooms" | "history">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [meetings, setMeetings] = useState<PastMeeting[]>([]);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
 
@@ -160,7 +161,7 @@ export default function DashboardPage() {
 
       async function loadRooms() {
         try {
-          const response = await fetch("/api/rooms", { signal: controller.signal });
+          const response = await fetch("/api/rooms", { signal: controller.signal, cache: "no-store" });
           const contentType = response.headers.get("content-type");
 
           if (!response.ok || !contentType?.includes("application/json")) return;
@@ -179,6 +180,7 @@ export default function DashboardPage() {
           }));
 
           setRooms(loadedRooms);
+          setActiveRoomId(data.activeRoomId ?? null);
         } catch (error: unknown) {
           if ((error as Error)?.name !== "AbortError") {
             // Silently handle temporary network failures during polling
@@ -598,12 +600,12 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => router.push(`/meeting/${room.slug}?role=host`)}
-                          disabled={!isActive || isAlreadyInRoom}
-                          title={isAlreadyInRoom ? "คุณอยู่ในห้องประชุมนี้แล้ว" : undefined}
+                          disabled={!isActive || isAlreadyInRoom || Boolean(activeRoomId)}
+                          title={isAlreadyInRoom ? "คุณอยู่ในห้องประชุมนี้แล้ว" : activeRoomId ? "กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้" : undefined}
                           className="room-card__join-btn focus-ring"
                         >
                           <DoorOpen aria-hidden="true" className="icon-16" />
-                          {isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "เข้าห้อง"}
+                          {isAlreadyInRoom ? "เข้าร่วมแล้ว" : "เข้าร่วม"}
                         </button>
                         <button
                           type="button"
