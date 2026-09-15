@@ -3,6 +3,7 @@
 import { startLiveTranscription, type SpeechRecognizer } from "@/features/meeting-room/lib/live-transcription";
 import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
+import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -411,14 +412,7 @@ export function MeetingRoomView({
           setIsMicrophoneMuted(true);
           showToast("ผู้จัดประชุม (Host) ได้ปิดไมโครโฟนของคุณแล้ว");
         } else if (data.type === "TRANSCRIPT_SEGMENT" && data.segment) {
-          setTranscriptSegments((prev) => {
-            if (prev.some((s) => s.id === data.segment.id)) return prev;
-            const next = [...prev, data.segment];
-            return next.sort((a, b) => {
-              if (a.startTime !== b.startTime) return a.startTime - b.startTime;
-              return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
-            });
-          });
+          setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
         }
       } catch (e) {
         console.error("DataReceived error:", e);
@@ -511,7 +505,7 @@ export function MeetingRoomView({
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { segments?: LiveTranscriptSegment[] } | null) => {
         if (data?.segments && Array.isArray(data.segments)) {
-          setTranscriptSegments(data.segments);
+          setTranscriptSegments((prev) => mergeTranscriptSegments(prev, data.segments!));
         }
       })
       .catch(() => {});
