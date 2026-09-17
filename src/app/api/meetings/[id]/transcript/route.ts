@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { resolveMeetingAccess } from "@/lib/meeting-access";
 
 const segmentSchema = z.object({
+  id: z.string().min(1).optional(),
   participantId: z.string().optional(),
   speakerName: z.string().optional(),
   startTime: z.number().min(0, "Start time must be non-negative"),
@@ -21,11 +23,20 @@ const postTranscriptSchema = z.union([
 ]);
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: meetingId } = await params;
+    const participantId = new URL(req.url).searchParams.get("participantId");
+    const access = await resolveMeetingAccess(meetingId, participantId);
+
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
@@ -97,6 +108,22 @@ export async function POST(
 ) {
   try {
     const { id: meetingId } = await params;
+    const body = await req.json();
+
+    // Only the single-segment shape carries a caller identity; a batch
+    // payload has no one participant to attribute the request to.
+    const candidateParticipantId =
+      body && typeof body === "object" && "participantId" in body && typeof body.participantId === "string"
+        ? body.participantId
+        : null;
+    const access = await resolveMeetingAccess(meetingId, candidateParticipantId);
+
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
@@ -107,7 +134,6 @@ export async function POST(
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    const body = await req.json();
     const result = postTranscriptSchema.safeParse(body);
 
     if (!result.success) {
@@ -139,13 +165,16 @@ export async function POST(
       });
     }
 
-    // Resolve participant for each segment
+    // Resolve participant for each segment. Kept in sync as segments create
+    // new participants so a batch introducing several new speakers reuses
+    // each one instead of creating a duplicate row per subsequent segment.
+    const participants = [...meeting.participants];
     const createdSegments = [];
     for (const seg of rawSegments) {
       let participantId = seg.participantId;
 
       if (!participantId && seg.speakerName) {
-        const found = meeting.participants.find(
+        const found = participants.find(
           (p) => p.displayName.toLowerCase() === seg.speakerName!.toLowerCase(),
         );
         if (found) {
@@ -158,12 +187,13 @@ export async function POST(
               displayName: seg.speakerName,
             },
           });
+          participants.push(created);
           participantId = created.id;
         }
       } else if (!participantId) {
         // Fallback to first participant or create a guest participant
-        if (meeting.participants.length > 0) {
-          participantId = meeting.participants[0].id;
+        if (participants.length > 0) {
+          participantId = participants[0].id;
         } else {
           const created = await prisma.participant.create({
             data: {
@@ -171,6 +201,7 @@ export async function POST(
               displayName: "Guest",
             },
           });
+          participants.push(created);
           participantId = created.id;
         }
       }
@@ -179,6 +210,10 @@ export async function POST(
 
       const createdSegment = await prisma.transcriptSegment.create({
         data: {
+          // Preserve the client-generated id so the caller's own optimistic,
+          // already-displayed copy of this segment can be deduped against
+          // the persisted row later (e.g. after a reconnect re-fetches it).
+          ...(seg.id ? { id: seg.id } : {}),
           transcriptId: transcript.id,
           participantId: participantId!,
           startTime: seg.startTime,

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState, useEffect } from "react";
-import { CalendarDays, ChevronRight, Search, Loader2 } from "lucide-react";
+import { CalendarDays, ChevronRight, Search, Loader2, AlertCircle } from "lucide-react";
 import { filterMeetingHistory } from "../search";
-import type { MeetingHistoryFilters, MeetingHistoryItem } from "../types";
+import type { MeetingHistoryFilters, MeetingHistoryItem, MeetingHistoryResponse } from "../types";
 
 type MeetingHistoryProps = { meetings?: MeetingHistoryItem[] };
 const emptyFilters: MeetingHistoryFilters = { query: "", from: "", to: "" };
@@ -20,28 +20,29 @@ function formatDuration(totalSeconds: number | null) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return [hours ? `${hours}h` : "", minutes ? `${minutes}m` : "", !hours && seconds ? `${seconds}s` : ""]
-    .filter(Boolean)
-    .join(" ");
+  const parts = [hours ? `${hours}h` : "", minutes ? `${minutes}m` : "", !hours && seconds ? `${seconds}s` : ""]
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : "0s";
 }
 
 export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProps) {
   const [meetings, setMeetings] = useState<MeetingHistoryItem[]>(initialMeetings || []);
   const [isLoading, setIsLoading] = useState(!initialMeetings);
+  const [error, setError] = useState("");
   const [draftFilters, setDraftFilters] = useState<MeetingHistoryFilters>(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState<MeetingHistoryFilters>(emptyFilters);
 
   useEffect(() => {
     if (!initialMeetings) {
       setIsLoading(true);
+      setError("");
       fetch('/api/meetings')
-        .then(res => res.json())
-        .then(data => {
-          if (data.meetings) {
-            setMeetings(data.meetings);
-          }
+        .then((res) => {
+          if (!res.ok) throw new Error("โหลดประวัติการประชุมไม่สำเร็จ");
+          return res.json() as Promise<MeetingHistoryResponse>;
         })
-        .catch(err => console.error(err))
+        .then((data) => setMeetings(data.meetings))
+        .catch((err: Error) => setError(err.message))
         .finally(() => setIsLoading(false));
     }
   }, [initialMeetings]);
@@ -98,6 +99,8 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
       <div className="meeting-history__results" aria-live="polite">
         {isLoading ? (
           <div className="meeting-history__state"><Loader2 aria-hidden="true" className="icon-20 animate-spin" /><p>กำลังโหลดข้อมูลการประชุม...</p></div>
+        ) : error ? (
+          <div className="meeting-history__state"><AlertCircle aria-hidden="true" className="icon-20" /><p>{error}</p></div>
         ) : filteredMeetings.length === 0 ? (
           <div className="meeting-history__state"><CalendarDays aria-hidden="true" className="icon-20" /><p>ไม่พบการประชุมที่ตรงกับเงื่อนไข</p></div>
         ) : (

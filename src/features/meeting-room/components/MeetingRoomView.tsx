@@ -497,9 +497,12 @@ export function MeetingRoomView({
   // Load existing transcript segments
   useEffect(() => {
     if (!hasJoined || !room) return;
-    const targetUrl = meetingId
+    const baseUrl = meetingId
       ? `/api/meetings/${meetingId}/transcript`
       : `/api/rooms/${room.roomHash}/transcript`;
+    const targetUrl = participantId
+      ? `${baseUrl}?participantId=${encodeURIComponent(participantId)}`
+      : baseUrl;
 
     fetch(targetUrl)
       .then((res) => (res.ok ? res.json() : null))
@@ -509,7 +512,7 @@ export function MeetingRoomView({
         }
       })
       .catch(() => {});
-  }, [hasJoined, room, meetingId]);
+  }, [hasJoined, room, meetingId, participantId]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -614,6 +617,7 @@ export function MeetingRoomView({
         const formData = new FormData();
         formData.append("file", audioBlob, `meeting-${room?.roomHash || "rec"}-${Date.now()}.webm`);
         formData.append("durationSeconds", String(duration));
+        formData.append("participantId", participantId || "");
 
         try {
           const targetUrl = meetingId

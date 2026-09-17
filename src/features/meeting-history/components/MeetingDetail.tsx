@@ -59,9 +59,18 @@ function formatDuration(totalSeconds: number | null) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return [hours ? `${hours}h` : "", minutes ? `${minutes}m` : "", !hours && seconds ? `${seconds}s` : ""]
-    .filter(Boolean)
-    .join(" ");
+  const parts = [hours ? `${hours}h` : "", minutes ? `${minutes}m` : "", !hours && seconds ? `${seconds}s` : ""]
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : "0s";
+}
+
+function formatTimestamp(totalSeconds: number) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const seconds = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
 
 export function MeetingDetail({ meetingId }: MeetingDetailProps) {
@@ -207,7 +216,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
             {meeting.transcript.segments.map((seg) => (
               <div key={seg.id} className="transcript-segment">
                 <div className="transcript-segment__time">
-                  {formatDuration(Math.floor(seg.startTime))}
+                  {formatTimestamp(seg.startTime)}
                 </div>
                 <div>
                   <strong className="transcript-segment__speaker">{seg.speakerName}</strong>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getRecordingObject } from "@/lib/storage";
+import { resolveMeetingAccess } from "@/lib/meeting-access";
 
 export async function GET(
   req: Request,
@@ -11,6 +12,11 @@ export async function GET(
     const recording = await prisma.recording.findUnique({ where: { id } });
     if (!recording) {
       return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+    }
+
+    const access = await resolveMeetingAccess(recording.meetingId);
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Ignore malformed/multipart ranges; MinIO handles valid single ranges,
