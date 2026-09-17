@@ -21,7 +21,8 @@ type Options = {
   elapsedSeconds: () => number;
   onFinal: (text: string, startTime: number, duration: number, confidence: number) => void;
   onInterim: (text: string) => void;
-  onStatus: (message: string) => void;
+  /** `isError` marks a terminal failure worth surfacing to the user, as opposed to routine status pings. */
+  onStatus: (message: string, isError?: boolean) => void;
 };
 
 /** Keep interim hypotheses separate; only the recognizer's final result is saved. */
@@ -47,7 +48,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     if (!active || retryTimer) return;
     if (failedAttempts >= 5) {
       active = false;
-      options.onStatus("ถอดเสียงหยุดทำงาน กรุณาตรวจสอบการเชื่อมต่อแล้วกดเริ่มใหม่");
+      options.onStatus("ถอดเสียงหยุดทำงาน กรุณาตรวจสอบการเชื่อมต่อแล้วกดเริ่มใหม่", true);
       return;
     }
     const delay = Math.min(500 * 2 ** failedAttempts, 8000);
@@ -120,7 +121,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
       clearTimeout(retryTimer);
       options.onStatus(error === "language-not-supported"
         ? "เบราว์เซอร์ไม่รองรับการถอดเสียงภาษาไทย"
-        : "ถอดเสียงไม่ได้ กรุณาตรวจสอบสิทธิ์ไมโครโฟนแล้วกดเริ่มใหม่");
+        : "ถอดเสียงไม่ได้ กรุณาตรวจสอบสิทธิ์ไมโครโฟนแล้วกดเริ่มใหม่", true);
     } else if (error !== "no-speech") {
       options.onStatus("การถอดเสียงขัดข้อง บางคำอาจหายไป กำลังเชื่อมต่อใหม่...");
     }

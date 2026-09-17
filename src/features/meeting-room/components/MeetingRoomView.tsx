@@ -755,6 +755,7 @@ export function MeetingRoomView({
     const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.warn("This browser does not support live transcription.");
+      showToast("เบราว์เซอร์นี้ไม่รองรับการถอดเสียงสด กรุณาใช้ Google Chrome");
       return;
     }
     return startLiveTranscription(new SpeechRecognition(), {
@@ -765,7 +766,10 @@ export function MeetingRoomView({
         void addTranscriptSegment(text, start, duration, confidence);
       },
       onInterim: setInterimTranscript,
-      onStatus: (message) => console.debug("Live transcription:", message),
+      onStatus: (message, isError) => {
+        console.debug("Live transcription:", message);
+        if (isError) showToast(message);
+      },
     });
   }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment]);
 
