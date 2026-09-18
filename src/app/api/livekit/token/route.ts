@@ -24,9 +24,11 @@ export async function POST(req: Request) {
 
     const { roomHash, identity, connectionId } = result.data;
 
-    const room = await prisma.meetingRoom.findUnique({
-      where: { roomHash },
-    });
+    // Independent lookups — run concurrently instead of chaining two DB/JWT round-trips.
+    const [room, user] = await Promise.all([
+      prisma.meetingRoom.findUnique({ where: { roomHash } }),
+      getUserFromRequest(),
+    ]);
 
     if (!room) {
       return NextResponse.json({ error: "Meeting room not found" }, { status: 404 });
@@ -36,7 +38,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Meeting room is not active" }, { status: 400 });
     }
 
-    const user = await getUserFromRequest();
     const session = await prisma.participantSession.findFirst({
       where: {
         connectionId,

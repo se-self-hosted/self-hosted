@@ -91,6 +91,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
   };
   recognition.onresult = (event) => {
     failedAttempts = 0;
+    const hadInterim = interim;
     const drafts: string[] = [];
     for (let index = 0; index < event.results.length; index += 1) {
       const result = event.results[index];
@@ -107,9 +108,19 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
       const confidence = alternative.confidence;
       options.onFinal(text, startTime, Math.max(0, endTime - startTime),
         typeof confidence === "number" && Number.isFinite(confidence) ? Math.max(0, Math.min(1, confidence)) : 0);
+      // `endTime` is when the recognizer finished processing, not when the
+      // next utterance's audio actually begins — `onspeechstart` should
+      // overwrite this, but it fires unreliably in continuous mode across
+      // browsers. Fall back to it only until a closer signal arrives below.
       startTime = endTime;
     }
     interim = drafts.join(" ");
+    if (!hadInterim && interim) {
+      // The first interim hypothesis of a new utterance lags real speech far
+      // less than waiting for a final result — much closer to true onset
+      // than the finalize-time carried over above.
+      startTime = options.elapsedSeconds();
+    }
     if (active) options.onInterim(interim);
   };
   recognition.onerror = ({ error }) => {

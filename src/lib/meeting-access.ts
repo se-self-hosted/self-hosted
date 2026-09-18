@@ -16,7 +16,7 @@ export async function resolveMeetingAccess(
     getUserFromRequest(),
     prisma.meeting.findUnique({
       where: { id: meetingId },
-      select: { id: true, room: { select: { hostId: true } } },
+      select: { id: true, room: { select: { hostId: true, roomHash: true } } },
     }),
   ]);
 

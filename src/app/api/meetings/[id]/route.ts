@@ -45,6 +45,7 @@ export async function GET(
         summary: true,
         recordings: {
           orderBy: { createdAt: "desc" },
+          include: { participant: { select: { displayName: true } } },
         },
       },
     });
@@ -66,8 +67,11 @@ export async function GET(
 
         return {
           id: rec.id,
+          participantId: rec.participantId,
+          speakerName: rec.participant?.displayName ?? null,
           fileName: rec.fileName,
           objectKey: rec.objectKey,
+          startOffsetSeconds: rec.startOffsetSeconds,
           durationSeconds: rec.durationSeconds,
           fileSize: rec.fileSize.toString(),
           mimeType: rec.mimeType,

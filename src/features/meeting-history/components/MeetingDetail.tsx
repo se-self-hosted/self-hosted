@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Users, FileText, Video, AlertCircle, Loader2, Download } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
 
 type Session = {
   id: string;
@@ -19,6 +19,7 @@ type Participant = {
 
 type TranscriptSegment = {
   id: string;
+  participantId: string;
   speakerName: string;
   startTime: number;
   endTime: number;
@@ -27,7 +28,10 @@ type TranscriptSegment = {
 
 type Recording = {
   id: string;
+  participantId: string | null;
+  speakerName: string | null;
   fileName: string;
+  startOffsetSeconds: number | null;
   durationSeconds: number | null;
   fileSize: string;
   mimeType: string;
@@ -78,6 +82,97 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>({});
+  const mediaRefs = useRef<Record<string, HTMLMediaElement | null>>({});
+  const [nowPlaying, setNowPlaying] = useState<{
+    recordingId: string;
+    speakerName: string;
+    currentTime: number;
+    duration: number;
+    paused: boolean;
+  } | null>(null);
+  const trackedMediaRef = useRef<HTMLMediaElement | null>(null);
+
+  function findRecordingForSegment(seg: TranscriptSegment): Recording | null {
+    if (!meeting) return null;
+
+    // Each participant records only their own mic, so a segment can only ever
+    // live in that same participant's recording(s) — never fall back to
+    // another speaker's file just because its time window happens to
+    // overlap; that plays the wrong person's voice.
+    const ownTracks = meeting.recordings.filter(
+      (r) => r.participantId === seg.participantId && r.startOffsetSeconds !== null,
+    );
+    if (ownTracks.length === 0) return null;
+
+    const containing = ownTracks.find(
+      (r) =>
+        seg.startTime >= r.startOffsetSeconds! &&
+        (r.durationSeconds == null || seg.startTime <= r.startOffsetSeconds! + r.durationSeconds),
+    );
+    if (containing) return containing;
+
+    const before = ownTracks
+      .filter((r) => r.startOffsetSeconds! <= seg.startTime)
+      .sort((a, b) => b.startOffsetSeconds! - a.startOffsetSeconds!)[0];
+    return before || ownTracks[0];
+  }
+
+  // Plays quietly behind the transcript — no player UI takes over the page,
+  // just a small floating bar (below) that mirrors whatever is playing.
+  function trackNowPlaying(recording: Recording, media: HTMLMediaElement) {
+    if (trackedMediaRef.current && trackedMediaRef.current !== media) {
+      trackedMediaRef.current.onplay = null;
+      trackedMediaRef.current.onpause = null;
+      trackedMediaRef.current.ontimeupdate = null;
+      trackedMediaRef.current.onended = null;
+    }
+    trackedMediaRef.current = media;
+
+    const sync = () => {
+      setNowPlaying({
+        recordingId: recording.id,
+        speakerName: recording.speakerName ?? recording.fileName,
+        currentTime: media.currentTime,
+        duration: Number.isFinite(media.duration) ? media.duration : 0,
+        paused: media.paused,
+      });
+    };
+    media.onplay = sync;
+    media.onpause = sync;
+    media.ontimeupdate = sync;
+    media.onended = sync;
+    sync();
+  }
+
+  function playSegment(seg: TranscriptSegment) {
+    const recording = findRecordingForSegment(seg);
+    if (!recording) return;
+    const media = mediaRefs.current[recording.id];
+    if (!media) return;
+    const target = Math.max(0, seg.startTime - (recording.startOffsetSeconds ?? 0));
+    // A stale/underestimated durationSeconds can let a segment match a
+    // recording it doesn't actually fall inside of; without this clamp the
+    // browser silently snaps an out-of-range currentTime to the file's very
+    // end instead of erroring, which looks like "it plays right at the end".
+    media.currentTime = Number.isFinite(media.duration) && media.duration > 0
+      ? Math.min(target, Math.max(0, media.duration - 0.05))
+      : target;
+    trackNowPlaying(recording, media);
+    void media.play();
+  }
+
+  function toggleNowPlayingPause() {
+    const media = trackedMediaRef.current;
+    if (!media) return;
+    if (media.paused) void media.play();
+    else media.pause();
+  }
+
+  function seekNowPlaying(time: number) {
+    const media = trackedMediaRef.current;
+    if (!media) return;
+    media.currentTime = time;
+  }
 
   function handlePlaybackError(id: string, media: HTMLMediaElement) {
     const messages: Record<number, string> = {
@@ -213,17 +308,37 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
             <FileText className="icon-20" /> Transcript
           </h3>
           <div className="transcript-segments">
-            {meeting.transcript.segments.map((seg) => (
-              <div key={seg.id} className="transcript-segment">
-                <div className="transcript-segment__time">
-                  {formatTimestamp(seg.startTime)}
+            {meeting.transcript.segments.map((seg) => {
+              const playable = findRecordingForSegment(seg) !== null;
+              return (
+                <div
+                  key={seg.id}
+                  className={`transcript-segment${playable ? " transcript-segment--playable" : ""}`}
+                  role={playable ? "button" : undefined}
+                  tabIndex={playable ? 0 : undefined}
+                  title={playable ? "คลิกเพื่อฟังเสียงที่บันทึกไว้ ณ จุดนี้" : undefined}
+                  onClick={playable ? () => playSegment(seg) : undefined}
+                  onKeyDown={
+                    playable
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            playSegment(seg);
+                          }
+                        }
+                      : undefined
+                  }
+                >
+                  <div className="transcript-segment__time">
+                    {formatTimestamp(seg.startTime)}
+                  </div>
+                  <div>
+                    <strong className="transcript-segment__speaker">{seg.speakerName}</strong>
+                    <p className="transcript-segment__text">{seg.text}</p>
+                  </div>
                 </div>
-                <div>
-                  <strong className="transcript-segment__speaker">{seg.speakerName}</strong>
-                  <p className="transcript-segment__text">{seg.text}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -238,7 +353,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
             {meeting.recordings.map((rec) => (
               <li key={rec.id} className="recordings-list__item">
                 <div>
-                  <p className="recordings-list__name">{rec.fileName}</p>
+                  <p className="recordings-list__name">{rec.speakerName ?? rec.fileName}</p>
                   <p className="recordings-list__meta">
                     {formatDuration(rec.durationSeconds)} • {(parseInt(rec.fileSize) / (1024 * 1024)).toFixed(2)} MB
                   </p>
@@ -247,17 +362,34 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                   <div className="recordings-list__actions">
                     {rec.mimeType.startsWith("video") ? (
                       <video
+                        ref={(el) => { mediaRefs.current[rec.id] = el; }}
                         controls src={rec.playbackUrl} className="recordings-list__preview"
                         onError={(event) => handlePlaybackError(rec.id, event.currentTarget)}
                         onCanPlay={() => clearPlaybackError(rec.id)}
                       />
                     ) : (
-                      <audio
-                        controls preload="metadata" src={rec.playbackUrl}
-                        aria-label={`เล่นเสียง ${rec.fileName}`}
-                        onError={(event) => handlePlaybackError(rec.id, event.currentTarget)}
-                        onCanPlay={() => clearPlaybackError(rec.id)}
-                      />
+                      <>
+                        <button
+                          type="button"
+                          className="recordings-list__play-btn"
+                          aria-label={`เล่นเสียง ${rec.speakerName ?? rec.fileName}`}
+                          onClick={() => {
+                            const media = mediaRefs.current[rec.id];
+                            if (!media) return;
+                            trackNowPlaying(rec, media);
+                            void media.play();
+                          }}
+                        >
+                          <Play className="icon-16" />
+                        </button>
+                        <audio
+                          ref={(el) => { mediaRefs.current[rec.id] = el; }}
+                          preload="metadata" src={rec.playbackUrl}
+                          aria-hidden="true"
+                          onError={(event) => handlePlaybackError(rec.id, event.currentTarget)}
+                          onCanPlay={() => clearPlaybackError(rec.id)}
+                        />
+                      </>
                     )}
                     {playbackErrors[rec.id] && (
                       <p role="alert" className="text-sm text-red-600">{playbackErrors[rec.id]}</p>
@@ -278,6 +410,32 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         </section>
       )}
 
+      {nowPlaying && (
+        <div className="now-playing-bar" role="region" aria-label="กำลังเล่นเสียง">
+          <button
+            type="button"
+            onClick={toggleNowPlayingPause}
+            aria-label={nowPlaying.paused ? "เล่น" : "หยุดชั่วคราว"}
+            className="now-playing-bar__toggle"
+          >
+            {nowPlaying.paused ? <Play className="icon-16" /> : <Pause className="icon-16" />}
+          </button>
+          <span className="now-playing-bar__speaker">{nowPlaying.speakerName}</span>
+          <span className="now-playing-bar__time">
+            {formatTimestamp(nowPlaying.currentTime)} / {formatTimestamp(nowPlaying.duration)}
+          </span>
+          <input
+            type="range"
+            className="now-playing-bar__seek"
+            min={0}
+            max={nowPlaying.duration || 0}
+            step={0.1}
+            value={nowPlaying.currentTime}
+            onChange={(e) => seekNowPlaying(Number(e.target.value))}
+            aria-label="ตำแหน่งเสียง"
+          />
+        </div>
+      )}
     </div>
   );
 }

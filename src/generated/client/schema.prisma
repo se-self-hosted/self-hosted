@@ -64,10 +64,11 @@ model Participant {
 
   createdAt DateTime @default(now())
 
-  meeting  Meeting              @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  user     User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
-  sessions ParticipantSession[]
-  segments TranscriptSegment[]
+  meeting    Meeting              @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user       User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessions   ParticipantSession[]
+  segments   TranscriptSegment[]
+  recordings Recording[]
 
   @@index([userId])
 }
@@ -129,19 +130,24 @@ model MeetingSummary {
 }
 
 model Recording {
-  id        String @id @default(cuid())
-  meetingId String
+  id            String  @id @default(cuid())
+  meetingId     String
+  participantId String?
 
   fileName  String
   objectKey String
 
-  durationSeconds Int?
-  fileSize        BigInt
-  mimeType        String
+  startOffsetSeconds Float?
+  durationSeconds    Int?
+  fileSize           BigInt
+  mimeType           String
 
   createdAt DateTime @default(now())
 
-  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meeting     Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  participant Participant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+
+  @@index([participantId])
 }
 
 model Export {
