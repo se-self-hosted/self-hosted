@@ -3,10 +3,12 @@ import { AccessToken } from "livekit-server-sdk";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
+import { activeSessionWhereClause } from "@/lib/presence";
 
 const tokenSchema = z.object({
   roomHash: z.string().min(1, "roomHash is required"),
   identity: z.string().min(1, "identity is required"),
+  connectionId: z.string().min(1, "connectionId is required"),
   displayName: z.string().min(1, "displayName is required"),
   isHost: z.boolean().optional().default(false),
 });
@@ -20,8 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { roomHash, identity, displayName } = result.data;
-    let isHost = result.data.isHost;
+    const { roomHash, identity, connectionId } = result.data;
 
     const room = await prisma.meetingRoom.findUnique({
       where: { roomHash },
@@ -36,9 +37,20 @@ export async function POST(req: Request) {
     }
 
     const user = await getUserFromRequest();
-    if (user && user.id === room.hostId) {
-      isHost = true;
+    const session = await prisma.participantSession.findFirst({
+      where: {
+        connectionId,
+        participantId: identity,
+        ...activeSessionWhereClause(),
+        participant: { meeting: { roomId: room.id, endedAt: null } },
+      },
+      include: { participant: true },
+    });
+    if (!session || (session.participant.userId && session.participant.userId !== user?.id)) {
+      return NextResponse.json({ error: "กรุณาเข้าร่วมห้องประชุมใหม่", code: "SESSION_ENDED" }, { status: 409 });
     }
+    const isHost = Boolean(user && user.id === room.hostId && session.participant.userId === user.id);
+    const displayName = session.participant.displayName;
 
     const apiKey = process.env.LIVEKIT_API_KEY || "devkey";
     const apiSecret = process.env.LIVEKIT_API_SECRET || "secret";

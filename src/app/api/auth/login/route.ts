@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const token = await signJwtToken({ sub: user.id, email: user.email });
 
     const response = NextResponse.json(
-      { user: { id: user.id, email: user.email, name: user.fullname } },
+      { user: { id: user.id, email: user.email, fullname: user.fullname } },
       { status: 200 }
     );
 

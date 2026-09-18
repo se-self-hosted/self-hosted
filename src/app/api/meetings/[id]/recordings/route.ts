@@ -2,13 +2,23 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { uploadRecording, getRecordingPresignedUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
+import { resolveMeetingAccess } from "@/lib/meeting-access";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: meetingId } = await params;
+    const participantId = new URL(req.url).searchParams.get("participantId");
+    const access = await resolveMeetingAccess(meetingId, participantId);
+
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const recordings = await prisma.recording.findMany({
       where: { meetingId },
@@ -53,25 +63,19 @@ export async function POST(
   try {
     const { id: meetingId } = await params;
 
-    const meeting = await prisma.meeting.findUnique({
-      where: { id: meetingId },
-    });
-
-    if (!meeting) {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
-    }
-
     const contentType = req.headers.get("content-type") || "";
 
     let audioBuffer: Buffer;
     let fileName: string = `recording-${Date.now()}.webm`;
     let mimeType: string = "audio/webm";
     let durationSeconds: number | null = null;
+    let participantId: string | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
       const durationParam = formData.get("durationSeconds");
+      participantId = (formData.get("participantId") as string | null) || null;
 
       if (!file) {
         return NextResponse.json({ error: "Audio file is required in 'file' field" }, { status: 400 });
@@ -94,6 +98,15 @@ export async function POST(
       if (customFileName) fileName = customFileName;
       const customDuration = req.headers.get("x-duration-seconds");
       if (customDuration) durationSeconds = parseInt(customDuration, 10) || null;
+      participantId = req.headers.get("x-participant-id");
+    }
+
+    const access = await resolveMeetingAccess(meetingId, participantId);
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (audioBuffer.length === 0) {

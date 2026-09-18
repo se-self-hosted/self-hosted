@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
 import { getRecordingPresignedUrl } from "@/lib/storage";
+import { resolveMeetingAccess } from "@/lib/meeting-access";
 
 export async function GET(
   _req: Request,
@@ -9,7 +9,14 @@ export async function GET(
 ) {
   try {
     const { id: meetingId } = await params;
-    const user = await getUserFromRequest();
+    const access = await resolveMeetingAccess(meetingId);
+
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
@@ -46,8 +53,7 @@ export async function GET(
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    // Check permissions if authenticated or allow host
-    const isHost = Boolean(user && meeting.room.hostId === user.id);
+    const isHost = access.isHost;
 
     const recordingsWithUrls = await Promise.all(
       meeting.recordings.map(async (rec) => {

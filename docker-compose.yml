@@ -52,7 +52,8 @@ services:
 
   livekit:
     image: livekit/livekit-server:latest
-    command: --dev --bind 0.0.0.0 --node-ip 172.20.10.5
+    # Same-machine development default; set LIVEKIT_NODE_IP to a reachable server IP for remote clients.
+    command: --dev --bind 0.0.0.0 --node-ip ${LIVEKIT_NODE_IP:-127.0.0.1}
     ports:
       - "7880:7880"
       - "7881:7881"

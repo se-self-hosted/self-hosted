@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ hash: string }> },
 ) {
   try {
@@ -23,8 +23,11 @@ export async function GET(
     }
 
     const meetingId = room.meetings[0].id;
-    const url = new URL(`/api/meetings/${meetingId}/transcript`, "http://localhost");
-    const res = await fetch(url.toString());
+    const url = new URL(`/api/meetings/${meetingId}/transcript`, req.url);
+    url.search = new URL(req.url).search;
+    const res = await fetch(url.toString(), {
+      headers: { cookie: req.headers.get("cookie") || "" },
+    });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
@@ -74,10 +77,10 @@ export async function POST(
     const body = await req.json();
 
     // Call the meeting transcript endpoint directly or perform logic
-    const transcriptUrl = new URL(`/api/meetings/${meeting.id}/transcript`, "http://localhost");
+    const transcriptUrl = new URL(`/api/meetings/${meeting.id}/transcript`, req.url);
     const res = await fetch(transcriptUrl.toString(), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") || "" },
       body: JSON.stringify(body),
     });
 

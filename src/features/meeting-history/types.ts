@@ -3,7 +3,7 @@ export type MeetingHistoryItem = {
   roomName: string;
   startedAt: string;
   endedAt: string | null;
-  durationSeconds: number;
+  durationSeconds: number | null;
   participantCount: number;
   participantNames: string[];
 };

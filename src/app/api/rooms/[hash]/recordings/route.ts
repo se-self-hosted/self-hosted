@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ hash: string }> },
 ) {
   try {
@@ -23,8 +23,11 @@ export async function GET(
     }
 
     const meetingId = room.meetings[0].id;
-    const url = new URL(`/api/meetings/${meetingId}/recordings`, "http://localhost");
-    const res = await fetch(url.toString());
+    const url = new URL(`/api/meetings/${meetingId}/recordings`, req.url);
+    url.search = new URL(req.url).search;
+    const res = await fetch(url.toString(), {
+      headers: { cookie: req.headers.get("cookie") || "" },
+    });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
@@ -71,7 +74,7 @@ export async function POST(
     }
 
     // Forward upload to the meeting recording route
-    const recordingUrl = new URL(`/api/meetings/${meeting.id}/recordings`, "http://localhost");
+    const recordingUrl = new URL(`/api/meetings/${meeting.id}/recordings`, req.url);
     const headers = new Headers(req.headers);
 
     const bodyBuffer = await req.arrayBuffer();

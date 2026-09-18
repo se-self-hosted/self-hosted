@@ -1,84 +1,64 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getRecordingObject, getRecordingPresignedUrl } from "@/lib/storage";
+import { getRecordingObject } from "@/lib/storage";
+import { resolveMeetingAccess } from "@/lib/meeting-access";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id: recordingId } = await params;
-
-    const recording = await prisma.recording.findUnique({
-      where: { id: recordingId },
-    });
-
+    const { id } = await params;
+    const recording = await prisma.recording.findUnique({ where: { id } });
     if (!recording) {
       return NextResponse.json({ error: "Recording not found" }, { status: 404 });
     }
 
-    try {
-      const s3Response = await getRecordingObject(recording.objectKey);
+    const access = await resolveMeetingAccess(recording.meetingId);
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-      if (!s3Response.Body) {
-        // Fallback to presigned URL redirect
-        const presignedUrl = await getRecordingPresignedUrl(recording.objectKey);
-        return NextResponse.redirect(presignedUrl);
-      }
-
-      const totalSize = Number(recording.fileSize);
-      const mimeType = recording.mimeType || s3Response.ContentType || "audio/webm";
-
-      const rangeHeader = req.headers.get("range");
-
-      // Handle Range request for audio seeking
-      if (rangeHeader && totalSize > 0) {
-        const parts = rangeHeader.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
-
-        if (start >= totalSize || end >= totalSize || start > end) {
-          return new NextResponse("Requested Range Not Satisfiable", {
-            status: 416,
-            headers: {
-              "Content-Range": `bytes */${totalSize}`,
-            },
-          });
-        }
-
-        const chunkLength = end - start + 1;
-        const bodyStream = s3Response.Body as ReadableStream<Uint8Array>;
-
-        return new NextResponse(bodyStream, {
-          status: 206,
-          headers: {
-            "Content-Type": mimeType,
-            "Content-Range": `bytes ${start}-${end}/${totalSize}`,
-            "Accept-Ranges": "bytes",
-            "Content-Length": String(chunkLength),
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
-      }
-
-      // Full stream response
-      const bodyStream = s3Response.Body as ReadableStream<Uint8Array>;
-      return new NextResponse(bodyStream as ReadableStream, {
-        status: 200,
+    // Ignore malformed/multipart ranges; MinIO handles valid single ranges,
+    // including suffix and open-ended requests, and streams only those bytes.
+    const requestedRange = req.headers.get("range");
+    const range = requestedRange && /^bytes=(?:\d+-\d*|-\d+)$/.test(requestedRange)
+      ? requestedRange
+      : undefined;
+    const object = await getRecordingObject(recording.objectKey, range);
+    if (object.status === 416) {
+      void object.Body?.cancel().catch(() => {});
+      return new NextResponse(null, {
+        status: 416,
         headers: {
-          "Content-Type": mimeType,
-          "Content-Length": totalSize > 0 ? String(totalSize) : undefined as unknown as string,
-          "Accept-Ranges": "bytes",
-          "Cache-Control": "public, max-age=31536000, immutable",
+          "Content-Range": object.ContentRange || `bytes */${recording.fileSize}`,
+          "Cache-Control": "private, no-store",
         },
       });
-    } catch (s3Err) {
-      console.warn("Direct stream error, attempting presigned redirect:", s3Err);
-      const presignedUrl = await getRecordingPresignedUrl(recording.objectKey);
-      return NextResponse.redirect(presignedUrl);
     }
+    if (object.status !== 200 && object.status !== 206) {
+      void object.Body?.cancel().catch(() => {});
+      return NextResponse.json(
+        { error: object.status === 404 ? "Recording file not found" : "Recording storage unavailable" },
+        { status: object.status === 404 ? 404 : 502 },
+      );
+    }
+    if (!object.Body) {
+      return NextResponse.json({ error: "Recording stream unavailable" }, { status: 502 });
+    }
+
+    const headers = new Headers({
+      "Content-Type": recording.mimeType || object.ContentType,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "private, no-store",
+    });
+    if (object.ContentLength !== undefined) {
+      headers.set("Content-Length", String(object.ContentLength));
+    }
+    if (object.ContentRange) headers.set("Content-Range", object.ContentRange);
+    return new NextResponse(object.Body, { status: object.status, headers });
   } catch (error) {
     console.error("Recording Playback Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Unable to play recording" }, { status: 500 });
   }
 }

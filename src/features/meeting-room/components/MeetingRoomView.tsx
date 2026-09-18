@@ -1,8 +1,11 @@
 "use client";
 
+import { startLiveTranscription, type SpeechRecognizer } from "@/features/meeting-room/lib/live-transcription";
+import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
+import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -13,9 +16,7 @@ import {
   MicOff,
   Phone,
   RefreshCw,
-  Send,
   Signal,
-  Sparkles,
   Square,
   Users,
   Video,
@@ -109,13 +110,29 @@ export function MeetingRoomView({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Session & database presence tracking
-  const [connectionId, setConnectionId] = useState<string | null>(null);
+  const joiningRef = useRef(false);
+  const mountedRef = useRef(true);
+  const activeSessionRef = useRef<{ connectionId: string; roomHash: string; room?: Room } | null>(null);
+
+  const releaseSession = useCallback(async () => {
+    const session = activeSessionRef.current;
+    activeSessionRef.current = null;
+    if (!session) return;
+    // Start the keepalive request before yielding, including during tab unload.
+    const leaving = fetch(`/api/rooms/${session.roomHash}/leave`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ connectionId: session.connectionId }),
+      keepalive: true,
+    });
+    await Promise.all([session.room?.disconnect(), leaving]);
+  }, []);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [meetingId, setMeetingId] = useState<string | null>(null);
   const [dbParticipants, setDbParticipants] = useState<{ id: string; displayName: string }[]>([]);
 
-  // Meeting start time for relative timeline calculation
-  const meetingStartTimeRef = useRef<number>(0);
+  // All participants use the persisted meeting start, including late joins/rejoins.
+  const meetingClockRef = useRef<ReturnType<typeof createMeetingClock> | null>(null);
 
   // 5. Audio Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -127,9 +144,8 @@ export function MeetingRoomView({
   // 6. Transcript Timeline State
   const [transcriptSegments, setTranscriptSegments] = useState<LiveTranscriptSegment[]>([]);
   const [showTranscriptPanel, setShowTranscriptPanel] = useState(false);
-  const [speechTestInput, setSpeechTestInput] = useState("");
   const transcriptBottomRef = useRef<HTMLDivElement>(null);
-  const speechRecognitionRef = useRef<{ stop: () => void } | null>(null);
+  const [interimTranscript, setInterimTranscript] = useState("");
 
   // Container ref for attaching remote audio elements
   const audioContainerRef = useRef<HTMLDivElement>(null);
@@ -169,23 +185,25 @@ export function MeetingRoomView({
 
   // Attempt joining room (db presence + LiveKit token)
   async function attemptJoin(name: string) {
-    if (!room) return;
+    if (!room || joiningRef.current || isJoining || hasJoined) return;
+    joiningRef.current = true;
+    let joined = false;
 
     setIsJoining(true);
     setJoinError(null);
 
     let shouldMute = isMicrophoneMuted;
 
-    // Try requesting mic permission, mute if denied
-    if (micPermissionState !== "granted") {
-      const granted = await requestMicrophonePermission();
-      if (!granted) {
-        setIsMicrophoneMuted(true);
-        shouldMute = true;
-      }
-    }
-
     try {
+      // Joining muted must not request or capture microphone audio.
+      if (!shouldMute && micPermissionState !== "granted") {
+        const granted = await requestMicrophonePermission();
+        if (!granted) {
+          setIsMicrophoneMuted(true);
+          shouldMute = true;
+        }
+      }
+      if (!mountedRef.current) return;
       // Step A: DB Join API
       const response = await fetch(`/api/rooms/${room.roomHash}/join`, {
         method: "POST",
@@ -197,14 +215,16 @@ export function MeetingRoomView({
 
       if (!response.ok) {
         setJoinError(dbData.error || "ไม่สามารถเข้าร่วมห้องประชุมได้");
-        setIsJoining(false);
         return;
       }
 
-      setConnectionId(dbData.connectionId);
+      const session = { connectionId: dbData.connectionId, roomHash: room.roomHash, room: undefined as Room | undefined };
+      activeSessionRef.current = session;
+      if (!mountedRef.current) return;
+      meetingClockRef.current = createMeetingClock(dbData.meetingStartedAt, dbData.serverNow);
       setParticipantId(dbData.participantId);
       setMeetingId(dbData.meetingId);
-      setDisplayName(name);
+      setDisplayName(dbData.displayName || name);
 
       // Step B: Fetch LiveKit JWT Token
       const tokenRes = await fetch("/api/livekit/token", {
@@ -213,16 +233,17 @@ export function MeetingRoomView({
         body: JSON.stringify({
           roomHash: room.roomHash,
           identity: dbData.participantId,
+          connectionId: dbData.connectionId,
           displayName: name,
           isHost,
         }),
       });
       const tokenContentType = tokenRes.headers.get("content-type");
       const tokenData = tokenContentType?.includes("application/json") ? await tokenRes.json() : {};
+      if (!mountedRef.current || activeSessionRef.current !== session) return;
 
       if (!tokenRes.ok || !tokenData.token) {
         setJoinError(tokenData.error || "ไม่สามารถขอรับ Token สำหรับ LiveKit ได้");
-        setIsJoining(false);
         return;
       }
 
@@ -243,11 +264,14 @@ export function MeetingRoomView({
         },
       });
 
+      session.room = lkRoom;
+
       // Set up LiveKit Room Event listeners
       setupLivekitEventListeners(lkRoom, dbData.participantId);
 
       try {
         await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
+        if (!mountedRef.current || activeSessionRef.current !== session) return;
         // Populate remote participants already in the room upon connection
         lkRoom.remoteParticipants.forEach((participant) => {
           updateRemoteParticipant(participant);
@@ -258,21 +282,26 @@ export function MeetingRoomView({
           const audioTrack = lkRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
           await applyNoiseCancellation(audioTrack);
         }
+        if (!mountedRef.current || activeSessionRef.current !== session) return;
         setLivekitRoom(lkRoom);
         setConnectionStatus("connected");
       } catch (lkErr: unknown) {
         console.error("LiveKit connection error:", lkErr);
         const errMsg = lkErr instanceof Error ? lkErr.message : "Connection failed";
         setJoinError(`ไม่สามารถเชื่อมต่อกับ LiveKit Server ได้ (${errMsg})`);
-        setIsJoining(false);
         return;
       }
 
+      joined = true;
       setHasJoined(true);
-      setIsJoining(false);
     } catch (error) {
       console.error("Join meeting error:", error);
       setJoinError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      if (!joined) {
+        await releaseSession().catch((error) => console.error("Release session error:", error));
+      }
+      joiningRef.current = false;
       setIsJoining(false);
     }
   }
@@ -292,6 +321,16 @@ export function MeetingRoomView({
       } else if (state === ConnectionState.Connecting) {
         setConnectionStatus("connecting");
       }
+    });
+
+    lkRoom.on(RoomEvent.Disconnected, () => {
+      if (activeSessionRef.current?.room !== lkRoom) return;
+      stopRecording();
+      void releaseSession().catch((error) => console.error("Release session error:", error));
+      setHasJoined(false);
+      setLivekitRoom(null);
+      setRemoteParticipantsMap(new Map());
+      setJoinError("การเชื่อมต่อสิ้นสุดแล้ว คุณสามารถกดเข้าร่วมห้องประชุมอีกครั้งได้");
     });
 
     // Reconnecting / Reconnected events
@@ -373,14 +412,7 @@ export function MeetingRoomView({
           setIsMicrophoneMuted(true);
           showToast("ผู้จัดประชุม (Host) ได้ปิดไมโครโฟนของคุณแล้ว");
         } else if (data.type === "TRANSCRIPT_SEGMENT" && data.segment) {
-          setTranscriptSegments((prev) => {
-            if (prev.some((s) => s.id === data.segment.id)) return prev;
-            const next = [...prev, data.segment];
-            return next.sort((a, b) => {
-              if (a.startTime !== b.startTime) return a.startTime - b.startTime;
-              return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
-            });
-          });
+          setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
         }
       } catch (e) {
         console.error("DataReceived error:", e);
@@ -465,64 +497,61 @@ export function MeetingRoomView({
   // Load existing transcript segments
   useEffect(() => {
     if (!hasJoined || !room) return;
-    const targetUrl = meetingId
+    const baseUrl = meetingId
       ? `/api/meetings/${meetingId}/transcript`
       : `/api/rooms/${room.roomHash}/transcript`;
+    const targetUrl = participantId
+      ? `${baseUrl}?participantId=${encodeURIComponent(participantId)}`
+      : baseUrl;
 
     fetch(targetUrl)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { segments?: LiveTranscriptSegment[] } | null) => {
         if (data?.segments && Array.isArray(data.segments)) {
-          setTranscriptSegments(data.segments);
+          setTranscriptSegments((prev) => mergeTranscriptSegments(prev, data.segments!));
         }
       })
       .catch(() => {});
-  }, [hasJoined, room, meetingId]);
+  }, [hasJoined, room, meetingId, participantId]);
 
-  // Host auto-join
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+  }, []);
+
+  // Keep the admission alive while connecting as well as during the meeting.
   useEffect(() => {
-    if (!isHost || !hostName || !room || hasJoined || isJoining || joinError) return;
-    const timer = setTimeout(() => {
-      void attemptJoin(hostName);
-    }, 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, hostName, room, hasJoined, isJoining, joinError]);
-
-  // Heartbeat presence call
-  useEffect(() => {
-    if (!hasJoined || !room || !connectionId) return;
-
     let cancelled = false;
-
     async function sendHeartbeat() {
+      const session = activeSessionRef.current;
+      if (!session) return;
       try {
-        await fetch(`/api/rooms/${room!.roomHash}/heartbeat`, {
+        const response = await fetch(`/api/rooms/${session.roomHash}/heartbeat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ connectionId }),
+          body: JSON.stringify({ connectionId: session.connectionId }),
         });
+        if (response.status === 409 && !cancelled && activeSessionRef.current === session) {
+          stopRecording();
+          await releaseSession();
+          setHasJoined(false);
+          setLivekitRoom(null);
+          setJoinError("การเชื่อมต่อห้องประชุมนี้สิ้นสุดแล้ว กรุณาเข้าห้องใหม่");
+        }
       } catch (error) {
         console.error("Heartbeat error:", error);
       }
     }
-
-    const interval = setInterval(() => {
-      if (!cancelled) void sendHeartbeat();
-    }, HEARTBEAT_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [hasJoined, room, connectionId]);
-
-  // Initialize meeting start time on join
-  useEffect(() => {
-    if (hasJoined) {
-      meetingStartTimeRef.current = Date.now();
-    }
-  }, [hasJoined]);
+    const interval = setInterval(() => { void sendHeartbeat(); }, HEARTBEAT_INTERVAL_MS);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [releaseSession, stopRecording]);
 
   // Auto-scroll transcript when new segments arrive
   useEffect(() => {
@@ -588,6 +617,7 @@ export function MeetingRoomView({
         const formData = new FormData();
         formData.append("file", audioBlob, `meeting-${room?.roomHash || "rec"}-${Date.now()}.webm`);
         formData.append("durationSeconds", String(duration));
+        formData.append("participantId", participantId || "");
 
         try {
           const targetUrl = meetingId
@@ -622,18 +652,6 @@ export function MeetingRoomView({
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    setIsRecording(false);
-  };
-
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -642,30 +660,20 @@ export function MeetingRoomView({
     }
   };
 
-  // Handle leave on window unload or unmount
+  // Read the active connection from a ref: state changes must never end a session.
   useEffect(() => {
-    if (!room) return;
-
+    mountedRef.current = true;
     function notifyLeave() {
-      if (isRecording) {
-        stopRecording();
-      }
-      if (livekitRoom) {
-        livekitRoom.disconnect();
-      }
-      if (!connectionId) return;
-      const payload = JSON.stringify({ connectionId });
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon?.(`/api/rooms/${room!.roomHash}/leave`, blob);
+      mountedRef.current = false;
+      stopRecording();
+      void releaseSession().catch((error) => console.error("Leave room error:", error));
     }
-
     window.addEventListener("beforeunload", notifyLeave);
-
     return () => {
       window.removeEventListener("beforeunload", notifyLeave);
       notifyLeave();
     };
-  }, [connectionId, room, livekitRoom, isRecording]);
+  }, [releaseSession, stopRecording]);
 
   // Show Toast notification popup
   function showToast(msg: string) {
@@ -674,21 +682,20 @@ export function MeetingRoomView({
   }
 
   // Add and broadcast transcript segment with start and end time
-  const addTranscriptSegment = async (
+  const addTranscriptSegment = useCallback(async (
     text: string,
     startTimeOffset?: number,
     durationSec?: number,
-    confidence = 0.98,
+    confidence = 0,
   ) => {
-    if (!text.trim()) return;
-    const now = Date.now();
-    const elapsedSec = Math.max(0, (now - meetingStartTimeRef.current) / 1000);
+    const clock = meetingClockRef.current;
+    if (!text.trim() || !clock) return;
+    const { elapsedSeconds: elapsedSec, spokenAt } = clock();
     const segStartTime = startTimeOffset !== undefined ? startTimeOffset : Math.max(0, elapsedSec - (durationSec || 2));
     const segEndTime = Math.max(segStartTime + 0.5, elapsedSec);
-    const spokenAt = new Date().toISOString();
 
     const newSegment: LiveTranscriptSegment = {
-      id: `seg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `seg-${crypto.randomUUID()}`,
       participantId: participantId || undefined,
       speakerName: displayName || "คุณ",
       startTime: Number(segStartTime.toFixed(2)),
@@ -725,105 +732,51 @@ export function MeetingRoomView({
         ? `/api/meetings/${meetingId}/transcript`
         : `/api/rooms/${room?.roomHash}/transcript`;
 
-      await fetch(targetUrl, {
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSegment),
       });
+      if (!response.ok) throw new Error(`Transcript save failed: ${response.status}`);
     } catch (err) {
       console.error("Save transcript segment error:", err);
     }
-  };
+  }, [participantId, displayName, livekitRoom, meetingId, room]);
 
-  // Web Speech API continuous speech recognition
+  // Recognition consumes the same cleaned local audio used in the meeting.
   useEffect(() => {
-    if (!hasJoined || isMicrophoneMuted) {
-      if (speechRecognitionRef.current) {
-        try {
-          (speechRecognitionRef.current as { stop: () => void }).stop();
-        } catch {}
-        speechRecognitionRef.current = null;
-      }
+    if (!hasJoined || isMicrophoneMuted || !livekitRoom) return;
+    const clock = meetingClockRef.current;
+    if (!clock) return;
+    const speechWindow = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognizer;
+      webkitSpeechRecognition?: new () => SpeechRecognizer;
+    };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("This browser does not support live transcription.");
+      showToast("เบราว์เซอร์นี้ไม่รองรับการถอดเสียงสด กรุณาใช้ Google Chrome");
       return;
     }
-
-    type SpeechRecConstructor = new () => {
-      continuous: boolean;
-      interimResults: boolean;
-      lang: string;
-      onspeechstart: (() => void) | null;
-      onresult: ((event: {
-        resultIndex: number;
-        results: {
-          length: number;
-          [index: number]: {
-            isFinal: boolean;
-            [index: number]: { transcript: string; confidence?: number };
-          };
-        };
-      }) => void) | null;
-      onerror: (() => void) | null;
-      onend: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-    };
-
-    const SpeechRec = ((window as unknown as { SpeechRecognition?: SpeechRecConstructor; webkitSpeechRecognition?: SpeechRecConstructor }).SpeechRecognition ||
-      (window as unknown as { SpeechRecognition?: SpeechRecConstructor; webkitSpeechRecognition?: SpeechRecConstructor }).webkitSpeechRecognition);
-
-    if (!SpeechRec) return;
-
-    try {
-      const recognition = new SpeechRec();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = "th-TH";
-
-      let speechStartSec = (Date.now() - meetingStartTimeRef.current) / 1000;
-
-      recognition.onspeechstart = () => {
-        speechStartSec = (Date.now() - meetingStartTimeRef.current) / 1000;
-      };
-
-      recognition.onresult = (event) => {
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            const transcript = event.results[i][0]?.transcript || "";
-            const confidence = event.results[i][0]?.confidence || 0.95;
-            const duration = Math.max(1.5, (Date.now() - meetingStartTimeRef.current) / 1000 - speechStartSec);
-            if (transcript.trim()) {
-              void addTranscriptSegment(transcript.trim(), speechStartSec, duration, confidence);
-            }
-          }
-        }
-      };
-
-      recognition.onerror = () => {};
-      recognition.onend = () => {
-        if (!isMicrophoneMuted && hasJoined && speechRecognitionRef.current) {
-          try { recognition.start(); } catch {}
-        }
-      };
-
-      recognition.start();
-      speechRecognitionRef.current = recognition;
-    } catch {}
-
-    return () => {
-      if (speechRecognitionRef.current) {
-        try {
-          (speechRecognitionRef.current as { stop: () => void }).stop();
-        } catch {}
-        speechRecognitionRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJoined, isMicrophoneMuted]);
+    return startLiveTranscription(new SpeechRecognition(), {
+      getAudioTrack: () => livekitRoom.localParticipant
+        .getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack,
+      elapsedSeconds: () => clock().elapsedSeconds,
+      onFinal: (text, start, duration, confidence) => {
+        void addTranscriptSegment(text, start, duration, confidence);
+      },
+      onInterim: setInterimTranscript,
+      onStatus: (message, isError) => {
+        console.debug("Live transcription:", message);
+        if (isError) showToast(message);
+      },
+    });
+  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment]);
 
   // 3. Toggle local Microphone
   const toggleMicrophone = async () => {
     const nextMuted = !isMicrophoneMuted;
-    setIsMicrophoneMuted(nextMuted);
+    if (nextMuted) setIsMicrophoneMuted(true);
 
     if (livekitRoom?.localParticipant) {
       try {
@@ -832,21 +785,14 @@ export function MeetingRoomView({
         if (!nextMuted) {
           const audioTrack = livekitRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
           await applyNoiseCancellation(audioTrack);
+          setIsMicrophoneMuted(false);
         }
       } catch (err) {
+        setIsMicrophoneMuted(!nextMuted);
         console.error("Set microphone enabled error:", err);
       }
     }
   };
-
-  const handleManualTranscriptSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!speechTestInput.trim()) return;
-    void addTranscriptSegment(speechTestInput.trim());
-    setSpeechTestInput("");
-  };
-
-
 
   // 8. Host Mute Remote Participant
   const hostMuteParticipant = async (targetIdentity: string) => {
@@ -913,7 +859,7 @@ export function MeetingRoomView({
 
   const handleJoinSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedName = displayName.trim();
+    const trimmedName = (isHost ? hostName ?? "" : displayName).trim();
 
     if (!trimmedName) {
       setNameError("กรุณากรอกชื่อของคุณ");
@@ -923,31 +869,7 @@ export function MeetingRoomView({
     void attemptJoin(trimmedName);
   };
 
-  // Host auto-join screen
-  if (isHost && !hasJoined) {
-    return (
-      <main className="meeting-unavailable">
-        <div className="meeting-unavailable__card">
-          {joinError ? (
-            <>
-              <span className="meeting-unavailable__icon">
-                <AlertTriangle aria-hidden="true" className="icon-20" />
-              </span>
-              <h1 className="meeting-unavailable__title">เข้าร่วมห้องไม่สำเร็จ</h1>
-              <p className="meeting-unavailable__description">{joinError}</p>
-              <Link href="/dashboard" className="meeting-unavailable__link focus-ring">
-                กลับไปที่แดชบอร์ด
-              </Link>
-            </>
-          ) : (
-            <p className="dashboard-loading__text">กำลังเข้าร่วมห้องประชุม...</p>
-          )}
-        </div>
-      </main>
-    );
-  }
-
-  // Lobby Screen
+  // Both roles enter from a user gesture so browser audio activation is available.
   if (!hasJoined) {
     return (
       <main className="meeting-lobby">
@@ -960,7 +882,7 @@ export function MeetingRoomView({
             รองรับผู้เข้าร่วมสูงสุด {room.maxParticipants} คน
           </p>
 
-          {/* Mic Permission Banner in Lobby */}
+          {/* Both roles see permission status independently of their mute choice. */}
           <div className="my-3 rounded-lg border border-slate-700 bg-slate-800/80 p-3 text-left">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
               <span className="flex items-center gap-1.5">
@@ -976,6 +898,12 @@ export function MeetingRoomView({
                   <AlertTriangle className="size-3.5" /> ถูกปฏิเสธ
                 </span>
               )}
+              {micPermissionState === "prompt" && (
+                <span className="text-[11px] text-slate-500">ยังไม่ได้ตรวจสอบ</span>
+              )}
+              {micPermissionState === "requesting" && (
+                <span className="text-[11px] text-slate-400">กำลังตรวจสอบ...</span>
+              )}
             </div>
 
             {micPermissionState === "denied" && (
@@ -986,6 +914,7 @@ export function MeetingRoomView({
                 <button
                   type="button"
                   onClick={requestMicrophonePermission}
+                  disabled={isJoining}
                   className="mt-2 text-xs font-semibold text-indigo-400 hover:underline"
                 >
                   ขอสิทธิ์ไมโครโฟนอีกครั้ง
@@ -994,37 +923,66 @@ export function MeetingRoomView({
             )}
           </div>
 
-          <div className="meeting-lobby__field">
-            <label htmlFor="meeting-display-name" className="meeting-lobby__label">
-              ชื่อผู้เข้าร่วม (Display Name)
-            </label>
-            <input
-              id="meeting-display-name"
-              type="text"
-              value={displayName}
-              onChange={(event) => {
-                setDisplayName(event.target.value);
-                setNameError("");
-              }}
-              placeholder="ชื่อของคุณ"
-              autoComplete="name"
-              autoFocus
-              disabled={isJoining}
-              className="meeting-lobby__input"
-            />
-            {nameError && (
-              <p role="alert" className="meeting-lobby__error">
-                {nameError}
-              </p>
-            )}
-            {joinError && (
-              <p role="alert" className="meeting-lobby__error">
-                {joinError}
-              </p>
-            )}
+          {!isHost && (
+            <div className="meeting-lobby__field">
+              <label htmlFor="meeting-display-name" className="meeting-lobby__label">
+                ชื่อผู้เข้าร่วม (Display Name)
+              </label>
+              <input
+                id="meeting-display-name"
+                type="text"
+                value={displayName}
+                onChange={(event) => {
+                  setDisplayName(event.target.value);
+                  setNameError("");
+                }}
+                placeholder="ชื่อของคุณ"
+                autoComplete="name"
+                autoFocus
+                disabled={isJoining}
+                className="meeting-lobby__input"
+              />
+              {nameError && (
+                <p role="alert" className="meeting-lobby__error">
+                  {nameError}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-5 flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMicrophoneMuted((muted) => !muted)}
+              disabled={isJoining || micPermissionState === "requesting"}
+              aria-label="ไมโครโฟนก่อนเข้าห้อง"
+              aria-pressed={!isMicrophoneMuted}
+              aria-describedby="lobby-microphone-status"
+              title={isMicrophoneMuted ? "เปิดไมค์ก่อนเข้าห้อง" : "ปิดไมค์ก่อนเข้าห้อง"}
+              className={`flex size-12 items-center justify-center rounded-full border shadow-sm transition-colors focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                isMicrophoneMuted
+                  ? "border-red-500 bg-red-500 text-white hover:bg-red-600"
+                  : "border-slate-600 bg-slate-700 text-white hover:bg-slate-600"
+              }`}
+            >
+              {isMicrophoneMuted ? <MicOff aria-hidden="true" className="size-5" /> : <Mic aria-hidden="true" className="size-5" />}
+            </button>
+            <p id="lobby-microphone-status" aria-live="polite" className="text-xs text-slate-400">
+              {isMicrophoneMuted ? "เข้าห้องโดยปิดไมค์" : "เข้าห้องโดยเปิดไมค์"}
+            </p>
           </div>
 
-          <button type="submit" disabled={isJoining} className="meeting-lobby__join focus-ring">
+          {joinError && (
+            <p role="alert" className="meeting-lobby__error">
+              {joinError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isJoining || micPermissionState === "requesting" || (isHost && !hostName?.trim())}
+            className="meeting-lobby__join focus-ring"
+          >
             {isJoining ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องประชุม"}
           </button>
         </form>
@@ -1281,53 +1239,27 @@ export function MeetingRoomView({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {transcriptSegments.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
-                <Sparkles className="size-8 text-indigo-400/50 mb-2" />
-                <p className="text-xs font-medium">ยังไม่มีข้อความการสนทนา</p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  เปิดไมค์เพื่อถอดเสียงพูด หรือพิมพ์ทดสอบด้านล่าง
-                </p>
-              </div>
-            ) : (
-              transcriptSegments.map((seg) => (
-                <div
-                  key={seg.id}
-                  className="rounded-lg border border-slate-800/80 bg-slate-800/40 p-2.5 transition hover:border-indigo-500/30"
-                >
-                  <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="text-indigo-300">{seg.speakerName}</span>
-                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
-                      {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-200 leading-relaxed">{seg.text}</p>
+            {transcriptSegments.map((seg) => (
+              <div
+                key={seg.id}
+                className="rounded-lg border border-slate-800/80 bg-slate-800/40 p-2.5 transition hover:border-indigo-500/30"
+              >
+                <div className="flex items-center justify-between text-[11px] font-semibold">
+                  <span className="text-indigo-300">{seg.speakerName}</span>
+                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
+                    {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
+                  </span>
                 </div>
-              ))
+                <p className="mt-1 text-xs text-slate-200 leading-relaxed">{seg.text}</p>
+              </div>
+            ))}
+            {interimTranscript && !isMicrophoneMuted && (
+              <div aria-label="ข้อความถอดเสียงที่ยังไม่ยืนยัน" className="rounded-lg border border-dashed border-indigo-400/40 p-2.5 text-xs text-slate-400">
+                <p>{interimTranscript}</p>
+              </div>
             )}
             <div ref={transcriptBottomRef} />
           </div>
-
-          {/* Manual Speech Test / Caption Input */}
-          <form
-            onSubmit={handleManualTranscriptSubmit}
-            className="border-t border-slate-800 p-2.5 flex items-center gap-2 bg-slate-950/60 rounded-b-xl"
-          >
-            <input
-              type="text"
-              value={speechTestInput}
-              onChange={(e) => setSpeechTestInput(e.target.value)}
-              placeholder="พิมพ์ข้อความเสียง / ทดสอบ Timeline..."
-              className="flex-1 rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!speechTestInput.trim()}
-              className="rounded-md bg-indigo-600 px-2.5 py-1.5 text-white hover:bg-indigo-500 disabled:opacity-50"
-            >
-              <Send className="size-3.5" />
-            </button>
-          </form>
         </section>
       )}
 
@@ -1392,13 +1324,18 @@ export function MeetingRoomView({
           </button>
         )}
 
-        <Link
-          href="/dashboard"
+        <button
+          type="button"
+          onClick={async () => {
+            stopRecording();
+            await releaseSession().catch((error) => console.error("Leave room error:", error));
+            window.location.href = "/dashboard";
+          }}
           aria-label="ออกจากห้อง"
           className="meeting-control meeting-control--leave focus-ring"
         >
           <Phone aria-hidden="true" className="icon-20" />
-        </Link>
+        </button>
       </footer>
     </main>
   );

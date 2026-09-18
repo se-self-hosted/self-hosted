@@ -27,7 +27,7 @@ export default function EditProfilePage() {
     checkAuth();
   }, [checkAuth]);
 
-  const displayName = user?.name ?? "";
+  const displayName = user?.fullname ?? "";
   const displayEmail = user?.email ?? "";
   const displayUsername = displayEmail.split("@")[0] ?? "";
   const initials = (displayName || displayEmail || "Host")
@@ -103,7 +103,7 @@ export default function EditProfilePage() {
 
               <div className="profile-fields-grid">
                 <Field label="Full name" icon={<UserRound size={17} />}>
-                  <input id="name" name="name" defaultValue={displayName} placeholder="Your full name" className="profile-input" />
+                  <input id="fullname" name="fullname" defaultValue={displayName} placeholder="Your full name" className="profile-input" />
                 </Field>
                 <Field label="Username" icon={<span className="text-sm font-bold">@</span>}>
                   <input id="username" name="username" defaultValue={displayUsername} placeholder="Your username" autoComplete="username" className="profile-input" />

@@ -6,7 +6,7 @@ const leaveSchema = z.object({
   connectionId: z.string().min(1, "connectionId is required"),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: Request, { params }: { params: Promise<{ hash: string }> }) {
   try {
     const body = await req.json();
     const result = leaveSchema.safeParse(body);
@@ -16,9 +16,10 @@ export async function POST(req: Request) {
     }
 
     const { connectionId } = result.data;
+    const { hash } = await params;
 
     const session = await prisma.participantSession.findFirst({
-      where: { connectionId, leftAt: null },
+      where: { connectionId, leftAt: null, participant: { meeting: { room: { roomHash: hash } } } },
     });
 
     // Already marked as left (or never existed) — treat as success, idempotent.
