@@ -54,6 +54,24 @@ test("replaces interim hypotheses and saves only the corrected final once", () =
   h.stop(); h.recognition.onend?.();
 });
 
+test("processes only changed results and does not repeat an unchanged interim update", () => {
+  const h = setup();
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("เริ่ม", false)] });
+  const unchanged = () => { throw new Error("unchanged result was read"); };
+  const results = {
+    length: 2,
+    get 0(): RecognitionResult { return unchanged(); },
+    1: result("กำลังประชุม", false),
+  };
+
+  h.recognition.onresult?.({ resultIndex: 1, results });
+  h.recognition.onresult?.({ resultIndex: 1, results });
+
+  assert.deepEqual(h.drafts, ["เริ่ม", "เริ่ม กำลังประชุม"]);
+  assert.equal(h.finals.length, 0);
+  h.stop(); h.recognition.onend?.();
+});
+
 test("keeps intentionally repeated speech and does not invent confidence", () => {
   const h = setup();
   h.elapsed(12);
@@ -75,6 +93,21 @@ test("mute drains the last final result without restarting", (t) => {
   assert.equal(h.finals.length, 1);
   assert.equal(h.stops(), 1);
   assert.equal(h.starts.length, 1);
+  assert.equal(h.recognition.onresult, null);
+});
+
+test("cleanup is idempotent while final results drain", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const h = setup();
+
+  h.stop();
+  h.stop();
+  h.elapsed(12);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("จบประโยค", true, 0.9)] });
+  t.mock.timers.tick(2000);
+
+  assert.equal(h.stops(), 1);
+  assert.equal(h.finals.length, 1);
   assert.equal(h.recognition.onresult, null);
 });
 

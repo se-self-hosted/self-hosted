@@ -33,7 +33,9 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
   let drainTimer: ReturnType<typeof setTimeout> | undefined;
   let startTime = options.elapsedSeconds();
   let interim = "";
+  let stopped = false;
   const finalized = new Set<number>();
+  const interimByIndex = new Map<number, string>();
 
   recognition.continuous = true;
   recognition.interimResults = true;
@@ -62,6 +64,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
   function start() {
     if (!active) return;
     finalized.clear();
+    interimByIndex.clear();
     startTime = options.elapsedSeconds();
     try {
       // LiveKit exposes the RNNoise-processed track. Older browsers may ignore
@@ -91,14 +94,18 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
   };
   recognition.onresult = (event) => {
     failedAttempts = 0;
-    const drafts: string[] = [];
-    for (let index = 0; index < event.results.length; index += 1) {
+    for (const index of interimByIndex.keys()) {
+      if (index >= event.resultIndex) interimByIndex.delete(index);
+    }
+    // Results before resultIndex are unchanged, so avoid rescanning the
+    // recognizer's growing history on every event.
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
       const result = event.results[index];
       const alternative = result[0];
       const text = alternative?.transcript.trim();
       if (!text) continue;
       if (!result.isFinal) {
-        drafts.push(text);
+        interimByIndex.set(index, text);
         continue;
       }
       if (finalized.has(index)) continue;
@@ -109,8 +116,9 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
         typeof confidence === "number" && Number.isFinite(confidence) ? Math.max(0, Math.min(1, confidence)) : 0);
       startTime = endTime;
     }
-    interim = drafts.join(" ");
-    if (active) options.onInterim(interim);
+    const nextInterim = [...interimByIndex.values()].join(" ");
+    if (active && nextInterim !== interim) options.onInterim(nextInterim);
+    interim = nextInterim;
   };
   recognition.onerror = ({ error }) => {
     if (!active) return;
@@ -133,12 +141,15 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     }
     if (interim) options.onStatus("ประโยคล่าสุดถอดเสียงไม่สมบูรณ์ กรุณาพูดซ้ำ");
     interim = "";
+    interimByIndex.clear();
     options.onInterim("");
     scheduleRestart();
   };
   start();
 
   return () => {
+    if (stopped) return;
+    stopped = true;
     active = false;
     clearTimeout(retryTimer);
     options.onInterim("");
