@@ -54,6 +54,60 @@ test("replaces interim hypotheses and saves only the corrected final once", () =
   h.stop(); h.recognition.onend?.();
 });
 
+test("normalizes whitespace in interim text", () => {
+  const h = setup();
+  h.recognition.onresult?.({
+    resultIndex: 0,
+    results: [result("  สวัสดี\t\tครับ\nวันนี้  ", false)],
+  });
+  assert.equal(h.drafts.at(-1), "สวัสดี ครับ วันนี้");
+  assert.equal(h.finals.length, 0);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("normalizes whitespace in final text without changing timing or confidence", () => {
+  const h = setup();
+  h.elapsed(13);
+  h.recognition.onresult?.({
+    resultIndex: 0,
+    results: [result("  สวัสดี\t\tครับ\nวันนี้  ", true, 0.75)],
+  });
+  assert.deepEqual(h.finals, [["สวัสดี ครับ วันนี้", 10, 3, 0.75]]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("normalizes recognition text to Unicode NFC", () => {
+  const h = setup();
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("Cafe\u0301", false)] });
+  assert.equal(h.drafts.at(-1), "Café");
+  h.elapsed(12);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("Cafe\u0301", true, 0.9)] });
+  assert.equal(h.finals.at(-1)?.[0], "Café");
+  h.stop(); h.recognition.onend?.();
+});
+
+test("ignores whitespace-only interim and final results", () => {
+  const h = setup();
+  h.recognition.onresult?.({
+    resultIndex: 0,
+    results: [result(" \t\n ", false), result("\r\n\t", true, 0.9)],
+  });
+  assert.equal(h.drafts.at(-1), "");
+  assert.equal(h.finals.length, 0);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("preserves ordinary Thai text, punctuation, and letter case", () => {
+  const h = setup();
+  const text = "สวัสดีครับ, OpenAI!";
+  h.recognition.onresult?.({ resultIndex: 0, results: [result(text, false)] });
+  assert.equal(h.drafts.at(-1), text);
+  h.elapsed(12);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result(text, true, 0.8)] });
+  assert.equal(h.finals.at(-1)?.[0], text);
+  h.stop(); h.recognition.onend?.();
+});
+
 test("keeps intentionally repeated speech and does not invent confidence", () => {
   const h = setup();
   h.elapsed(12);

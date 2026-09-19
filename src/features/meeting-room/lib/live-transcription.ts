@@ -25,6 +25,10 @@ type Options = {
   onStatus: (message: string, isError?: boolean) => void;
 };
 
+function normalizeTranscriptText(text: string) {
+  return text.normalize("NFC").replace(/\s+/gu, " ").trim();
+}
+
 /** Keep interim hypotheses separate; only the recognizer's final result is saved. */
 export function startLiveTranscription(recognition: SpeechRecognizer, options: Options) {
   let active = true;
@@ -95,7 +99,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     for (let index = 0; index < event.results.length; index += 1) {
       const result = event.results[index];
       const alternative = result[0];
-      const text = alternative?.transcript.trim();
+      const text = alternative ? normalizeTranscriptText(alternative.transcript) : "";
       if (!text) continue;
       if (!result.isFinal) {
         drafts.push(text);
