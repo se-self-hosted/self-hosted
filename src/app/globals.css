@@ -919,4 +919,25 @@
   .profile-submit-btn {
     @apply h-12 flex-1 rounded-lg bg-[#4f46e5] px-7 text-sm font-bold text-white transition hover:bg-[#6366f1] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none;
   }
+  .transcript-segment--playable {
+    @apply cursor-pointer rounded-lg transition hover:bg-[#f4f4ff];
+  }
+  .recordings-list__play-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#4f46e5]/40 text-[#4f46e5] transition hover:bg-[#4f46e5]/10;
+  }
+  .now-playing-bar {
+    @apply fixed bottom-4 left-1/2 z-40 flex w-[min(92vw,28rem)] -translate-x-1/2 items-center gap-3 rounded-full border border-black/10 bg-white/95 px-4 py-2 text-sm text-gray-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#1a1a2e]/95 dark:text-white;
+  }
+  .now-playing-bar__toggle {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4f46e5] text-white transition hover:bg-[#6366f1];
+  }
+  .now-playing-bar__speaker {
+    @apply shrink-0 truncate font-medium;
+  }
+  .now-playing-bar__time {
+    @apply shrink-0 text-xs text-gray-500 tabular-nums;
+  }
+  .now-playing-bar__seek {
+    @apply h-1 w-full min-w-0 flex-1 cursor-pointer accent-[#4f46e5];
+  }
 }

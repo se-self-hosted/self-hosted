@@ -334,8 +334,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.9.1
-   * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
+   * Prisma Client JS version: 7.10.0
+   * Query Engine version: 0edf323efd1d98336f3f0a68684b56f689b900d3
    */
   export type PrismaVersion = {
     client: string
@@ -1835,11 +1835,13 @@ export namespace Prisma {
   export type ParticipantCountOutputType = {
     sessions: number
     segments: number
+    recordings: number
   }
 
   export type ParticipantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sessions?: boolean | ParticipantCountOutputTypeCountSessionsArgs
     segments?: boolean | ParticipantCountOutputTypeCountSegmentsArgs
+    recordings?: boolean | ParticipantCountOutputTypeCountRecordingsArgs
   }
 
   // Custom InputTypes
@@ -1865,6 +1867,13 @@ export namespace Prisma {
    */
   export type ParticipantCountOutputTypeCountSegmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TranscriptSegmentWhereInput
+  }
+
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeCountRecordingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecordingWhereInput
   }
 
 
@@ -5595,6 +5604,7 @@ export namespace Prisma {
     user?: boolean | Participant$userArgs<ExtArgs>
     sessions?: boolean | Participant$sessionsArgs<ExtArgs>
     segments?: boolean | Participant$segmentsArgs<ExtArgs>
+    recordings?: boolean | Participant$recordingsArgs<ExtArgs>
     _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
@@ -5632,6 +5642,7 @@ export namespace Prisma {
     user?: boolean | Participant$userArgs<ExtArgs>
     sessions?: boolean | Participant$sessionsArgs<ExtArgs>
     segments?: boolean | Participant$segmentsArgs<ExtArgs>
+    recordings?: boolean | Participant$recordingsArgs<ExtArgs>
     _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5650,6 +5661,7 @@ export namespace Prisma {
       user: Prisma.$UserPayload<ExtArgs> | null
       sessions: Prisma.$ParticipantSessionPayload<ExtArgs>[]
       segments: Prisma.$TranscriptSegmentPayload<ExtArgs>[]
+      recordings: Prisma.$RecordingPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -6055,6 +6067,7 @@ export namespace Prisma {
     user<T extends Participant$userArgs<ExtArgs> = {}>(args?: Subset<T, Participant$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sessions<T extends Participant$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     segments<T extends Participant$segmentsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$segmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptSegmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    recordings<T extends Participant$recordingsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$recordingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecordingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6554,6 +6567,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: TranscriptSegmentScalarFieldEnum | TranscriptSegmentScalarFieldEnum[]
+  }
+
+  /**
+   * Participant.recordings
+   */
+  export type Participant$recordingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Recording
+     */
+    select?: RecordingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Recording
+     */
+    omit?: RecordingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecordingInclude<ExtArgs> | null
+    where?: RecordingWhereInput
+    orderBy?: RecordingOrderByWithRelationInput | RecordingOrderByWithRelationInput[]
+    cursor?: RecordingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecordingScalarFieldEnum | RecordingScalarFieldEnum[]
   }
 
   /**
@@ -11045,11 +11082,13 @@ export namespace Prisma {
   }
 
   export type RecordingAvgAggregateOutputType = {
+    startOffsetSeconds: number | null
     durationSeconds: number | null
     fileSize: number | null
   }
 
   export type RecordingSumAggregateOutputType = {
+    startOffsetSeconds: number | null
     durationSeconds: number | null
     fileSize: bigint | null
   }
@@ -11057,8 +11096,10 @@ export namespace Prisma {
   export type RecordingMinAggregateOutputType = {
     id: string | null
     meetingId: string | null
+    participantId: string | null
     fileName: string | null
     objectKey: string | null
+    startOffsetSeconds: number | null
     durationSeconds: number | null
     fileSize: bigint | null
     mimeType: string | null
@@ -11068,8 +11109,10 @@ export namespace Prisma {
   export type RecordingMaxAggregateOutputType = {
     id: string | null
     meetingId: string | null
+    participantId: string | null
     fileName: string | null
     objectKey: string | null
+    startOffsetSeconds: number | null
     durationSeconds: number | null
     fileSize: bigint | null
     mimeType: string | null
@@ -11079,8 +11122,10 @@ export namespace Prisma {
   export type RecordingCountAggregateOutputType = {
     id: number
     meetingId: number
+    participantId: number
     fileName: number
     objectKey: number
+    startOffsetSeconds: number
     durationSeconds: number
     fileSize: number
     mimeType: number
@@ -11090,11 +11135,13 @@ export namespace Prisma {
 
 
   export type RecordingAvgAggregateInputType = {
+    startOffsetSeconds?: true
     durationSeconds?: true
     fileSize?: true
   }
 
   export type RecordingSumAggregateInputType = {
+    startOffsetSeconds?: true
     durationSeconds?: true
     fileSize?: true
   }
@@ -11102,8 +11149,10 @@ export namespace Prisma {
   export type RecordingMinAggregateInputType = {
     id?: true
     meetingId?: true
+    participantId?: true
     fileName?: true
     objectKey?: true
+    startOffsetSeconds?: true
     durationSeconds?: true
     fileSize?: true
     mimeType?: true
@@ -11113,8 +11162,10 @@ export namespace Prisma {
   export type RecordingMaxAggregateInputType = {
     id?: true
     meetingId?: true
+    participantId?: true
     fileName?: true
     objectKey?: true
+    startOffsetSeconds?: true
     durationSeconds?: true
     fileSize?: true
     mimeType?: true
@@ -11124,8 +11175,10 @@ export namespace Prisma {
   export type RecordingCountAggregateInputType = {
     id?: true
     meetingId?: true
+    participantId?: true
     fileName?: true
     objectKey?: true
+    startOffsetSeconds?: true
     durationSeconds?: true
     fileSize?: true
     mimeType?: true
@@ -11222,8 +11275,10 @@ export namespace Prisma {
   export type RecordingGroupByOutputType = {
     id: string
     meetingId: string
+    participantId: string | null
     fileName: string
     objectKey: string
+    startOffsetSeconds: number | null
     durationSeconds: number | null
     fileSize: bigint
     mimeType: string
@@ -11252,71 +11307,88 @@ export namespace Prisma {
   export type RecordingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
+    participantId?: boolean
     fileName?: boolean
     objectKey?: boolean
+    startOffsetSeconds?: boolean
     durationSeconds?: boolean
     fileSize?: boolean
     mimeType?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }, ExtArgs["result"]["recording"]>
 
   export type RecordingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
+    participantId?: boolean
     fileName?: boolean
     objectKey?: boolean
+    startOffsetSeconds?: boolean
     durationSeconds?: boolean
     fileSize?: boolean
     mimeType?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }, ExtArgs["result"]["recording"]>
 
   export type RecordingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     meetingId?: boolean
+    participantId?: boolean
     fileName?: boolean
     objectKey?: boolean
+    startOffsetSeconds?: boolean
     durationSeconds?: boolean
     fileSize?: boolean
     mimeType?: boolean
     createdAt?: boolean
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }, ExtArgs["result"]["recording"]>
 
   export type RecordingSelectScalar = {
     id?: boolean
     meetingId?: boolean
+    participantId?: boolean
     fileName?: boolean
     objectKey?: boolean
+    startOffsetSeconds?: boolean
     durationSeconds?: boolean
     fileSize?: boolean
     mimeType?: boolean
     createdAt?: boolean
   }
 
-  export type RecordingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "fileName" | "objectKey" | "durationSeconds" | "fileSize" | "mimeType" | "createdAt", ExtArgs["result"]["recording"]>
+  export type RecordingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "meetingId" | "participantId" | "fileName" | "objectKey" | "startOffsetSeconds" | "durationSeconds" | "fileSize" | "mimeType" | "createdAt", ExtArgs["result"]["recording"]>
   export type RecordingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }
   export type RecordingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }
   export type RecordingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meeting?: boolean | MeetingDefaultArgs<ExtArgs>
+    participant?: boolean | Recording$participantArgs<ExtArgs>
   }
 
   export type $RecordingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Recording"
     objects: {
       meeting: Prisma.$MeetingPayload<ExtArgs>
+      participant: Prisma.$ParticipantPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       meetingId: string
+      participantId: string | null
       fileName: string
       objectKey: string
+      startOffsetSeconds: number | null
       durationSeconds: number | null
       fileSize: bigint
       mimeType: string
@@ -11716,6 +11788,7 @@ export namespace Prisma {
   export interface Prisma__RecordingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     meeting<T extends MeetingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MeetingDefaultArgs<ExtArgs>>): Prisma__MeetingClient<$Result.GetResult<Prisma.$MeetingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    participant<T extends Recording$participantArgs<ExtArgs> = {}>(args?: Subset<T, Recording$participantArgs<ExtArgs>>): Prisma__ParticipantClient<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11747,8 +11820,10 @@ export namespace Prisma {
   interface RecordingFieldRefs {
     readonly id: FieldRef<"Recording", 'String'>
     readonly meetingId: FieldRef<"Recording", 'String'>
+    readonly participantId: FieldRef<"Recording", 'String'>
     readonly fileName: FieldRef<"Recording", 'String'>
     readonly objectKey: FieldRef<"Recording", 'String'>
+    readonly startOffsetSeconds: FieldRef<"Recording", 'Float'>
     readonly durationSeconds: FieldRef<"Recording", 'Int'>
     readonly fileSize: FieldRef<"Recording", 'BigInt'>
     readonly mimeType: FieldRef<"Recording", 'String'>
@@ -12151,6 +12226,25 @@ export namespace Prisma {
      * Limit how many Recordings to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Recording.participant
+   */
+  export type Recording$participantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Participant
+     */
+    select?: ParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Participant
+     */
+    omit?: ParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantInclude<ExtArgs> | null
+    where?: ParticipantWhereInput
   }
 
   /**
@@ -13352,8 +13446,10 @@ export namespace Prisma {
   export const RecordingScalarFieldEnum: {
     id: 'id',
     meetingId: 'meetingId',
+    participantId: 'participantId',
     fileName: 'fileName',
     objectKey: 'objectKey',
+    startOffsetSeconds: 'startOffsetSeconds',
     durationSeconds: 'durationSeconds',
     fileSize: 'fileSize',
     mimeType: 'mimeType',
@@ -13704,6 +13800,7 @@ export namespace Prisma {
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     sessions?: ParticipantSessionListRelationFilter
     segments?: TranscriptSegmentListRelationFilter
+    recordings?: RecordingListRelationFilter
   }
 
   export type ParticipantOrderByWithRelationInput = {
@@ -13716,6 +13813,7 @@ export namespace Prisma {
     user?: UserOrderByWithRelationInput
     sessions?: ParticipantSessionOrderByRelationAggregateInput
     segments?: TranscriptSegmentOrderByRelationAggregateInput
+    recordings?: RecordingOrderByRelationAggregateInput
   }
 
   export type ParticipantWhereUniqueInput = Prisma.AtLeast<{
@@ -13731,6 +13829,7 @@ export namespace Prisma {
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     sessions?: ParticipantSessionListRelationFilter
     segments?: TranscriptSegmentListRelationFilter
+    recordings?: RecordingListRelationFilter
   }, "id">
 
   export type ParticipantOrderByWithAggregationInput = {
@@ -14026,25 +14125,31 @@ export namespace Prisma {
     NOT?: RecordingWhereInput | RecordingWhereInput[]
     id?: StringFilter<"Recording"> | string
     meetingId?: StringFilter<"Recording"> | string
+    participantId?: StringNullableFilter<"Recording"> | string | null
     fileName?: StringFilter<"Recording"> | string
     objectKey?: StringFilter<"Recording"> | string
+    startOffsetSeconds?: FloatNullableFilter<"Recording"> | number | null
     durationSeconds?: IntNullableFilter<"Recording"> | number | null
     fileSize?: BigIntFilter<"Recording"> | bigint | number
     mimeType?: StringFilter<"Recording"> | string
     createdAt?: DateTimeFilter<"Recording"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+    participant?: XOR<ParticipantNullableScalarRelationFilter, ParticipantWhereInput> | null
   }
 
   export type RecordingOrderByWithRelationInput = {
     id?: SortOrder
     meetingId?: SortOrder
+    participantId?: SortOrderInput | SortOrder
     fileName?: SortOrder
     objectKey?: SortOrder
+    startOffsetSeconds?: SortOrderInput | SortOrder
     durationSeconds?: SortOrderInput | SortOrder
     fileSize?: SortOrder
     mimeType?: SortOrder
     createdAt?: SortOrder
     meeting?: MeetingOrderByWithRelationInput
+    participant?: ParticipantOrderByWithRelationInput
   }
 
   export type RecordingWhereUniqueInput = Prisma.AtLeast<{
@@ -14053,20 +14158,25 @@ export namespace Prisma {
     OR?: RecordingWhereInput[]
     NOT?: RecordingWhereInput | RecordingWhereInput[]
     meetingId?: StringFilter<"Recording"> | string
+    participantId?: StringNullableFilter<"Recording"> | string | null
     fileName?: StringFilter<"Recording"> | string
     objectKey?: StringFilter<"Recording"> | string
+    startOffsetSeconds?: FloatNullableFilter<"Recording"> | number | null
     durationSeconds?: IntNullableFilter<"Recording"> | number | null
     fileSize?: BigIntFilter<"Recording"> | bigint | number
     mimeType?: StringFilter<"Recording"> | string
     createdAt?: DateTimeFilter<"Recording"> | Date | string
     meeting?: XOR<MeetingScalarRelationFilter, MeetingWhereInput>
+    participant?: XOR<ParticipantNullableScalarRelationFilter, ParticipantWhereInput> | null
   }, "id">
 
   export type RecordingOrderByWithAggregationInput = {
     id?: SortOrder
     meetingId?: SortOrder
+    participantId?: SortOrderInput | SortOrder
     fileName?: SortOrder
     objectKey?: SortOrder
+    startOffsetSeconds?: SortOrderInput | SortOrder
     durationSeconds?: SortOrderInput | SortOrder
     fileSize?: SortOrder
     mimeType?: SortOrder
@@ -14084,8 +14194,10 @@ export namespace Prisma {
     NOT?: RecordingScalarWhereWithAggregatesInput | RecordingScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Recording"> | string
     meetingId?: StringWithAggregatesFilter<"Recording"> | string
+    participantId?: StringNullableWithAggregatesFilter<"Recording"> | string | null
     fileName?: StringWithAggregatesFilter<"Recording"> | string
     objectKey?: StringWithAggregatesFilter<"Recording"> | string
+    startOffsetSeconds?: FloatNullableWithAggregatesFilter<"Recording"> | number | null
     durationSeconds?: IntNullableWithAggregatesFilter<"Recording"> | number | null
     fileSize?: BigIntWithAggregatesFilter<"Recording"> | bigint | number
     mimeType?: StringWithAggregatesFilter<"Recording"> | string
@@ -14388,6 +14500,7 @@ export namespace Prisma {
     user?: UserCreateNestedOneWithoutParticipantsInput
     sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateInput = {
@@ -14398,6 +14511,7 @@ export namespace Prisma {
     createdAt?: Date | string
     sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUpdateInput = {
@@ -14408,6 +14522,7 @@ export namespace Prisma {
     user?: UserUpdateOneWithoutParticipantsNestedInput
     sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateInput = {
@@ -14418,6 +14533,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantCreateManyInput = {
@@ -14718,18 +14834,22 @@ export namespace Prisma {
     id?: string
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
     createdAt?: Date | string
     meeting: MeetingCreateNestedOneWithoutRecordingsInput
+    participant?: ParticipantCreateNestedOneWithoutRecordingsInput
   }
 
   export type RecordingUncheckedCreateInput = {
     id?: string
     meetingId: string
+    participantId?: string | null
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
@@ -14740,18 +14860,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     meeting?: MeetingUpdateOneRequiredWithoutRecordingsNestedInput
+    participant?: ParticipantUpdateOneWithoutRecordingsNestedInput
   }
 
   export type RecordingUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
+    participantId?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
@@ -14761,8 +14885,10 @@ export namespace Prisma {
   export type RecordingCreateManyInput = {
     id?: string
     meetingId: string
+    participantId?: string | null
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
@@ -14773,6 +14899,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
@@ -14782,8 +14909,10 @@ export namespace Prisma {
   export type RecordingUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     meetingId?: StringFieldUpdateOperationsInput | string
+    participantId?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
@@ -15421,6 +15550,17 @@ export namespace Prisma {
     editedAt?: SortOrder
   }
 
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type BigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -15432,11 +15572,18 @@ export namespace Prisma {
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
+  export type ParticipantNullableScalarRelationFilter = {
+    is?: ParticipantWhereInput | null
+    isNot?: ParticipantWhereInput | null
+  }
+
   export type RecordingCountOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
+    participantId?: SortOrder
     fileName?: SortOrder
     objectKey?: SortOrder
+    startOffsetSeconds?: SortOrder
     durationSeconds?: SortOrder
     fileSize?: SortOrder
     mimeType?: SortOrder
@@ -15444,6 +15591,7 @@ export namespace Prisma {
   }
 
   export type RecordingAvgOrderByAggregateInput = {
+    startOffsetSeconds?: SortOrder
     durationSeconds?: SortOrder
     fileSize?: SortOrder
   }
@@ -15451,8 +15599,10 @@ export namespace Prisma {
   export type RecordingMaxOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
+    participantId?: SortOrder
     fileName?: SortOrder
     objectKey?: SortOrder
+    startOffsetSeconds?: SortOrder
     durationSeconds?: SortOrder
     fileSize?: SortOrder
     mimeType?: SortOrder
@@ -15462,8 +15612,10 @@ export namespace Prisma {
   export type RecordingMinOrderByAggregateInput = {
     id?: SortOrder
     meetingId?: SortOrder
+    participantId?: SortOrder
     fileName?: SortOrder
     objectKey?: SortOrder
+    startOffsetSeconds?: SortOrder
     durationSeconds?: SortOrder
     fileSize?: SortOrder
     mimeType?: SortOrder
@@ -15471,8 +15623,25 @@ export namespace Prisma {
   }
 
   export type RecordingSumOrderByAggregateInput = {
+    startOffsetSeconds?: SortOrder
     durationSeconds?: SortOrder
     fileSize?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -15913,6 +16082,13 @@ export namespace Prisma {
     connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
   }
 
+  export type RecordingCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput> | RecordingCreateWithoutParticipantInput[] | RecordingUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutParticipantInput | RecordingCreateOrConnectWithoutParticipantInput[]
+    createMany?: RecordingCreateManyParticipantInputEnvelope
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+  }
+
   export type ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput = {
     create?: XOR<ParticipantSessionCreateWithoutParticipantInput, ParticipantSessionUncheckedCreateWithoutParticipantInput> | ParticipantSessionCreateWithoutParticipantInput[] | ParticipantSessionUncheckedCreateWithoutParticipantInput[]
     connectOrCreate?: ParticipantSessionCreateOrConnectWithoutParticipantInput | ParticipantSessionCreateOrConnectWithoutParticipantInput[]
@@ -15925,6 +16101,13 @@ export namespace Prisma {
     connectOrCreate?: TranscriptSegmentCreateOrConnectWithoutParticipantInput | TranscriptSegmentCreateOrConnectWithoutParticipantInput[]
     createMany?: TranscriptSegmentCreateManyParticipantInputEnvelope
     connect?: TranscriptSegmentWhereUniqueInput | TranscriptSegmentWhereUniqueInput[]
+  }
+
+  export type RecordingUncheckedCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput> | RecordingCreateWithoutParticipantInput[] | RecordingUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutParticipantInput | RecordingCreateOrConnectWithoutParticipantInput[]
+    createMany?: RecordingCreateManyParticipantInputEnvelope
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
   }
 
   export type MeetingUpdateOneRequiredWithoutParticipantsNestedInput = {
@@ -15973,6 +16156,20 @@ export namespace Prisma {
     deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
   }
 
+  export type RecordingUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput> | RecordingCreateWithoutParticipantInput[] | RecordingUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutParticipantInput | RecordingCreateOrConnectWithoutParticipantInput[]
+    upsert?: RecordingUpsertWithWhereUniqueWithoutParticipantInput | RecordingUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: RecordingCreateManyParticipantInputEnvelope
+    set?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    disconnect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    delete?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    update?: RecordingUpdateWithWhereUniqueWithoutParticipantInput | RecordingUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: RecordingUpdateManyWithWhereWithoutParticipantInput | RecordingUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
+  }
+
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
   }
@@ -16003,6 +16200,20 @@ export namespace Prisma {
     update?: TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput | TranscriptSegmentUpdateWithWhereUniqueWithoutParticipantInput[]
     updateMany?: TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput | TranscriptSegmentUpdateManyWithWhereWithoutParticipantInput[]
     deleteMany?: TranscriptSegmentScalarWhereInput | TranscriptSegmentScalarWhereInput[]
+  }
+
+  export type RecordingUncheckedUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput> | RecordingCreateWithoutParticipantInput[] | RecordingUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: RecordingCreateOrConnectWithoutParticipantInput | RecordingCreateOrConnectWithoutParticipantInput[]
+    upsert?: RecordingUpsertWithWhereUniqueWithoutParticipantInput | RecordingUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: RecordingCreateManyParticipantInputEnvelope
+    set?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    disconnect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    delete?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    connect?: RecordingWhereUniqueInput | RecordingWhereUniqueInput[]
+    update?: RecordingUpdateWithWhereUniqueWithoutParticipantInput | RecordingUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: RecordingUpdateManyWithWhereWithoutParticipantInput | RecordingUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
   }
 
   export type ParticipantCreateNestedOneWithoutSessionsInput = {
@@ -16131,6 +16342,20 @@ export namespace Prisma {
     connect?: MeetingWhereUniqueInput
   }
 
+  export type ParticipantCreateNestedOneWithoutRecordingsInput = {
+    create?: XOR<ParticipantCreateWithoutRecordingsInput, ParticipantUncheckedCreateWithoutRecordingsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutRecordingsInput
+    connect?: ParticipantWhereUniqueInput
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type BigIntFieldUpdateOperationsInput = {
     set?: bigint | number
     increment?: bigint | number
@@ -16145,6 +16370,16 @@ export namespace Prisma {
     upsert?: MeetingUpsertWithoutRecordingsInput
     connect?: MeetingWhereUniqueInput
     update?: XOR<XOR<MeetingUpdateToOneWithWhereWithoutRecordingsInput, MeetingUpdateWithoutRecordingsInput>, MeetingUncheckedUpdateWithoutRecordingsInput>
+  }
+
+  export type ParticipantUpdateOneWithoutRecordingsNestedInput = {
+    create?: XOR<ParticipantCreateWithoutRecordingsInput, ParticipantUncheckedCreateWithoutRecordingsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutRecordingsInput
+    upsert?: ParticipantUpsertWithoutRecordingsInput
+    disconnect?: ParticipantWhereInput | boolean
+    delete?: ParticipantWhereInput | boolean
+    connect?: ParticipantWhereUniqueInput
+    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutRecordingsInput, ParticipantUpdateWithoutRecordingsInput>, ParticipantUncheckedUpdateWithoutRecordingsInput>
   }
 
   export type MeetingCreateNestedOneWithoutExportsInput = {
@@ -16376,6 +16611,22 @@ export namespace Prisma {
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
   export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -16431,6 +16682,7 @@ export namespace Prisma {
     meeting: MeetingCreateNestedOneWithoutParticipantsInput
     sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutUserInput = {
@@ -16440,6 +16692,7 @@ export namespace Prisma {
     createdAt?: Date | string
     sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutUserInput = {
@@ -16663,6 +16916,7 @@ export namespace Prisma {
     user?: UserCreateNestedOneWithoutParticipantsInput
     sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutMeetingInput = {
@@ -16672,6 +16926,7 @@ export namespace Prisma {
     createdAt?: Date | string
     sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
     segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutMeetingInput = {
@@ -16732,16 +16987,20 @@ export namespace Prisma {
     id?: string
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
     createdAt?: Date | string
+    participant?: ParticipantCreateNestedOneWithoutRecordingsInput
   }
 
   export type RecordingUncheckedCreateWithoutMeetingInput = {
     id?: string
+    participantId?: string | null
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
@@ -16909,8 +17168,10 @@ export namespace Prisma {
     NOT?: RecordingScalarWhereInput | RecordingScalarWhereInput[]
     id?: StringFilter<"Recording"> | string
     meetingId?: StringFilter<"Recording"> | string
+    participantId?: StringNullableFilter<"Recording"> | string | null
     fileName?: StringFilter<"Recording"> | string
     objectKey?: StringFilter<"Recording"> | string
+    startOffsetSeconds?: FloatNullableFilter<"Recording"> | number | null
     durationSeconds?: IntNullableFilter<"Recording"> | number | null
     fileSize?: BigIntFilter<"Recording"> | bigint | number
     mimeType?: StringFilter<"Recording"> | string
@@ -17058,6 +17319,40 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RecordingCreateWithoutParticipantInput = {
+    id?: string
+    fileName: string
+    objectKey: string
+    startOffsetSeconds?: number | null
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutRecordingsInput
+  }
+
+  export type RecordingUncheckedCreateWithoutParticipantInput = {
+    id?: string
+    meetingId: string
+    fileName: string
+    objectKey: string
+    startOffsetSeconds?: number | null
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
+  }
+
+  export type RecordingCreateOrConnectWithoutParticipantInput = {
+    where: RecordingWhereUniqueInput
+    create: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type RecordingCreateManyParticipantInputEnvelope = {
+    data: RecordingCreateManyParticipantInput | RecordingCreateManyParticipantInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MeetingUpsertWithoutParticipantsInput = {
     update: XOR<MeetingUpdateWithoutParticipantsInput, MeetingUncheckedUpdateWithoutParticipantsInput>
     create: XOR<MeetingCreateWithoutParticipantsInput, MeetingUncheckedCreateWithoutParticipantsInput>
@@ -17185,6 +17480,22 @@ export namespace Prisma {
     confidence?: FloatFilter<"TranscriptSegment"> | number
   }
 
+  export type RecordingUpsertWithWhereUniqueWithoutParticipantInput = {
+    where: RecordingWhereUniqueInput
+    update: XOR<RecordingUpdateWithoutParticipantInput, RecordingUncheckedUpdateWithoutParticipantInput>
+    create: XOR<RecordingCreateWithoutParticipantInput, RecordingUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type RecordingUpdateWithWhereUniqueWithoutParticipantInput = {
+    where: RecordingWhereUniqueInput
+    data: XOR<RecordingUpdateWithoutParticipantInput, RecordingUncheckedUpdateWithoutParticipantInput>
+  }
+
+  export type RecordingUpdateManyWithWhereWithoutParticipantInput = {
+    where: RecordingScalarWhereInput
+    data: XOR<RecordingUpdateManyMutationInput, RecordingUncheckedUpdateManyWithoutParticipantInput>
+  }
+
   export type ParticipantCreateWithoutSessionsInput = {
     id?: string
     displayName: string
@@ -17192,6 +17503,7 @@ export namespace Prisma {
     meeting: MeetingCreateNestedOneWithoutParticipantsInput
     user?: UserCreateNestedOneWithoutParticipantsInput
     segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutSessionsInput = {
@@ -17201,6 +17513,7 @@ export namespace Prisma {
     displayName: string
     createdAt?: Date | string
     segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutSessionsInput = {
@@ -17226,6 +17539,7 @@ export namespace Prisma {
     meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
     user?: UserUpdateOneWithoutParticipantsNestedInput
     segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutSessionsInput = {
@@ -17235,6 +17549,7 @@ export namespace Prisma {
     displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type MeetingCreateWithoutTranscriptInput = {
@@ -17379,6 +17694,7 @@ export namespace Prisma {
     meeting: MeetingCreateNestedOneWithoutParticipantsInput
     user?: UserCreateNestedOneWithoutParticipantsInput
     sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutSegmentsInput = {
@@ -17388,6 +17704,7 @@ export namespace Prisma {
     displayName: string
     createdAt?: Date | string
     sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
+    recordings?: RecordingUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutSegmentsInput = {
@@ -17440,6 +17757,7 @@ export namespace Prisma {
     meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
     user?: UserUpdateOneWithoutParticipantsNestedInput
     sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutSegmentsInput = {
@@ -17449,6 +17767,7 @@ export namespace Prisma {
     displayName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type MeetingCreateWithoutSummaryInput = {
@@ -17550,6 +17869,31 @@ export namespace Prisma {
     create: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
   }
 
+  export type ParticipantCreateWithoutRecordingsInput = {
+    id?: string
+    displayName: string
+    createdAt?: Date | string
+    meeting: MeetingCreateNestedOneWithoutParticipantsInput
+    user?: UserCreateNestedOneWithoutParticipantsInput
+    sessions?: ParticipantSessionCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentCreateNestedManyWithoutParticipantInput
+  }
+
+  export type ParticipantUncheckedCreateWithoutRecordingsInput = {
+    id?: string
+    meetingId: string
+    userId?: string | null
+    displayName: string
+    createdAt?: Date | string
+    sessions?: ParticipantSessionUncheckedCreateNestedManyWithoutParticipantInput
+    segments?: TranscriptSegmentUncheckedCreateNestedManyWithoutParticipantInput
+  }
+
+  export type ParticipantCreateOrConnectWithoutRecordingsInput = {
+    where: ParticipantWhereUniqueInput
+    create: XOR<ParticipantCreateWithoutRecordingsInput, ParticipantUncheckedCreateWithoutRecordingsInput>
+  }
+
   export type MeetingUpsertWithoutRecordingsInput = {
     update: XOR<MeetingUpdateWithoutRecordingsInput, MeetingUncheckedUpdateWithoutRecordingsInput>
     create: XOR<MeetingCreateWithoutRecordingsInput, MeetingUncheckedCreateWithoutRecordingsInput>
@@ -17585,6 +17929,37 @@ export namespace Prisma {
     transcript?: TranscriptUncheckedUpdateOneWithoutMeetingNestedInput
     summary?: MeetingSummaryUncheckedUpdateOneWithoutMeetingNestedInput
     exports?: ExportUncheckedUpdateManyWithoutMeetingNestedInput
+  }
+
+  export type ParticipantUpsertWithoutRecordingsInput = {
+    update: XOR<ParticipantUpdateWithoutRecordingsInput, ParticipantUncheckedUpdateWithoutRecordingsInput>
+    create: XOR<ParticipantCreateWithoutRecordingsInput, ParticipantUncheckedCreateWithoutRecordingsInput>
+    where?: ParticipantWhereInput
+  }
+
+  export type ParticipantUpdateToOneWithWhereWithoutRecordingsInput = {
+    where?: ParticipantWhereInput
+    data: XOR<ParticipantUpdateWithoutRecordingsInput, ParticipantUncheckedUpdateWithoutRecordingsInput>
+  }
+
+  export type ParticipantUpdateWithoutRecordingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
+    user?: UserUpdateOneWithoutParticipantsNestedInput
+    sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+  }
+
+  export type ParticipantUncheckedUpdateWithoutRecordingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
+    segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type MeetingCreateWithoutExportsInput = {
@@ -17711,6 +18086,7 @@ export namespace Prisma {
     meeting?: MeetingUpdateOneRequiredWithoutParticipantsNestedInput
     sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutUserInput = {
@@ -17720,6 +18096,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateManyWithoutUserInput = {
@@ -17780,8 +18157,10 @@ export namespace Prisma {
 
   export type RecordingCreateManyMeetingInput = {
     id?: string
+    participantId?: string | null
     fileName: string
     objectKey: string
+    startOffsetSeconds?: number | null
     durationSeconds?: number | null
     fileSize: bigint | number
     mimeType: string
@@ -17802,6 +18181,7 @@ export namespace Prisma {
     user?: UserUpdateOneWithoutParticipantsNestedInput
     sessions?: ParticipantSessionUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutMeetingInput = {
@@ -17811,6 +18191,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: ParticipantSessionUncheckedUpdateManyWithoutParticipantNestedInput
     segments?: TranscriptSegmentUncheckedUpdateManyWithoutParticipantNestedInput
+    recordings?: RecordingUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateManyWithoutMeetingInput = {
@@ -17824,16 +18205,20 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participant?: ParticipantUpdateOneWithoutRecordingsNestedInput
   }
 
   export type RecordingUncheckedUpdateWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
+    participantId?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
@@ -17842,8 +18227,10 @@ export namespace Prisma {
 
   export type RecordingUncheckedUpdateManyWithoutMeetingInput = {
     id?: StringFieldUpdateOperationsInput | string
+    participantId?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: StringFieldUpdateOperationsInput | string
     objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
     durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
     fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
     mimeType?: StringFieldUpdateOperationsInput | string
@@ -17888,6 +18275,18 @@ export namespace Prisma {
     spokenAt: Date | string
     text: string
     confidence: number
+  }
+
+  export type RecordingCreateManyParticipantInput = {
+    id?: string
+    meetingId: string
+    fileName: string
+    objectKey: string
+    startOffsetSeconds?: number | null
+    durationSeconds?: number | null
+    fileSize: bigint | number
+    mimeType: string
+    createdAt?: Date | string
   }
 
   export type ParticipantSessionUpdateWithoutParticipantInput = {
@@ -17945,6 +18344,42 @@ export namespace Prisma {
     spokenAt?: DateTimeFieldUpdateOperationsInput | Date | string
     text?: StringFieldUpdateOperationsInput | string
     confidence?: FloatFieldUpdateOperationsInput | number
+  }
+
+  export type RecordingUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    meeting?: MeetingUpdateOneRequiredWithoutRecordingsNestedInput
+  }
+
+  export type RecordingUncheckedUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecordingUncheckedUpdateManyWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    meetingId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    objectKey?: StringFieldUpdateOperationsInput | string
+    startOffsetSeconds?: NullableFloatFieldUpdateOperationsInput | number | null
+    durationSeconds?: NullableIntFieldUpdateOperationsInput | number | null
+    fileSize?: BigIntFieldUpdateOperationsInput | bigint | number
+    mimeType?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TranscriptSegmentCreateManyTranscriptInput = {

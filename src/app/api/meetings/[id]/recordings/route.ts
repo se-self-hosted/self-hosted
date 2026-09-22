@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { uploadRecording, getRecordingPresignedUrl } from "@/lib/storage";
+import { transcodeToMp3, probeDurationSeconds } from "@/lib/audio-transcode";
 import { randomUUID } from "crypto";
 import { resolveMeetingAccess } from "@/lib/meeting-access";
 
@@ -23,6 +24,7 @@ export async function GET(
     const recordings = await prisma.recording.findMany({
       where: { meetingId },
       orderBy: { createdAt: "desc" },
+      include: { participant: { select: { displayName: true } } },
     });
 
     const recordingsWithUrls = await Promise.all(
@@ -37,8 +39,11 @@ export async function GET(
         return {
           id: rec.id,
           meetingId: rec.meetingId,
+          participantId: rec.participantId,
+          speakerName: rec.participant?.displayName ?? null,
           fileName: rec.fileName,
           objectKey: rec.objectKey,
+          startOffsetSeconds: rec.startOffsetSeconds,
           durationSeconds: rec.durationSeconds,
           fileSize: rec.fileSize.toString(),
           mimeType: rec.mimeType,
@@ -70,11 +75,13 @@ export async function POST(
     let mimeType: string = "audio/webm";
     let durationSeconds: number | null = null;
     let participantId: string | null = null;
+    let startOffsetSeconds: number | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
       const durationParam = formData.get("durationSeconds");
+      const startOffsetParam = formData.get("startOffsetSeconds");
       participantId = (formData.get("participantId") as string | null) || null;
 
       if (!file) {
@@ -88,6 +95,10 @@ export async function POST(
 
       if (durationParam) {
         durationSeconds = parseInt(String(durationParam), 10) || null;
+      }
+      if (startOffsetParam) {
+        startOffsetSeconds = parseFloat(String(startOffsetParam));
+        if (!Number.isFinite(startOffsetSeconds)) startOffsetSeconds = null;
       }
     } else {
       // Raw binary body upload
@@ -113,8 +124,37 @@ export async function POST(
       return NextResponse.json({ error: "Audio buffer is empty" }, { status: 400 });
     }
 
+    // Standardize every recording to mp3, regardless of what the browser
+    // captured (webm/opus, ogg, ...), so stored files are consistent.
+    let ext = "mp3";
+    try {
+      audioBuffer = await transcodeToMp3(audioBuffer);
+      mimeType = "audio/mpeg";
+      // Trust the encoded file's own duration over the client's elapsed-clock
+      // estimate — it's what playback-window matching actually seeks against.
+      const probedDuration = await probeDurationSeconds(audioBuffer);
+      if (probedDuration !== null) {
+        durationSeconds = Math.round(probedDuration);
+      }
+    } catch (transcodeErr) {
+      console.error("mp3 transcode failed, storing original format:", transcodeErr);
+      ext = fileName.includes(".") ? fileName.split(".").pop()! : "webm";
+    }
+
+    // Human-readable name for data management: ID_Name_RoomNumber.
+    // The actual storage path below stays opaque/recordingId-based so a
+    // display-name or room-number change never breaks a stored reference.
+    const speaker = participantId
+      ? await prisma.participant.findUnique({ where: { id: participantId }, select: { displayName: true } })
+      : null;
+    const sanitize = (s: string) => s.replace(/[^\p{L}\p{N}_-]+/gu, "_").replace(/^_+|_+$/g, "") || "unknown";
+    fileName = [
+      sanitize(participantId || "guest"),
+      sanitize(speaker?.displayName || "guest"),
+      sanitize(access.meeting.room.roomHash),
+    ].join("_") + `.${ext}`;
+
     const recordingId = randomUUID();
-    const ext = fileName.includes(".") ? fileName.split(".").pop() : "webm";
     const objectKey = `recordings/${meetingId}/${recordingId}.${ext}`;
 
     // Upload to MinIO/S3
@@ -125,8 +165,10 @@ export async function POST(
       data: {
         id: recordingId,
         meetingId,
+        participantId: participantId || null,
         fileName,
         objectKey,
+        startOffsetSeconds,
         durationSeconds,
         fileSize: BigInt(audioBuffer.length),
         mimeType,
@@ -140,14 +182,61 @@ export async function POST(
       // Presigned url fallback
     }
 
+    // Store this participant's own transcript segments alongside their audio
+    // in MinIO, so the voice and the words spoken travel together as one unit
+    // instead of only living in Postgres.
+    if (participantId) {
+      try {
+        const transcript = await prisma.transcript.findUnique({
+          where: { meetingId },
+          select: { id: true },
+        });
+        if (transcript) {
+          const windowStart = startOffsetSeconds ?? 0;
+          const windowEnd = durationSeconds != null ? windowStart + durationSeconds : null;
+          const segments = await prisma.transcriptSegment.findMany({
+            where: {
+              transcriptId: transcript.id,
+              participantId,
+              startTime: { gte: windowStart, ...(windowEnd != null ? { lte: windowEnd } : {}) },
+            },
+            orderBy: { startTime: "asc" },
+            select: { startTime: true, endTime: true, text: true, confidence: true, spokenAt: true },
+          });
+          const transcriptKey = `recordings/${meetingId}/${recordingId}.json`;
+          const transcriptPayload = JSON.stringify(
+            {
+              recordingId,
+              meetingId,
+              participantId,
+              speakerName: speaker?.displayName ?? null,
+              startOffsetSeconds,
+              durationSeconds,
+              segments,
+            },
+            null,
+            2,
+          );
+          await uploadRecording(Buffer.from(transcriptPayload, "utf-8"), transcriptKey, "application/json");
+        }
+      } catch (transcriptUploadErr) {
+        console.error("Transcript companion upload failed:", transcriptUploadErr);
+      }
+    }
+
+    const speakerName = speaker?.displayName ?? null;
+
     return NextResponse.json(
       {
         success: true,
         recording: {
           id: recording.id,
           meetingId: recording.meetingId,
+          participantId: recording.participantId,
+          speakerName,
           fileName: recording.fileName,
           objectKey: recording.objectKey,
+          startOffsetSeconds: recording.startOffsetSeconds,
           durationSeconds: recording.durationSeconds,
           fileSize: recording.fileSize.toString(),
           mimeType: recording.mimeType,

@@ -81,6 +81,7 @@ export function MeetingRoomView({
   const [nameError, setNameError] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [joinStep, setJoinStep] = useState<"permission" | "room" | "token" | "connecting" | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [roomStatusState, setRoomStatusState] = useState<string>(room?.status || "active");
 
@@ -140,6 +141,10 @@ export function MeetingRoomView({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingStartOffsetRef = useRef<number | null>(null);
+  const autoRecordStartedRef = useRef(false);
+  const pendingUploadResolveRef = useRef<(() => void) | null>(null);
+  const recordingDurationOverrideRef = useRef<number | null>(null);
 
   // 6. Transcript Timeline State
   const [transcriptSegments, setTranscriptSegments] = useState<LiveTranscriptSegment[]>([]);
@@ -197,6 +202,7 @@ export function MeetingRoomView({
     try {
       // Joining muted must not request or capture microphone audio.
       if (!shouldMute && micPermissionState !== "granted") {
+        setJoinStep("permission");
         const granted = await requestMicrophonePermission();
         if (!granted) {
           setIsMicrophoneMuted(true);
@@ -205,6 +211,7 @@ export function MeetingRoomView({
       }
       if (!mountedRef.current) return;
       // Step A: DB Join API
+      setJoinStep("room");
       const response = await fetch(`/api/rooms/${room.roomHash}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -227,6 +234,7 @@ export function MeetingRoomView({
       setDisplayName(dbData.displayName || name);
 
       // Step B: Fetch LiveKit JWT Token
+      setJoinStep("token");
       const tokenRes = await fetch("/api/livekit/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -270,6 +278,7 @@ export function MeetingRoomView({
       setupLivekitEventListeners(lkRoom, dbData.participantId);
 
       try {
+        setJoinStep("connecting");
         await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
         if (!mountedRef.current || activeSessionRef.current !== session) return;
         // Populate remote participants already in the room upon connection
@@ -279,8 +288,13 @@ export function MeetingRoomView({
         // Publish local audio track if mic not muted
         if (!shouldMute) {
           await lkRoom.localParticipant.setMicrophoneEnabled(true);
+          if (!mountedRef.current || activeSessionRef.current !== session) return;
+          // Noise cancellation loads and compiles an RNNoise WASM module — pure
+          // audio-quality polish, not worth blocking the user's entry to the
+          // meeting on. Publish the raw mic track now, swap in the processed
+          // one once it's ready.
           const audioTrack = lkRoom.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack as LocalAudioTrack | undefined;
-          await applyNoiseCancellation(audioTrack);
+          void applyNoiseCancellation(audioTrack);
         }
         if (!mountedRef.current || activeSessionRef.current !== session) return;
         setLivekitRoom(lkRoom);
@@ -303,6 +317,7 @@ export function MeetingRoomView({
       }
       joiningRef.current = false;
       setIsJoining(false);
+      setJoinStep(null);
     }
   }
 
@@ -413,6 +428,12 @@ export function MeetingRoomView({
           showToast("ผู้จัดประชุม (Host) ได้ปิดไมโครโฟนของคุณแล้ว");
         } else if (data.type === "TRANSCRIPT_SEGMENT" && data.segment) {
           setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
+        } else if (data.type === "RECORDING_CONTROL") {
+          if (data.action === "start") {
+            void startRecording();
+          } else if (data.action === "stop") {
+            stopRecording();
+          }
         }
       } catch (e) {
         console.error("DataReceived error:", e);
@@ -514,16 +535,35 @@ export function MeetingRoomView({
       .catch(() => {});
   }, [hasJoined, room, meetingId, participantId]);
 
+  // Returns a promise that resolves once the recorded audio has finished
+  // uploading, so callers that navigate away (e.g. ending the meeting) can
+  // wait for the MinIO upload instead of cancelling it mid-flight.
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-      recordingTimerRef.current = null;
-    }
-    setIsRecording(false);
+    return new Promise<void>((resolve) => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        // Derive duration from the meeting clock (same clock transcript
+        // timestamps use), not the setInterval counter below — background
+        // tabs throttle intervals, which would under-report duration and
+        // throw off the segment-to-recording time match on playback.
+        const clock = meetingClockRef.current;
+        const startOffset = recordingStartOffsetRef.current;
+        recordingDurationOverrideRef.current =
+          clock && startOffset !== null
+            ? Math.max(1, Math.round(clock().elapsedSeconds - startOffset))
+            : null;
+
+        pendingUploadResolveRef.current = resolve;
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
+      } else {
+        resolve();
+      }
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      setIsRecording(false);
+    });
   }, []);
 
   // Keep the admission alive while connecting as well as during the meeting.
@@ -560,40 +600,17 @@ export function MeetingRoomView({
     }
   }, [transcriptSegments, showTranscriptPanel]);
 
-  // 5. Start / Stop Audio Recording
+  // 5. Start / Stop Audio Recording — each client records only its own mic,
+  // so every speaker's words end up in their own separate file.
   const startRecording = async () => {
     try {
       audioChunksRef.current = [];
+      recordingStartOffsetRef.current = meetingClockRef.current?.().elapsedSeconds ?? null;
 
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      const dest = audioCtx.createMediaStreamDestination();
-
-      // Mix local microphone audio
       const localTrack = livekitRoom?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack;
-      if (localTrack && localTrack.readyState === "live") {
-        try {
-          const localSource = audioCtx.createMediaStreamSource(new MediaStream([localTrack]));
-          localSource.connect(dest);
-        } catch {}
-      }
-
-      // Mix remote audio tracks
-      if (audioContainerRef.current) {
-        const audioElements = audioContainerRef.current.querySelectorAll("audio");
-        audioElements.forEach((el) => {
-          if (el.srcObject instanceof MediaStream && el.srcObject.getAudioTracks().length > 0) {
-            try {
-              const remoteSource = audioCtx.createMediaStreamSource(el.srcObject);
-              remoteSource.connect(dest);
-            } catch {}
-          }
-        });
-      }
-
-      const stream = dest.stream.getAudioTracks().length > 0
-        ? dest.stream
-        : (localTrack ? new MediaStream([localTrack]) : await navigator.mediaDevices.getUserMedia({ audio: true }));
+      const stream = localTrack && localTrack.readyState === "live"
+        ? new MediaStream([localTrack])
+        : await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -610,16 +627,23 @@ export function MeetingRoomView({
       };
 
       recorder.onstop = async () => {
-        if (audioChunksRef.current.length === 0) return;
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        const duration = Math.max(1, recordingSeconds);
-
-        const formData = new FormData();
-        formData.append("file", audioBlob, `meeting-${room?.roomHash || "rec"}-${Date.now()}.webm`);
-        formData.append("durationSeconds", String(duration));
-        formData.append("participantId", participantId || "");
+        const resolvePendingUpload = pendingUploadResolveRef.current;
+        pendingUploadResolveRef.current = null;
 
         try {
+          if (audioChunksRef.current.length === 0) return;
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          const duration = recordingDurationOverrideRef.current ?? Math.max(1, recordingSeconds);
+          recordingDurationOverrideRef.current = null;
+
+          const formData = new FormData();
+          formData.append("file", audioBlob, `speaker-${participantId || "guest"}-${Date.now()}.webm`);
+          formData.append("durationSeconds", String(duration));
+          formData.append("participantId", participantId || "");
+          if (recordingStartOffsetRef.current !== null) {
+            formData.append("startOffsetSeconds", String(recordingStartOffsetRef.current));
+          }
+
           const targetUrl = meetingId
             ? `/api/meetings/${meetingId}/recordings`
             : `/api/rooms/${room?.roomHash}/recordings`;
@@ -633,6 +657,8 @@ export function MeetingRoomView({
           }
         } catch (uploadErr) {
           console.error("Recording upload error:", uploadErr);
+        } finally {
+          resolvePendingUpload?.();
         }
       };
 
@@ -652,13 +678,34 @@ export function MeetingRoomView({
     }
   };
 
-  const toggleRecording = () => {
-    if (isRecording) {
+  // Host-triggered: every participant's client records only its own mic,
+  // so the meeting ends up with one file per speaker instead of one mixed file.
+  const toggleRecording = async () => {
+    if (!isHost || !livekitRoom?.localParticipant) return;
+    const action = isRecording ? "stop" : "start";
+    try {
+      const payload = new TextEncoder().encode(
+        JSON.stringify({ type: "RECORDING_CONTROL", action }),
+      );
+      await livekitRoom.localParticipant.publishData(payload, { reliable: true });
+    } catch (e) {
+      console.error("Broadcast recording control error:", e);
+    }
+    if (action === "stop") {
       stopRecording();
     } else {
       void startRecording();
     }
   };
+
+  // Recording is always on from the start of the meeting: every participant's
+  // client records its own mic as soon as it joins, no host action required.
+  useEffect(() => {
+    if (!hasJoined || !livekitRoom || autoRecordStartedRef.current) return;
+    autoRecordStartedRef.current = true;
+    void startRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasJoined, livekitRoom]);
 
   // Read the active connection from a ref: state changes must never end a session.
   useEffect(() => {
@@ -813,8 +860,21 @@ export function MeetingRoomView({
   const handleHostEndRoom = async () => {
     if (!isHost || !room) return;
     try {
+      // Broadcast first so every participant's client stops and uploads its
+      // own recording before the host's disconnect/redirect below tears
+      // down the room.
+      if (livekitRoom?.localParticipant) {
+        try {
+          const payload = new TextEncoder().encode(
+            JSON.stringify({ type: "RECORDING_CONTROL", action: "stop" }),
+          );
+          await livekitRoom.localParticipant.publishData(payload, { reliable: true });
+        } catch (e) {
+          console.error("Broadcast recording stop error:", e);
+        }
+      }
       if (isRecording) {
-        stopRecording();
+        await stopRecording();
       }
       await fetch(`/api/rooms/${room.roomHash}`, {
         method: "PATCH",
@@ -871,6 +931,24 @@ export function MeetingRoomView({
 
   // Both roles enter from a user gesture so browser audio activation is available.
   if (!hasJoined) {
+    if (isJoining) {
+      const stepLabel: Record<NonNullable<typeof joinStep>, string> = {
+        permission: "กำลังขอสิทธิ์ไมโครโฟน...",
+        room: "กำลังเข้าร่วมห้องประชุม...",
+        token: "กำลังขอสิทธิ์เชื่อมต่อ...",
+        connecting: "กำลังเชื่อมต่อกับเซิร์ฟเวอร์ประชุม...",
+      };
+      return (
+        <main className="meeting-lobby">
+          <div className="meeting-lobby__card flex flex-col items-center gap-4 py-10">
+            <RefreshCw aria-hidden="true" className="size-8 animate-spin text-indigo-400" />
+            <p aria-live="polite" className="text-sm font-medium text-slate-200">
+              {joinStep ? stepLabel[joinStep] : "กำลังเข้าร่วม..."}
+            </p>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="meeting-lobby">
         <form onSubmit={handleJoinSubmit} className="meeting-lobby__card">
@@ -1283,22 +1361,33 @@ export function MeetingRoomView({
           )}
         </button>
 
-        {/* Recording Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleRecording}
-          aria-label={isRecording ? "หยุดบันทึกเสียง" : "เริ่มบันทึกเสียง"}
-          title={isRecording ? "หยุดบันทึกเสียงและอัปโหลด" : "บันทึกเสียงการประชุม"}
-          className={`meeting-control focus-ring ${
-            isRecording ? "border-red-500 bg-red-600/80 text-white animate-pulse" : ""
-          }`}
-        >
-          {isRecording ? (
-            <Square aria-hidden="true" className="icon-18 fill-current" />
-          ) : (
-            <Disc aria-hidden="true" className="icon-20 text-red-400" />
-          )}
-        </button>
+        {/* Recording Toggle Button — host-only: starts/stops recording for every participant */}
+        {isHost && (
+          <button
+            type="button"
+            onClick={() => void toggleRecording()}
+            aria-label={isRecording ? "หยุดบันทึกเสียง" : "เริ่มบันทึกเสียง"}
+            title={isRecording ? "หยุดบันทึกเสียงและอัปโหลด" : "บันทึกเสียงการประชุม (แยกไฟล์ตามผู้พูด)"}
+            className={`meeting-control focus-ring ${
+              isRecording ? "border-red-500 bg-red-600/80 text-white animate-pulse" : ""
+            }`}
+          >
+            {isRecording ? (
+              <Square aria-hidden="true" className="icon-18 fill-current" />
+            ) : (
+              <Disc aria-hidden="true" className="icon-20 text-red-400" />
+            )}
+          </button>
+        )}
+        {!isHost && isRecording && (
+          <div
+            className="meeting-control meeting-control--muted"
+            title="ผู้จัดประชุมกำลังบันทึกเสียงอยู่"
+            aria-label="กำลังบันทึกเสียง"
+          >
+            <Disc aria-hidden="true" className="icon-20 animate-pulse text-red-500" />
+          </div>
+        )}
 
         {/* Live Transcript Drawer Button */}
         <button
@@ -1327,7 +1416,7 @@ export function MeetingRoomView({
         <button
           type="button"
           onClick={async () => {
-            stopRecording();
+            await stopRecording();
             await releaseSession().catch((error) => console.error("Leave room error:", error));
             window.location.href = "/dashboard";
           }}

@@ -35,6 +35,8 @@ async function isConnected(roomHash: string, participantId: string) {
 type JoiningUser = { id: string; fullname: string; email: string };
 
 type PresenceSession = {
+  id: string;
+  joinedAt: Date;
   leftAt: Date | null;
   lastSeenAt: Date;
   participantId: string;
@@ -62,6 +64,30 @@ export async function getActiveUserRoom(userId: string) {
 }
 
 export async function joinMeeting(hash: string, name: string, user: JoiningUser | null) {
+  // Resolve "already active elsewhere" and find genuinely-stale sessions BEFORE
+  // taking any row locks. This can involve a live network call to the LiveKit
+  // server per stale-heartbeat session (see isConnected above) — running that
+  // under the FOR UPDATE locks below would serialize every join for this
+  // account, and every join into this room, behind that external round-trip.
+  let staleSessions: PresenceSession[] = [];
+  if (user) {
+    const sessions = await prisma.participantSession.findMany({
+      where: { leftAt: null, participant: { userId: user.id } },
+      include: { participant: { include: { meeting: { include: { room: true } } } } },
+    });
+    const previousRoom = await findActiveRoom(sessions);
+    if (previousRoom) {
+      const targetRoom = await prisma.meetingRoom.findUnique({ where: { roomHash: hash }, select: { id: true } });
+      const sameRoom = targetRoom?.id === previousRoom.id;
+      throw new AdmissionError(409, sameRoom ? "ALREADY_IN_ROOM" : "ALREADY_IN_ANOTHER_ROOM",
+        sameRoom
+          ? "คุณอยู่ในห้องประชุมนี้แล้ว กรุณากลับไปใช้แท็บหรืออุปกรณ์เดิม"
+          : `คุณกำลังอยู่ในห้อง “${previousRoom.roomName}” กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้`);
+    }
+    // None of these were reachable (live or heartbeat) — safe to retire.
+    staleSessions = sessions;
+  }
+
   return prisma.$transaction(async (tx) => {
     // Serialize every admission for this account, even across different rooms.
     if (user) await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
@@ -71,29 +97,17 @@ export async function joinMeeting(hash: string, name: string, user: JoiningUser 
     if (!room) throw new AdmissionError(404, "ROOM_NOT_FOUND", "ไม่พบห้องประชุม");
     if (room.status !== "active") throw new AdmissionError(400, "ROOM_INACTIVE", "ห้องประชุมปิดแล้ว");
 
-    if (user) {
-      const sessions = await tx.participantSession.findMany({
-        where: { leftAt: null, participant: { userId: user.id } },
-        include: { participant: { include: { meeting: { include: { room: true } } } } },
+    // Retire stale sessions permanently so a delayed heartbeat cannot revive
+    // them. Re-check leftAt under the lock: the pre-check above ran without
+    // one, so a session could have already been closed/renewed in the gap.
+    for (const session of staleSessions) {
+      await tx.participantSession.updateMany({
+        where: { id: session.id, leftAt: null },
+        data: {
+          leftAt: session.lastSeenAt,
+          durationSeconds: Math.max(0, Math.round((session.lastSeenAt.getTime() - session.joinedAt.getTime()) / 1000)),
+        },
       });
-      const previousRoom = await findActiveRoom(sessions);
-      if (previousRoom) {
-        const sameRoom = previousRoom.id === room.id;
-        throw new AdmissionError(409, sameRoom ? "ALREADY_IN_ROOM" : "ALREADY_IN_ANOTHER_ROOM",
-          sameRoom
-            ? "คุณอยู่ในห้องประชุมนี้แล้ว กรุณากลับไปใช้แท็บหรืออุปกรณ์เดิม"
-            : `คุณกำลังอยู่ในห้อง “${previousRoom.roomName}” กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้`);
-      }
-      // Retire stale sessions permanently so a delayed heartbeat cannot revive them.
-      for (const session of sessions) {
-        await tx.participantSession.update({
-          where: { id: session.id },
-          data: {
-            leftAt: session.lastSeenAt,
-            durationSeconds: Math.max(0, Math.round((session.lastSeenAt.getTime() - session.joinedAt.getTime()) / 1000)),
-          },
-        });
-      }
     }
 
     let meeting = await tx.meeting.findFirst({

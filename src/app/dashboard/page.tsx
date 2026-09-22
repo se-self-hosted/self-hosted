@@ -78,6 +78,8 @@ type MeetingDetails = {
     id: string;
     fileName: string;
     objectKey: string;
+    participantId: string;
+    startOffsetSeconds: number | null;
     durationSeconds: number | null;
     fileSize: string;
     mimeType: string;
@@ -137,6 +139,7 @@ export default function DashboardPage() {
 
   // Audio Player State
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const pendingSeekSecondsRef = useRef<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
@@ -271,12 +274,71 @@ export default function DashboardPage() {
   };
 
   const seekAudioToTime = (seconds: number) => {
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.currentTime = seconds;
+    const player = audioPlayerRef.current;
+    if (player) {
+      // A stale/underestimated durationSeconds can hand us a target past this
+      // track's real end; without this clamp the browser silently snaps it to
+      // the file's very end instead of erroring, which looks like "it plays
+      // right at the end".
+      player.currentTime = Number.isFinite(player.duration) && player.duration > 0
+        ? Math.min(Math.max(0, seconds), Math.max(0, player.duration - 0.05))
+        : seconds;
       if (!isPlaying) {
         playAudio();
       }
     }
+  };
+
+  // Transcript timestamps are meeting-elapsed seconds (anchored to Meeting.startedAt),
+  // while each recording file's own timeline starts at 0 from whenever that
+  // participant's recorder actually started — so we must pick the recording whose
+  // offset window contains the segment and subtract its startOffsetSeconds.
+  const findRecordingIndexForSegment = (seg: { participantId: string; startTime: number }) => {
+    if (!meetingDetails) return -1;
+
+    // Each participant records only their own mic, so a segment can only ever
+    // live in that same participant's recording(s) — never fall back to
+    // another speaker's track just because its time window happens to
+    // overlap; that plays the wrong person's voice.
+    const ownTracks = meetingDetails.recordings
+      .map((rec, index) => ({ rec, index }))
+      .filter(({ rec }) => rec.participantId === seg.participantId && rec.startOffsetSeconds !== null);
+    if (ownTracks.length === 0) return -1;
+
+    const containing = ownTracks.find(
+      ({ rec }) =>
+        seg.startTime >= rec.startOffsetSeconds! &&
+        (rec.durationSeconds == null || seg.startTime <= rec.startOffsetSeconds! + rec.durationSeconds),
+    );
+    if (containing) return containing.index;
+
+    const before = ownTracks
+      .filter(({ rec }) => rec.startOffsetSeconds! <= seg.startTime)
+      .sort((a, b) => b.rec.startOffsetSeconds! - a.rec.startOffsetSeconds!)[0];
+    return (before ?? ownTracks[0]).index;
+  };
+
+  const playSegment = (seg: { participantId: string; startTime: number }) => {
+    const index = findRecordingIndexForSegment(seg);
+    if (index === -1) {
+      setAudioError("ไม่พบไฟล์เสียงที่บันทึกไว้ของผู้พูดคนนี้");
+      return;
+    }
+    const recording = meetingDetails!.recordings[index];
+    const localTime = Math.max(0, seg.startTime - (recording.startOffsetSeconds ?? 0));
+
+    if (index === selectedRecordingIndex) {
+      seekAudioToTime(localTime);
+      return;
+    }
+
+    pendingSeekSecondsRef.current = localTime;
+    audioPlayerRef.current?.pause();
+    setSelectedRecordingIndex(index);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setAudioError("");
   };
 
   const toggleAudioPlay = () => {
@@ -822,6 +884,14 @@ export default function DashboardPage() {
                         onLoadedMetadata={(e) => {
                           const length = e.currentTarget.duration;
                           setDuration(Number.isFinite(length) ? length : 0);
+                          if (pendingSeekSecondsRef.current !== null) {
+                            const pending = pendingSeekSecondsRef.current;
+                            pendingSeekSecondsRef.current = null;
+                            e.currentTarget.currentTime = Number.isFinite(length) && length > 0
+                              ? Math.min(pending, Math.max(0, length - 0.05))
+                              : pending;
+                            void e.currentTarget.play().catch((error: unknown) => reportAudioError(error));
+                          }
                         }}
                         onDurationChange={(e) => {
                           const length = e.currentTarget.duration;
@@ -909,7 +979,7 @@ export default function DashboardPage() {
                         {meetingDetails.transcript.segments.map((seg) => (
                           <div
                             key={seg.id}
-                            onClick={() => seekAudioToTime(seg.startTime)}
+                            onClick={() => playSegment(seg)}
                             className="rounded-lg border border-slate-800 bg-slate-900/90 p-3 hover:border-indigo-500/40 hover:bg-slate-800/50 cursor-pointer transition group"
                           >
                             <div className="flex items-center justify-between text-xs mb-1">
