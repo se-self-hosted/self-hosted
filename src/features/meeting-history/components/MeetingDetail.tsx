@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
+import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
+import type { MeetingSummary } from "../types";
 
 type Session = {
   id: string;
@@ -45,6 +47,7 @@ type MeetingData = {
   durationSeconds: number | null;
   participants: Participant[];
   transcript: { segments: TranscriptSegment[] } | null;
+  summary: MeetingSummary | null;
   recordings: Recording[];
 };
 
@@ -301,7 +304,10 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         </div>
       </section>
 
-      {/* 3. Transcript */}
+      {/* 3. AI Summary */}
+      <MeetingSummaryDisplay summary={meeting.summary} />
+
+      {/* 4. Transcript */}
       {meeting.transcript && (
         <section className="card p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -343,7 +349,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         </section>
       )}
 
-      {/* 4. Recordings */}
+      {/* 5. Recordings */}
       {meeting.recordings.length > 0 && (
         <section className="card p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">

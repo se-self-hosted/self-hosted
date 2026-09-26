@@ -17,3 +17,12 @@ export type MeetingHistoryFilters = {
   from: string;
   to: string;
 };
+
+export type MeetingSummary = {
+  id: string;
+  aiSummary: string;
+  editedSummary: string | null;
+  llmModel: string;
+  generatedAt: string;
+  editedAt: string | null;
+};
