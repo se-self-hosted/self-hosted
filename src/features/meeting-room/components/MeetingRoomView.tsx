@@ -4,6 +4,7 @@ import { startLiveTranscription, type SpeechRecognizer } from "@/features/meetin
 import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
+import { createRecordingBus, type RecordingBus } from "@/features/meeting-room/lib/recording-bus";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -34,6 +35,8 @@ import {
   RemoteTrackPublication,
   RemoteTrack,
   LocalAudioTrack,
+  TrackEvent,
+  type LocalTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 
@@ -139,6 +142,7 @@ export function MeetingRoomView({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingBusRef = useRef<RecordingBus | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartOffsetRef = useRef<number | null>(null);
@@ -430,7 +434,9 @@ export function MeetingRoomView({
           setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
         } else if (data.type === "RECORDING_CONTROL") {
           if (data.action === "start") {
-            void startRecording();
+            // This listener is bound once at join, so its own `startRecording`
+            // would still see pre-join state (no room, no participant id).
+            void startRecordingRef.current();
           } else if (data.action === "stop") {
             stopRecording();
           }
@@ -603,14 +609,23 @@ export function MeetingRoomView({
   // 5. Start / Stop Audio Recording — each client records only its own mic,
   // so every speaker's words end up in their own separate file.
   const startRecording = async () => {
+    // Auto-record and a host "start" broadcast can both arrive; a second
+    // recorder would orphan the first, which then never stops or uploads.
+    if (mediaRecorderRef.current) return;
+    let bus: RecordingBus | undefined;
     try {
       audioChunksRef.current = [];
       recordingStartOffsetRef.current = meetingClockRef.current?.().elapsedSeconds ?? null;
 
-      const localTrack = livekitRoom?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack;
-      const stream = localTrack && localTrack.readyState === "live"
-        ? new MediaStream([localTrack])
-        : await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Record the bus, not the mic track itself: LiveKit swaps that track
+      // after join, and the effect below keeps the bus on the current one.
+      // Joining muted records silence rather than opening the mic behind
+      // LiveKit's back.
+      bus = createRecordingBus();
+      bus.setTrack(livekitRoom?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack);
+      await bus.resume();
+      const recordingBus = bus;
+      const stream = bus.stream;
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -658,12 +673,15 @@ export function MeetingRoomView({
         } catch (uploadErr) {
           console.error("Recording upload error:", uploadErr);
         } finally {
+          recordingBus.close();
+          if (recordingBusRef.current === recordingBus) recordingBusRef.current = null;
           resolvePendingUpload?.();
         }
       };
 
       recorder.start(1000);
       mediaRecorderRef.current = recorder;
+      recordingBusRef.current = recordingBus;
       setIsRecording(true);
       setRecordingSeconds(0);
 
@@ -673,10 +691,40 @@ export function MeetingRoomView({
 
       showToast("เริ่มบันทึกเสียงการประชุมแล้ว");
     } catch (err) {
+      bus?.close();
       console.error("Failed to start recording:", err);
       showToast("ไม่สามารถเริ่มบันทึกเสียงได้");
     }
   };
+  const startRecordingRef = useRef(startRecording);
+  useEffect(() => {
+    startRecordingRef.current = startRecording;
+  });
+
+  // Follow the local mic while recording: publish/unpublish (mute toggles),
+  // LiveKit restarts, and the RNNoise processor swap all change which
+  // MediaStreamTrack carries the audio.
+  useEffect(() => {
+    const bus = recordingBusRef.current;
+    if (!isRecording || !livekitRoom || !bus) return;
+    const localParticipant = livekitRoom.localParticipant;
+    let micTrack: LocalTrack | undefined;
+    const sync = () => {
+      const next = localParticipant.getTrackPublication(Track.Source.Microphone)?.track;
+      if (next !== micTrack) {
+        micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
+        micTrack = next;
+        micTrack?.on(TrackEvent.Restarted, sync).on(TrackEvent.TrackProcessorUpdate, sync);
+      }
+      bus.setTrack(micTrack?.mediaStreamTrack);
+    };
+    sync();
+    livekitRoom.on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync);
+    return () => {
+      livekitRoom.off(RoomEvent.LocalTrackPublished, sync).off(RoomEvent.LocalTrackUnpublished, sync);
+      micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
+    };
+  }, [isRecording, livekitRoom]);
 
   // Host-triggered: every participant's client records only its own mic,
   // so the meeting ends up with one file per speaker instead of one mixed file.
