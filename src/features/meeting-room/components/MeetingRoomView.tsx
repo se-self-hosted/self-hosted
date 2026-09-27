@@ -149,7 +149,7 @@ export function MeetingRoomView({
   // 6. Transcript Timeline State
   const [transcriptSegments, setTranscriptSegments] = useState<LiveTranscriptSegment[]>([]);
   const [showTranscriptPanel, setShowTranscriptPanel] = useState(false);
-  const transcriptBottomRef = useRef<HTMLDivElement>(null);
+  const transcriptListRef = useRef<HTMLDivElement>(null);
   const [interimTranscript, setInterimTranscript] = useState("");
 
   // Container ref for attaching remote audio elements
@@ -593,12 +593,14 @@ export function MeetingRoomView({
     return () => { cancelled = true; clearInterval(interval); };
   }, [releaseSession, stopRecording]);
 
-  // Auto-scroll transcript when new segments arrive
+  // Keep the newest segment and the growing interim draft in view. Scroll the
+  // list itself — scrollIntoView would also scroll the page behind the panel.
   useEffect(() => {
-    if (showTranscriptPanel && transcriptBottomRef.current) {
-      transcriptBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    const list = transcriptListRef.current;
+    if (showTranscriptPanel && list) {
+      list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
     }
-  }, [transcriptSegments, showTranscriptPanel]);
+  }, [transcriptSegments, interimTranscript, showTranscriptPanel]);
 
   // 5. Start / Stop Audio Recording — each client records only its own mic,
   // so every speaker's words end up in their own separate file.
@@ -752,14 +754,7 @@ export function MeetingRoomView({
       confidence: Number(confidence.toFixed(2)),
     };
 
-    // Sort chronologically
-    setTranscriptSegments((prev) => {
-      const next = [...prev, newSegment];
-      return next.sort((a, b) => {
-        if (a.startTime !== b.startTime) return a.startTime - b.startTime;
-        return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
-      });
-    });
+    setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [newSegment]));
 
     // Broadcast across LiveKit Data Channel
     if (livekitRoom?.localParticipant) {
@@ -1316,7 +1311,7 @@ export function MeetingRoomView({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref={transcriptListRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {transcriptSegments.map((seg) => (
               <div
                 key={seg.id}
@@ -1336,7 +1331,6 @@ export function MeetingRoomView({
                 <p>{interimTranscript}</p>
               </div>
             )}
-            <div ref={transcriptBottomRef} />
           </div>
         </section>
       )}
