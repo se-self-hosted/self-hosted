@@ -406,6 +406,18 @@
   .meeting-summary__model {
     @apply w-fit rounded-full border border-[#4b5870] bg-[#111c30] px-2.5 py-1 text-xs text-[#aebbd0];
   }
+  .meeting-summary__actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  .meeting-summary__regenerate {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#596d8d] bg-[#26354b] px-3 text-xs font-semibold text-[#d8e2f0] transition-colors hover:bg-[#3a4d6a] hover:text-white disabled:cursor-not-allowed disabled:border-[#3b475b] disabled:bg-[#202c40] disabled:text-[#7183a2];
+  }
+  .meeting-summary__notice {
+    @apply mt-3 text-xs text-[#8493ac];
+  }
+  .meeting-summary__error {
+    @apply mt-3 text-xs text-red-300;
+  }
   .meeting-summary__content {
     @apply mt-6 whitespace-pre-wrap break-words text-sm leading-7 text-[#e5eaf2];
   }
