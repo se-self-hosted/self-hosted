@@ -406,6 +406,15 @@
   .meeting-summary__model {
     @apply w-fit rounded-full border border-[#4b5870] bg-[#111c30] px-2.5 py-1 text-xs text-[#aebbd0];
   }
+  .meeting-summary__actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  .meeting-summary__export {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#596d8d] bg-[#26354b] px-3 text-xs font-semibold text-[#d8e2f0] transition-colors hover:bg-[#3a4d6a] hover:text-white;
+  }
+  .meeting-summary__export-error {
+    @apply mt-4 text-sm text-red-300;
+  }
   .meeting-summary__content {
     @apply mt-6 whitespace-pre-wrap break-words text-sm leading-7 text-[#e5eaf2];
   }
@@ -429,6 +438,51 @@
   }
   .meeting-summary__empty-description {
     @apply mt-1 text-xs leading-5;
+  }
+
+  @media print {
+    html.summary-export-printing .meeting-detail__content > :not(.meeting-summary) {
+      display: none;
+    }
+    html.summary-export-printing body * {
+      visibility: hidden;
+    }
+    html.summary-export-printing .meeting-summary,
+    html.summary-export-printing .meeting-summary * {
+      visibility: visible;
+    }
+    html.summary-export-printing .meeting-summary {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      overflow: visible;
+      border: 0;
+      background: #fff;
+      color: #111827;
+      box-shadow: none;
+      font-family: Tahoma, "Noto Sans Thai", Arial, sans-serif;
+    }
+    html.summary-export-printing .meeting-summary__title,
+    html.summary-export-printing .meeting-summary__content,
+    html.summary-export-printing .meeting-summary__metadata dd {
+      color: #111827;
+    }
+    html.summary-export-printing .meeting-summary__subtitle,
+    html.summary-export-printing .meeting-summary__metadata dt {
+      color: #4b5563;
+    }
+    html.summary-export-printing .meeting-summary__content {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    html.summary-export-printing .meeting-summary__actions,
+    html.summary-export-printing .meeting-summary__export-error {
+      display: none;
+    }
+    html.summary-export-printing .meeting-summary__metadata {
+      break-inside: avoid;
+      border-color: #d1d5db;
+    }
   }
   /* ---------- meeting room lobby ---------- */
   .meeting-lobby,

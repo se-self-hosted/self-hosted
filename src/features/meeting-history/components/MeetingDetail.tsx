@@ -305,7 +305,11 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
       </section>
 
       {/* 3. AI Summary */}
-      <MeetingSummaryDisplay summary={meeting.summary} />
+      <MeetingSummaryDisplay
+        summary={meeting.summary}
+        roomName={meeting.roomName}
+        startedAt={meeting.startedAt}
+      />
 
       {/* 4. Transcript */}
       {meeting.transcript && (

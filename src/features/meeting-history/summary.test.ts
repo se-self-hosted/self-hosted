@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { selectMeetingSummaryContent } from "./summary.ts";
+import { createSummaryPdfFilename, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -40,4 +40,18 @@ test("preserves multiline Thai and English summary content", () => {
 
   assert.ok(displayedSummary);
   assert.equal(displayedSummary.content, content);
+});
+
+test("creates a meeting-specific PDF filename while preserving Thai", () => {
+  assert.equal(
+    createSummaryPdfFilename("ประชุมทีม: Sprint / Review", "2026-09-27T02:00:00.000Z"),
+    "ประชุมทีม- Sprint - Review-2026-09-27-summary.pdf",
+  );
+});
+
+test("creates a safe fallback PDF filename", () => {
+  assert.equal(
+    createSummaryPdfFilename("  <>:\"/\\|?*...  ", "not-a-date"),
+    "meeting-summary-undated-summary.pdf",
+  );
 });

@@ -1,9 +1,14 @@
-import { Bot, FileText } from "lucide-react";
-import { selectMeetingSummaryContent } from "../summary";
+"use client";
+
+import { useState } from "react";
+import { Bot, Download, FileText } from "lucide-react";
+import { createSummaryPdfFilename, selectMeetingSummaryContent } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
+  roomName: string;
+  startedAt: string;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", {
@@ -12,7 +17,9 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeZone: "Asia/Bangkok",
 });
 
-export function MeetingSummaryDisplay({ summary }: MeetingSummaryDisplayProps) {
+export function MeetingSummaryDisplay({ summary, roomName, startedAt }: MeetingSummaryDisplayProps) {
+  const [exportError, setExportError] = useState("");
+
   if (!summary) {
     return (
       <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
@@ -35,6 +42,31 @@ export function MeetingSummaryDisplay({ summary }: MeetingSummaryDisplayProps) {
   const displayedSummary = selectMeetingSummaryContent(summary);
   if (!displayedSummary) return null;
 
+  function exportPdf() {
+    const previousTitle = document.title;
+    const printClass = "summary-export-printing";
+    let cleanedUp = false;
+
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      document.documentElement.classList.remove(printClass);
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    setExportError("");
+    try {
+      document.title = createSummaryPdfFilename(roomName, startedAt).replace(/\.pdf$/i, "");
+      document.documentElement.classList.add(printClass);
+      window.addEventListener("afterprint", cleanup);
+      window.print();
+    } catch {
+      cleanup();
+      setExportError("ไม่สามารถเปิดหน้าต่างส่งออก PDF ได้ กรุณาลองอีกครั้ง");
+    }
+  }
+
   return (
     <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
       <div className="meeting-summary__header">
@@ -46,8 +78,23 @@ export function MeetingSummaryDisplay({ summary }: MeetingSummaryDisplayProps) {
             {displayedSummary.source === "edited" ? "ฉบับแก้ไข" : "สร้างจากบทสนทนาการประชุม"}
           </p>
         </div>
-        <span className="meeting-summary__model">{summary.llmModel}</span>
+        <div className="meeting-summary__actions">
+          <span className="meeting-summary__model">{summary.llmModel}</span>
+          <button
+            type="button"
+            className="meeting-summary__export focus-ring"
+            onClick={exportPdf}
+            aria-describedby="meeting-summary-export-help"
+          >
+            <Download aria-hidden="true" className="icon-14" /> ส่งออก PDF
+          </button>
+        </div>
       </div>
+
+      <p id="meeting-summary-export-help" className="sr-only">
+        เปิดหน้าต่างพิมพ์เพื่อบันทึกสรุปการประชุมเป็นไฟล์ PDF
+      </p>
+      {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
 
       <p className="meeting-summary__content">{displayedSummary.content}</p>
 
