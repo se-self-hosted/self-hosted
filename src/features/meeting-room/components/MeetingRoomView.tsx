@@ -4,6 +4,8 @@ import { startLiveTranscription, type SpeechRecognizer } from "@/features/meetin
 import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
+import { saveTranscriptSegment } from "@/features/meeting-room/lib/transcript-save";
+import { createRecordingBus, type RecordingBus } from "@/features/meeting-room/lib/recording-bus";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -34,8 +36,21 @@ import {
   RemoteTrackPublication,
   RemoteTrack,
   LocalAudioTrack,
+  TrackEvent,
+  type LocalTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
+
+// Our token route writes this metadata and grants no canUpdateOwnMetadata,
+// so a participant can't claim to be the host by rewriting their own.
+function isHostParticipant(participant?: Participant) {
+  if (!participant?.metadata) return false;
+  try {
+    return JSON.parse(participant.metadata).isHost === true;
+  } catch {
+    return false;
+  }
+}
 
 type MeetingRoomProps = {
   room: {
@@ -114,6 +129,9 @@ export function MeetingRoomView({
   const joiningRef = useRef(false);
   const mountedRef = useRef(true);
   const activeSessionRef = useRef<{ connectionId: string; roomHash: string; room?: Room } | null>(null);
+  // Proves this client's participant id to the API. Unlike activeSessionRef
+  // it outlives leaving, so saves still in flight then can finish.
+  const connectionIdRef = useRef<string | null>(null);
 
   const releaseSession = useCallback(async () => {
     const session = activeSessionRef.current;
@@ -139,10 +157,17 @@ export function MeetingRoomView({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // Set while startRecording awaits the audio graph, before mediaRecorderRef
+  // exists; a stop in that window cancels the start instead of missing it.
+  const recordingStartRef = useRef<{ cancelled: boolean } | null>(null);
+  const recordingBusRef = useRef<RecordingBus | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartOffsetRef = useRef<number | null>(null);
-  const autoRecordStartedRef = useRef(false);
+  // Host "start" requests received vs. acted on: a late joiner can receive one
+  // mid-join, before its room and mic are ready, so starting waits for the join.
+  const [recordStartRequests, setRecordStartRequests] = useState(0);
+  const handledRecordStartsRef = useRef(0);
   const pendingUploadResolveRef = useRef<(() => void) | null>(null);
   const recordingDurationOverrideRef = useRef<number | null>(null);
 
@@ -230,6 +255,7 @@ export function MeetingRoomView({
 
       const session = { connectionId: dbData.connectionId, roomHash: room.roomHash, room: undefined as Room | undefined };
       activeSessionRef.current = session;
+      connectionIdRef.current = dbData.connectionId;
       if (!mountedRef.current) return;
       meetingClockRef.current = createMeetingClock(dbData.meetingStartedAt, dbData.serverNow);
       setParticipantId(dbData.participantId);
@@ -378,15 +404,40 @@ export function MeetingRoomView({
     // Participant Connected
     lkRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
       updateRemoteParticipant(participant);
+      // Each client records its own mic, so someone joining mid-recording
+      // must be told to start theirs.
+      if (isHost && (mediaRecorderRef.current || recordingStartRef.current)) {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({ type: "RECORDING_CONTROL", action: "start" }),
+        );
+        lkRoom.localParticipant
+          .publishData(payload, { reliable: true, destinationIdentities: [participant.identity] })
+          .catch((e) => console.error("Broadcast recording control error:", e));
+      }
     });
 
     // Participant Disconnected
+    // Drop a start still waiting on the join, and stop any recording.
+    const stopRecordingForHost = () => {
+      handledRecordStartsRef.current = 0;
+      setRecordStartRequests(0);
+      stopRecording();
+    };
+
     lkRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
       setRemoteParticipantsMap((prev) => {
         const next = new Map(prev);
         next.delete(participant.identity);
         return next;
       });
+      // Recording follows the host: its own recorder stops when it drops, and
+      // on rejoin it shows "not recording" and tells no late joiner to start.
+      // Members stop too, so the room never ends up half recorded.
+      if (isHostParticipant(participant)) {
+        const wasRecording = Boolean(mediaRecorderRef.current || recordingStartRef.current);
+        stopRecordingForHost();
+        if (wasRecording) showToast("ผู้จัดประชุมออกจากห้อง การบันทึกเสียงจึงหยุดลง");
+      }
     });
 
     // Track Subscribed (Attach Audio)
@@ -420,22 +471,25 @@ export function MeetingRoomView({
     });
 
     // Data Received (Host Mute Remote Command & Live Transcript Broadcast)
-    lkRoom.on(RoomEvent.DataReceived, (payload: Uint8Array) => {
+    lkRoom.on(RoomEvent.DataReceived, (payload: Uint8Array, sender?: RemoteParticipant) => {
       try {
         const decoder = new TextDecoder();
         const data = JSON.parse(decoder.decode(payload));
-        if (data.type === "MUTE_PARTICIPANT" && data.targetIdentity === localId) {
+        // Every token may publish data, so commands must come from the host
+        // and a transcript line from the speaker it names.
+        const fromHost = isHostParticipant(sender);
+        if (data.type === "MUTE_PARTICIPANT" && data.targetIdentity === localId && fromHost) {
           // Mute local mic automatically
           void lkRoom.localParticipant.setMicrophoneEnabled(false);
           setIsMicrophoneMuted(true);
           showToast("ผู้จัดประชุม (Host) ได้ปิดไมโครโฟนของคุณแล้ว");
-        } else if (data.type === "TRANSCRIPT_SEGMENT" && data.segment) {
+        } else if (data.type === "TRANSCRIPT_SEGMENT" && data.segment && data.segment.participantId === sender?.identity) {
           setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
-        } else if (data.type === "RECORDING_CONTROL") {
+        } else if (data.type === "RECORDING_CONTROL" && fromHost) {
           if (data.action === "start") {
-            void startRecording();
+            setRecordStartRequests((n) => n + 1);
           } else if (data.action === "stop") {
-            stopRecording();
+            stopRecordingForHost();
           }
         }
       } catch (e) {
@@ -528,7 +582,7 @@ export function MeetingRoomView({
       ? `${baseUrl}?participantId=${encodeURIComponent(participantId)}`
       : baseUrl;
 
-    fetch(targetUrl)
+    fetch(targetUrl, { headers: { "x-connection-id": connectionIdRef.current ?? "" } })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { segments?: LiveTranscriptSegment[] } | null) => {
         if (data?.segments && Array.isArray(data.segments)) {
@@ -543,6 +597,13 @@ export function MeetingRoomView({
   // wait for the MinIO upload instead of cancelling it mid-flight.
   const stopRecording = useCallback(() => {
     return new Promise<void>((resolve) => {
+      // Cancel a start still waiting on the audio graph, and release the ref
+      // now: that start holds its own handle, and keeping the ref set until
+      // it settles would make a quick restart look like a duplicate start.
+      if (recordingStartRef.current) {
+        recordingStartRef.current.cancelled = true;
+        recordingStartRef.current = null;
+      }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         // Derive duration from the meeting clock (same clock transcript
         // timestamps use), not the setInterval counter below — background
@@ -615,14 +676,30 @@ export function MeetingRoomView({
   // 5. Start / Stop Audio Recording — each client records only its own mic,
   // so every speaker's words end up in their own separate file.
   const startRecording = async () => {
+    // A repeated host "start" (a rejoin, a double click) must not open a
+    // second recorder: it would orphan the first, which then never stops or
+    // uploads.
+    if (mediaRecorderRef.current || recordingStartRef.current) return;
+    const start = { cancelled: false };
+    recordingStartRef.current = start;
+    let bus: RecordingBus | undefined;
     try {
       audioChunksRef.current = [];
       recordingStartOffsetRef.current = meetingClockRef.current?.().elapsedSeconds ?? null;
 
-      const localTrack = livekitRoom?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack;
-      const stream = localTrack && localTrack.readyState === "live"
-        ? new MediaStream([localTrack])
-        : await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Record the bus, not the mic track itself: LiveKit swaps that track
+      // after join, and the effect below keeps the bus on the current one.
+      // Joining muted records silence rather than opening the mic behind
+      // LiveKit's back.
+      bus = createRecordingBus();
+      bus.setTrack(livekitRoom?.localParticipant.getTrackPublication(Track.Source.Microphone)?.audioTrack?.mediaStreamTrack);
+      await bus.resume();
+      if (start.cancelled) {
+        bus.close();
+        return;
+      }
+      const recordingBus = bus;
+      const stream = bus.stream;
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -662,6 +739,9 @@ export function MeetingRoomView({
 
           const res = await fetch(targetUrl, {
             method: "POST",
+            // Headers, not just form fields: the server checks access before
+            // reading a possibly long upload.
+            headers: { "x-connection-id": connectionIdRef.current ?? "", "x-participant-id": participantId || "" },
             body: formData,
           });
           if (res.ok) {
@@ -670,12 +750,15 @@ export function MeetingRoomView({
         } catch (uploadErr) {
           console.error("Recording upload error:", uploadErr);
         } finally {
+          recordingBus.close();
+          if (recordingBusRef.current === recordingBus) recordingBusRef.current = null;
           resolvePendingUpload?.();
         }
       };
 
       recorder.start(1000);
       mediaRecorderRef.current = recorder;
+      recordingBusRef.current = recordingBus;
       setIsRecording(true);
       setRecordingSeconds(0);
 
@@ -685,10 +768,38 @@ export function MeetingRoomView({
 
       showToast("เริ่มบันทึกเสียงการประชุมแล้ว");
     } catch (err) {
+      bus?.close();
       console.error("Failed to start recording:", err);
       showToast("ไม่สามารถเริ่มบันทึกเสียงได้");
+    } finally {
+      if (recordingStartRef.current === start) recordingStartRef.current = null;
     }
   };
+
+  // Follow the local mic while recording: publish/unpublish (mute toggles),
+  // LiveKit restarts, and the RNNoise processor swap all change which
+  // MediaStreamTrack carries the audio.
+  useEffect(() => {
+    const bus = recordingBusRef.current;
+    if (!isRecording || !livekitRoom || !bus) return;
+    const localParticipant = livekitRoom.localParticipant;
+    let micTrack: LocalTrack | undefined;
+    const sync = () => {
+      const next = localParticipant.getTrackPublication(Track.Source.Microphone)?.track;
+      if (next !== micTrack) {
+        micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
+        micTrack = next;
+        micTrack?.on(TrackEvent.Restarted, sync).on(TrackEvent.TrackProcessorUpdate, sync);
+      }
+      bus.setTrack(micTrack?.mediaStreamTrack);
+    };
+    sync();
+    livekitRoom.on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync);
+    return () => {
+      livekitRoom.off(RoomEvent.LocalTrackPublished, sync).off(RoomEvent.LocalTrackUnpublished, sync);
+      micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
+    };
+  }, [isRecording, livekitRoom]);
 
   // Host-triggered: every participant's client records only its own mic,
   // so the meeting ends up with one file per speaker instead of one mixed file.
@@ -710,14 +821,14 @@ export function MeetingRoomView({
     }
   };
 
-  // Recording is always on from the start of the meeting: every participant's
-  // client records its own mic as soon as it joins, no host action required.
+  // Recording starts only when the host presses record; members follow the
+  // host's "start" once their own join has finished.
   useEffect(() => {
-    if (!hasJoined || !livekitRoom || autoRecordStartedRef.current) return;
-    autoRecordStartedRef.current = true;
+    if (recordStartRequests === handledRecordStartsRef.current || !hasJoined || !livekitRoom) return;
+    handledRecordStartsRef.current = recordStartRequests;
     void startRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJoined, livekitRoom]);
+  }, [recordStartRequests, hasJoined, livekitRoom]);
 
   // Read the active connection from a ref: state changes must never end a session.
   useEffect(() => {
@@ -778,20 +889,22 @@ export function MeetingRoomView({
       }
     }
 
-    // Persist to database
-    try {
-      const targetUrl = meetingId
-        ? `/api/meetings/${meetingId}/transcript`
-        : `/api/rooms/${room?.roomHash}/transcript`;
-
-      const response = await fetch(targetUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSegment),
-      });
-      if (!response.ok) throw new Error(`Transcript save failed: ${response.status}`);
-    } catch (err) {
-      console.error("Save transcript segment error:", err);
+    // Persist to database. Everyone has already seen this line live, so a
+    // failed save is retried rather than silently missing from the history.
+    const targetUrl = meetingId
+      ? `/api/meetings/${meetingId}/transcript`
+      : `/api/rooms/${room?.roomHash}/transcript`;
+    const request: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-connection-id": connectionIdRef.current ?? "" },
+      body: JSON.stringify(newSegment),
+      // Lets a line spoken just before the tab closes still reach the server.
+      keepalive: true,
+    };
+    const saved = await saveTranscriptSegment(() => fetch(targetUrl, request));
+    if (!saved) {
+      console.error("Save transcript segment failed:", newSegment.id);
+      showToast("บันทึกข้อความถอดเสียงไม่สำเร็จ บางประโยคอาจไม่อยู่ในประวัติการประชุม");
     }
   }, [participantId, displayName, livekitRoom, meetingId, room]);
 
@@ -1389,15 +1502,6 @@ export function MeetingRoomView({
               <Disc aria-hidden="true" className="icon-20 text-red-400" />
             )}
           </button>
-        )}
-        {!isHost && isRecording && (
-          <div
-            className="meeting-control meeting-control--muted"
-            title="ผู้จัดประชุมกำลังบันทึกเสียงอยู่"
-            aria-label="กำลังบันทึกเสียง"
-          >
-            <Disc aria-hidden="true" className="icon-20 animate-pulse text-red-500" />
-          </div>
         )}
 
         {/* Live Transcript Drawer Button */}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { uploadRecording, getRecordingPresignedUrl } from "@/lib/storage";
 import { transcodeToMp3, probeDurationSeconds } from "@/lib/audio-transcode";
 import { randomUUID } from "crypto";
-import { resolveMeetingAccess } from "@/lib/meeting-access";
+import { LEAVE_GRACE_MS, resolveMeetingAccess } from "@/lib/meeting-access";
 
 export async function GET(
   req: Request,
@@ -12,7 +12,10 @@ export async function GET(
   try {
     const { id: meetingId } = await params;
     const participantId = new URL(req.url).searchParams.get("participantId");
-    const access = await resolveMeetingAccess(meetingId, participantId);
+    const access = await resolveMeetingAccess(meetingId, {
+      participantId,
+      connectionId: req.headers.get("x-connection-id"),
+    });
 
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
@@ -67,6 +70,20 @@ export async function POST(
 ) {
   try {
     const { id: meetingId } = await params;
+    const connectionId = req.headers.get("x-connection-id");
+    const checkAccess = (participantId: string | null) =>
+      resolveMeetingAccess(meetingId, { participantId, connectionId }, { leftGraceMs: LEAVE_GRACE_MS });
+
+    // Check before reading the body: a long meeting's upload can outlast the
+    // uploader's session, e.g. when the host ends the meeting mid-upload.
+    const headerParticipantId = req.headers.get("x-participant-id");
+    let access = await checkAccess(headerParticipantId);
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.allowed && headerParticipantId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const contentType = req.headers.get("content-type") || "";
 
@@ -82,7 +99,7 @@ export async function POST(
       const file = formData.get("file") as File | null;
       const durationParam = formData.get("durationSeconds");
       const startOffsetParam = formData.get("startOffsetSeconds");
-      participantId = (formData.get("participantId") as string | null) || null;
+      participantId = (formData.get("participantId") as string | null) || headerParticipantId;
 
       if (!file) {
         return NextResponse.json({ error: "Audio file is required in 'file' field" }, { status: 400 });
@@ -109,10 +126,14 @@ export async function POST(
       if (customFileName) fileName = customFileName;
       const customDuration = req.headers.get("x-duration-seconds");
       if (customDuration) durationSeconds = parseInt(customDuration, 10) || null;
-      participantId = req.headers.get("x-participant-id");
+      participantId = headerParticipantId;
     }
 
-    const access = await resolveMeetingAccess(meetingId, participantId);
+    // The recording is stored under the body's participant id, so that is
+    // the one the caller must have proven.
+    if (participantId !== headerParticipantId) {
+      access = await checkAccess(participantId);
+    }
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
