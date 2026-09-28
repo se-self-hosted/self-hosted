@@ -594,7 +594,13 @@ export function MeetingRoomView({
   // wait for the MinIO upload instead of cancelling it mid-flight.
   const stopRecording = useCallback(() => {
     return new Promise<void>((resolve) => {
-      if (recordingStartRef.current) recordingStartRef.current.cancelled = true;
+      // Cancel a start still waiting on the audio graph, and release the ref
+      // now: that start holds its own handle, and keeping the ref set until
+      // it settles would make a quick restart look like a duplicate start.
+      if (recordingStartRef.current) {
+        recordingStartRef.current.cancelled = true;
+        recordingStartRef.current = null;
+      }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         // Derive duration from the meeting clock (same clock transcript
         // timestamps use), not the setInterval counter below — background

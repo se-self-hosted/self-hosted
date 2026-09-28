@@ -16,9 +16,11 @@ export const LEAVE_GRACE_MS = 60_000;
  * The participant id alone proves nothing: it is also the LiveKit identity,
  * visible to everyone in the room.
  *
- * `leftGraceMs` also admits a session that ended within that window, so
+ * `leftGraceMs` also admits a session last seen within that window, so
  * writes still in flight when someone leaves (their last transcript line)
- * are not rejected.
+ * are not rejected. It counts from the last heartbeat, not from leftAt: a
+ * stale session not yet retired has no leftAt, and a retired one has leftAt
+ * backdated to that heartbeat.
  */
 export async function resolveMeetingAccess(
   meetingId: string,
@@ -50,7 +52,7 @@ export async function resolveMeetingAccess(
         participant: { meetingId },
         OR: [
           activeSessionWhereClause(),
-          ...(leftGraceMs > 0 ? [{ leftAt: { gte: new Date(Date.now() - leftGraceMs) } }] : []),
+          ...(leftGraceMs > 0 ? [{ lastSeenAt: { gte: new Date(Date.now() - leftGraceMs) } }] : []),
         ],
       },
     });
