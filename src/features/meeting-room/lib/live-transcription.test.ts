@@ -64,6 +64,61 @@ test("keeps intentionally repeated speech and does not invent confidence", () =>
   h.stop(); h.recognition.onend?.();
 });
 
+test("a final with no observed onset does not reuse a stale start time", () => {
+  const h = setup();
+  h.elapsed(12);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("สวัสดี", true)] });
+  // Minutes of silence, then a short reply that is finalized with no interim first.
+  h.elapsed(200);
+  h.recognition.onresult?.({ resultIndex: 1, results: [result("สวัสดี", true), result("ครับ", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ครับ", 197, 3, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("a speechstart long before a draft-less final does not stretch the segment", () => {
+  const h = setup();
+  // Noise fires speechstart, no result follows, and minutes later a short
+  // reply is finalized with no draft first.
+  h.elapsed(12);
+  h.recognition.onspeechstart?.();
+  h.elapsed(200);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ครับ", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ครับ", 197, 3, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("a speechstart just before a draft-less final is kept as its start", () => {
+  const h = setup();
+  h.elapsed(40);
+  h.recognition.onspeechstart?.();
+  h.elapsed(41.5);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ครับ", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ครับ", 40, 1.5, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("a final after an observed onset keeps the full utterance length", () => {
+  const h = setup();
+  h.elapsed(100);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ประโยค", false)] });
+  h.elapsed(120);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ประโยคยาวมาก", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ประโยคยาวมาก", 100, 20, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("a draft that follows a final in the same event keeps its start time", () => {
+  const h = setup();
+  h.elapsed(50);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("หนึ่ง", false)] });
+  h.elapsed(55);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("หนึ่ง", true), result("สอง", false)] });
+  h.elapsed(65);
+  h.recognition.onresult?.({ resultIndex: 1, results: [result("หนึ่ง", true), result("สองยาว", true)] });
+  assert.deepEqual(h.finals, [["หนึ่ง", 50, 5, 0], ["สองยาว", 55, 10, 0]]);
+  h.stop(); h.recognition.onend?.();
+});
+
 test("mute drains the last final result without restarting", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   const h = setup();

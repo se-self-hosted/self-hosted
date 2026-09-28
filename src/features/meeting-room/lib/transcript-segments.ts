@@ -1,9 +1,14 @@
 type SortableTranscriptSegment = {
   id: string;
-  startTime: number;
+  endTime: number;
   spokenAt: string;
 };
 
+/**
+ * Orders the live panel like a chat: by when each utterance finished, so a new
+ * final result always lands at the bottom even if its speech began before
+ * segments other speakers finished in the meantime.
+ */
 export function mergeTranscriptSegments<T extends SortableTranscriptSegment>(
   current: readonly T[],
   incoming: readonly T[],
@@ -18,7 +23,7 @@ export function mergeTranscriptSegments<T extends SortableTranscriptSegment>(
   }
 
   return merged.sort((a, b) => {
-    if (a.startTime !== b.startTime) return a.startTime - b.startTime;
+    if (a.endTime !== b.endTime) return a.endTime - b.endTime;
     return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
   });
 }
