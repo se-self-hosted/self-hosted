@@ -146,7 +146,10 @@ export function MeetingRoomView({
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartOffsetRef = useRef<number | null>(null);
-  const autoRecordStartedRef = useRef(false);
+  // Host "start" requests received vs. acted on: a late joiner can receive one
+  // mid-join, before its room and mic are ready, so starting waits for the join.
+  const [recordStartRequests, setRecordStartRequests] = useState(0);
+  const handledRecordStartsRef = useRef(0);
   const pendingUploadResolveRef = useRef<(() => void) | null>(null);
   const recordingDurationOverrideRef = useRef<number | null>(null);
 
@@ -379,6 +382,16 @@ export function MeetingRoomView({
     // Participant Connected
     lkRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
       updateRemoteParticipant(participant);
+      // Each client records its own mic, so someone joining mid-recording
+      // must be told to start theirs.
+      if (isHost && mediaRecorderRef.current) {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({ type: "RECORDING_CONTROL", action: "start" }),
+        );
+        lkRoom.localParticipant
+          .publishData(payload, { reliable: true, destinationIdentities: [participant.identity] })
+          .catch((e) => console.error("Broadcast recording control error:", e));
+      }
     });
 
     // Participant Disconnected
@@ -434,10 +447,11 @@ export function MeetingRoomView({
           setTranscriptSegments((prev) => mergeTranscriptSegments(prev, [data.segment]));
         } else if (data.type === "RECORDING_CONTROL") {
           if (data.action === "start") {
-            // This listener is bound once at join, so its own `startRecording`
-            // would still see pre-join state (no room, no participant id).
-            void startRecordingRef.current();
+            setRecordStartRequests((n) => n + 1);
           } else if (data.action === "stop") {
+            // Drop a start still waiting on the join.
+            handledRecordStartsRef.current = 0;
+            setRecordStartRequests(0);
             stopRecording();
           }
         }
@@ -609,8 +623,8 @@ export function MeetingRoomView({
   // 5. Start / Stop Audio Recording — each client records only its own mic,
   // so every speaker's words end up in their own separate file.
   const startRecording = async () => {
-    // Auto-record and a host "start" broadcast can both arrive; a second
-    // recorder would orphan the first, which then never stops or uploads.
+    // A repeated host "start" (e.g. a rejoin) must not open a second
+    // recorder: it would orphan the first, which then never stops or uploads.
     if (mediaRecorderRef.current) return;
     let bus: RecordingBus | undefined;
     try {
@@ -696,10 +710,6 @@ export function MeetingRoomView({
       showToast("ไม่สามารถเริ่มบันทึกเสียงได้");
     }
   };
-  const startRecordingRef = useRef(startRecording);
-  useEffect(() => {
-    startRecordingRef.current = startRecording;
-  });
 
   // Follow the local mic while recording: publish/unpublish (mute toggles),
   // LiveKit restarts, and the RNNoise processor swap all change which
@@ -746,14 +756,14 @@ export function MeetingRoomView({
     }
   };
 
-  // Recording is always on from the start of the meeting: every participant's
-  // client records its own mic as soon as it joins, no host action required.
+  // Recording starts only when the host presses record; members follow the
+  // host's "start" once their own join has finished.
   useEffect(() => {
-    if (!hasJoined || !livekitRoom || autoRecordStartedRef.current) return;
-    autoRecordStartedRef.current = true;
+    if (recordStartRequests === handledRecordStartsRef.current || !hasJoined || !livekitRoom) return;
+    handledRecordStartsRef.current = recordStartRequests;
     void startRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJoined, livekitRoom]);
+  }, [recordStartRequests, hasJoined, livekitRoom]);
 
   // Read the active connection from a ref: state changes must never end a session.
   useEffect(() => {
