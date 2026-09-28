@@ -4,6 +4,7 @@ import { startLiveTranscription, type SpeechRecognizer } from "@/features/meetin
 import { createMeetingClock } from "@/features/meeting-room/lib/meeting-clock";
 import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
+import { saveTranscriptSegment } from "@/features/meeting-room/lib/transcript-save";
 import { createRecordingBus, type RecordingBus } from "@/features/meeting-room/lib/recording-bus";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -117,6 +118,9 @@ export function MeetingRoomView({
   const joiningRef = useRef(false);
   const mountedRef = useRef(true);
   const activeSessionRef = useRef<{ connectionId: string; roomHash: string; room?: Room } | null>(null);
+  // Proves this client's participant id to the API. Unlike activeSessionRef
+  // it outlives leaving, so saves still in flight then can finish.
+  const connectionIdRef = useRef<string | null>(null);
 
   const releaseSession = useCallback(async () => {
     const session = activeSessionRef.current;
@@ -234,6 +238,7 @@ export function MeetingRoomView({
 
       const session = { connectionId: dbData.connectionId, roomHash: room.roomHash, room: undefined as Room | undefined };
       activeSessionRef.current = session;
+      connectionIdRef.current = dbData.connectionId;
       if (!mountedRef.current) return;
       meetingClockRef.current = createMeetingClock(dbData.meetingStartedAt, dbData.serverNow);
       setParticipantId(dbData.participantId);
@@ -545,7 +550,7 @@ export function MeetingRoomView({
       ? `${baseUrl}?participantId=${encodeURIComponent(participantId)}`
       : baseUrl;
 
-    fetch(targetUrl)
+    fetch(targetUrl, { headers: { "x-connection-id": connectionIdRef.current ?? "" } })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { segments?: LiveTranscriptSegment[] } | null) => {
         if (data?.segments && Array.isArray(data.segments)) {
@@ -679,6 +684,7 @@ export function MeetingRoomView({
 
           const res = await fetch(targetUrl, {
             method: "POST",
+            headers: { "x-connection-id": connectionIdRef.current ?? "" },
             body: formData,
           });
           if (res.ok) {
@@ -831,20 +837,22 @@ export function MeetingRoomView({
       }
     }
 
-    // Persist to database
-    try {
-      const targetUrl = meetingId
-        ? `/api/meetings/${meetingId}/transcript`
-        : `/api/rooms/${room?.roomHash}/transcript`;
-
-      const response = await fetch(targetUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSegment),
-      });
-      if (!response.ok) throw new Error(`Transcript save failed: ${response.status}`);
-    } catch (err) {
-      console.error("Save transcript segment error:", err);
+    // Persist to database. Everyone has already seen this line live, so a
+    // failed save is retried rather than silently missing from the history.
+    const targetUrl = meetingId
+      ? `/api/meetings/${meetingId}/transcript`
+      : `/api/rooms/${room?.roomHash}/transcript`;
+    const request: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-connection-id": connectionIdRef.current ?? "" },
+      body: JSON.stringify(newSegment),
+      // Lets a line spoken just before the tab closes still reach the server.
+      keepalive: true,
+    };
+    const saved = await saveTranscriptSegment(() => fetch(targetUrl, request));
+    if (!saved) {
+      console.error("Save transcript segment failed:", newSegment.id);
+      showToast("บันทึกข้อความถอดเสียงไม่สำเร็จ บางประโยคอาจไม่อยู่ในประวัติการประชุม");
     }
   }, [participantId, displayName, livekitRoom, meetingId, room]);
 

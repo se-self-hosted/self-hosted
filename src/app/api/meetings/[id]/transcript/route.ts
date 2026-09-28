@@ -14,6 +14,14 @@ const segmentSchema = z.object({
   confidence: z.number().min(0).max(1).optional().default(1.0),
 });
 
+// Covers the recognizer's drain after stop() plus the save's own round trip,
+// so a member's last line isn't rejected because they just left.
+const LEAVE_GRACE_MS = 30_000;
+
+function isUniqueViolation(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
+}
+
 const postTranscriptSchema = z.union([
   segmentSchema,
   z.object({
@@ -29,7 +37,10 @@ export async function GET(
   try {
     const { id: meetingId } = await params;
     const participantId = new URL(req.url).searchParams.get("participantId");
-    const access = await resolveMeetingAccess(meetingId, participantId);
+    const access = await resolveMeetingAccess(meetingId, {
+      participantId,
+      connectionId: req.headers.get("x-connection-id"),
+    });
 
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
@@ -116,7 +127,11 @@ export async function POST(
       body && typeof body === "object" && "participantId" in body && typeof body.participantId === "string"
         ? body.participantId
         : null;
-    const access = await resolveMeetingAccess(meetingId, candidateParticipantId);
+    const access = await resolveMeetingAccess(
+      meetingId,
+      { participantId: candidateParticipantId, connectionId: req.headers.get("x-connection-id") },
+      { leftGraceMs: LEAVE_GRACE_MS },
+    );
 
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
@@ -150,20 +165,18 @@ export async function POST(
       rawSegments = [result.data];
     }
 
-    // Ensure or create Transcript for the meeting
-    let transcript = await prisma.transcript.findUnique({
-      where: { meetingId },
-    });
-
-    if (!transcript) {
-      transcript = await prisma.transcript.create({
-        data: {
-          meetingId,
-          fullTranscript: "",
-          language,
-        },
+    // Two speakers' first lines can race to create the meeting's one
+    // Transcript; the loser reads the winner's row instead of failing.
+    const transcript = await prisma.transcript
+      .upsert({
+        where: { meetingId },
+        create: { meetingId, fullTranscript: "", language },
+        update: {},
+      })
+      .catch((error) => {
+        if (isUniqueViolation(error)) return prisma.transcript.findUniqueOrThrow({ where: { meetingId } });
+        throw error;
       });
-    }
 
     // Resolve participant for each segment. Kept in sync as segments create
     // new participants so a batch introducing several new speakers reuses
@@ -171,6 +184,21 @@ export async function POST(
     const participants = [...meeting.participants];
     const createdSegments = [];
     for (const seg of rawSegments) {
+      // Clients retry a failed save with the same id; answer a retry of a
+      // segment already stored with that row instead of a duplicate-key 500.
+      const findExisting = () =>
+        seg.id
+          ? prisma.transcriptSegment.findUnique({ where: { id: seg.id }, include: { participant: true } })
+          : null;
+      const existing = await findExisting();
+      if (existing) {
+        if (existing.transcriptId !== transcript.id) {
+          return NextResponse.json({ error: "Segment id already in use" }, { status: 409 });
+        }
+        createdSegments.push(existing);
+        continue;
+      }
+
       let participantId = seg.participantId;
 
       if (!participantId && seg.speakerName) {
@@ -225,6 +253,11 @@ export async function POST(
         include: {
           participant: true,
         },
+      }).catch(async (error) => {
+        // A concurrent retry of the same segment won the insert.
+        const raced = isUniqueViolation(error) ? await findExisting() : null;
+        if (raced?.transcriptId === transcript.id) return raced;
+        throw error;
       });
 
       createdSegments.push(createdSegment);

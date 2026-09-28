@@ -26,7 +26,10 @@ export async function GET(
     const url = new URL(`/api/meetings/${meetingId}/transcript`, req.url);
     url.search = new URL(req.url).search;
     const res = await fetch(url.toString(), {
-      headers: { cookie: req.headers.get("cookie") || "" },
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+        "x-connection-id": req.headers.get("x-connection-id") || "",
+      },
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
@@ -80,7 +83,11 @@ export async function POST(
     const transcriptUrl = new URL(`/api/meetings/${meeting.id}/transcript`, req.url);
     const res = await fetch(transcriptUrl.toString(), {
       method: "POST",
-      headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") || "" },
+      headers: {
+        "Content-Type": "application/json",
+        cookie: req.headers.get("cookie") || "",
+        "x-connection-id": req.headers.get("x-connection-id") || "",
+      },
       body: JSON.stringify(body),
     });
 

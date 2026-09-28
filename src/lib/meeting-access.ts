@@ -4,13 +4,19 @@ import { activeSessionWhereClause } from "@/lib/presence";
 
 /**
  * A caller may view/post meeting data if they're the meeting's host (via
- * session cookie) or a currently-active participant of that specific
- * meeting (proven by an active ParticipantSession, the same check used for
- * LiveKit token issuance) — never just anyone who knows the meeting id.
+ * session cookie) or a participant of that specific meeting proven by the
+ * session's `connectionId` — the same pair used for LiveKit token issuance.
+ * The participant id alone proves nothing: it is also the LiveKit identity,
+ * visible to everyone in the room.
+ *
+ * `leftGraceMs` also admits a session that ended within that window, so
+ * writes still in flight when someone leaves (their last transcript line)
+ * are not rejected.
  */
 export async function resolveMeetingAccess(
   meetingId: string,
-  participantId?: string | null,
+  proof?: { participantId?: string | null; connectionId?: string | null },
+  { leftGraceMs = 0 }: { leftGraceMs?: number } = {},
 ) {
   const [user, meeting] = await Promise.all([
     getUserFromRequest(),
@@ -29,12 +35,16 @@ export async function resolveMeetingAccess(
     return { meeting, allowed: true, isHost: true };
   }
 
-  if (participantId) {
+  if (proof?.participantId && proof.connectionId) {
     const session = await prisma.participantSession.findFirst({
       where: {
-        participantId,
-        ...activeSessionWhereClause(),
+        participantId: proof.participantId,
+        connectionId: proof.connectionId,
         participant: { meetingId },
+        OR: [
+          activeSessionWhereClause(),
+          ...(leftGraceMs > 0 ? [{ leftAt: { gte: new Date(Date.now() - leftGraceMs) } }] : []),
+        ],
       },
     });
     if (session) {

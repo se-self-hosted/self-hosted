@@ -12,7 +12,10 @@ export async function GET(
   try {
     const { id: meetingId } = await params;
     const participantId = new URL(req.url).searchParams.get("participantId");
-    const access = await resolveMeetingAccess(meetingId, participantId);
+    const access = await resolveMeetingAccess(meetingId, {
+      participantId,
+      connectionId: req.headers.get("x-connection-id"),
+    });
 
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
@@ -112,7 +115,10 @@ export async function POST(
       participantId = req.headers.get("x-participant-id");
     }
 
-    const access = await resolveMeetingAccess(meetingId, participantId);
+    const access = await resolveMeetingAccess(meetingId, {
+      participantId,
+      connectionId: req.headers.get("x-connection-id"),
+    });
     if (!access.meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
