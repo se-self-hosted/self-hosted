@@ -41,6 +41,7 @@ type Recording = {
 };
 
 type MeetingData = {
+  isHost: boolean;
   roomName: string;
   startedAt: string;
   endedAt: string | null;
@@ -305,7 +306,10 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
       </section>
 
       {/* 3. AI Summary */}
-      <MeetingSummaryDisplay summary={meeting.summary} />
+      <MeetingSummaryDisplay
+        summary={meeting.summary}
+        showRegenerate={meeting.isHost}
+      />
 
       {/* 4. Transcript */}
       {meeting.transcript && (
