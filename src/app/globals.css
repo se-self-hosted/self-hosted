@@ -387,6 +387,49 @@
   .meeting-history__link {
     @apply inline-flex size-9 items-center justify-center rounded-lg border border-[#3b4b65] bg-[#26354b] text-[#c4d0e1] shadow-sm transition-colors hover:border-[#596d8d] hover:bg-[#3a4d6a] hover:text-white;
   }
+  /* ---------- meeting summary ---------- */
+  .meeting-summary {
+    @apply overflow-hidden border border-[#32415a] bg-[#1c293d] text-slate-100;
+  }
+  .meeting-summary__header {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
+  }
+  .meeting-summary__title {
+    @apply flex items-center gap-2 text-lg font-semibold text-white;
+  }
+  .meeting-summary__title svg {
+    @apply text-[#8078ff];
+  }
+  .meeting-summary__subtitle {
+    @apply mt-1 text-xs text-[#7183a2];
+  }
+  .meeting-summary__model {
+    @apply w-fit rounded-full border border-[#4b5870] bg-[#111c30] px-2.5 py-1 text-xs text-[#aebbd0];
+  }
+  .meeting-summary__content {
+    @apply mt-6 whitespace-pre-wrap break-words text-sm leading-7 text-[#e5eaf2];
+  }
+  .meeting-summary__metadata {
+    @apply mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-[#32415a] pt-4 text-xs;
+  }
+  .meeting-summary__metadata div {
+    @apply flex flex-wrap gap-2;
+  }
+  .meeting-summary__metadata dt {
+    @apply text-[#7183a2];
+  }
+  .meeting-summary__metadata dd {
+    @apply text-[#b8c5d8];
+  }
+  .meeting-summary__empty {
+    @apply mt-4 flex items-start gap-3 rounded-lg border border-dashed border-[#42516a] bg-[#111c30]/70 p-5 text-[#7183a2];
+  }
+  .meeting-summary__empty-title {
+    @apply text-sm font-semibold text-[#c2cede];
+  }
+  .meeting-summary__empty-description {
+    @apply mt-1 text-xs leading-5;
+  }
   /* ---------- meeting room lobby ---------- */
   .meeting-lobby,
   .meeting-unavailable {
