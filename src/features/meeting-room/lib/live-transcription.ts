@@ -96,9 +96,11 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     if (active) options.onStatus("กำลังฟังเสียง");
   };
   recognition.onspeechstart = () => {
-    if (interim) return;
-    startTime = options.elapsedSeconds();
-    onsetObserved = true;
+    // A closer start time, but not proof of an utterance: noise can fire it
+    // with no result following, then nothing clears it through the silence.
+    // Only a draft confirms the onset, so a later draft-less final stays
+    // capped instead of stretching back to that stale speechstart.
+    if (!interim) startTime = options.elapsedSeconds();
   };
   recognition.onresult = (event) => {
     failedAttempts = 0;

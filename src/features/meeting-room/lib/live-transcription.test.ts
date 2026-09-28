@@ -75,6 +75,28 @@ test("a final with no observed onset does not reuse a stale start time", () => {
   h.stop(); h.recognition.onend?.();
 });
 
+test("a speechstart long before a draft-less final does not stretch the segment", () => {
+  const h = setup();
+  // Noise fires speechstart, no result follows, and minutes later a short
+  // reply is finalized with no draft first.
+  h.elapsed(12);
+  h.recognition.onspeechstart?.();
+  h.elapsed(200);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ครับ", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ครับ", 197, 3, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
+test("a speechstart just before a draft-less final is kept as its start", () => {
+  const h = setup();
+  h.elapsed(40);
+  h.recognition.onspeechstart?.();
+  h.elapsed(41.5);
+  h.recognition.onresult?.({ resultIndex: 0, results: [result("ครับ", true)] });
+  assert.deepEqual(h.finals.at(-1), ["ครับ", 40, 1.5, 0]);
+  h.stop(); h.recognition.onend?.();
+});
+
 test("a final after an observed onset keeps the full utterance length", () => {
   const h = setup();
   h.elapsed(100);

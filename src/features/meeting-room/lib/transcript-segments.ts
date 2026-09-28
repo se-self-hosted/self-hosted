@@ -9,7 +9,6 @@ type SortableTranscriptSegment = {
  * final result always lands at the bottom even if its speech began before
  * segments other speakers finished in the meantime.
  */
-
 export function mergeTranscriptSegments<T extends SortableTranscriptSegment>(
   current: readonly T[],
   incoming: readonly T[],
