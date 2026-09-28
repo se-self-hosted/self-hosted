@@ -2,6 +2,8 @@
 // on retry. A 403 does not: a stale heartbeat (e.g. a backgrounded phone
 // tab) recovers once the next heartbeat lands.
 const PERMANENT_STATUSES = new Set([400, 404, 409]);
+// ~31 s in total: keep it inside the server's LEAVE_GRACE_MS, or a line
+// spoken just before leaving can exhaust the window while still retrying.
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 /**

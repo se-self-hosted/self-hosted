@@ -137,6 +137,9 @@ export default function DashboardPage() {
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState("");
+  // Bumped per open/close so a slow earlier response can't fill the modal
+  // after the user has moved on to another meeting.
+  const detailsRequestRef = useRef(0);
 
   // Audio Player State
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
@@ -228,6 +231,7 @@ export default function DashboardPage() {
 
   // Open Meeting Details / Playback
   const openMeetingDetails = async (meetingId: string) => {
+    const request = ++detailsRequestRef.current;
     setSelectedMeetingId(meetingId);
     setMeetingDetails(null);
     setDetailsError("");
@@ -241,6 +245,7 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`/api/meetings/${meetingId}`);
       const data = res.ok ? await res.json().catch(() => null) : null;
+      if (request !== detailsRequestRef.current) return;
       if (data?.meeting) {
         setMeetingDetails(data.meeting);
       } else {
@@ -248,9 +253,9 @@ export default function DashboardPage() {
       }
     } catch (e) {
       console.error("Load meeting details error:", e);
-      setDetailsError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+      if (request === detailsRequestRef.current) setDetailsError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
     } finally {
-      setLoadingDetails(false);
+      if (request === detailsRequestRef.current) setLoadingDetails(false);
     }
   };
 
@@ -258,8 +263,10 @@ export default function DashboardPage() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
     }
+    detailsRequestRef.current += 1;
     setSelectedMeetingId(null);
     setMeetingDetails(null);
+    setDetailsError("");
     setIsPlaying(false);
   };
 

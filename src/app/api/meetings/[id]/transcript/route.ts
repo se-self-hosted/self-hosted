@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { resolveMeetingAccess } from "@/lib/meeting-access";
+import { LEAVE_GRACE_MS, resolveMeetingAccess } from "@/lib/meeting-access";
 
 const segmentSchema = z.object({
   id: z.string().min(1).optional(),
@@ -13,10 +13,6 @@ const segmentSchema = z.object({
   text: z.string().min(1, "Transcript text is required"),
   confidence: z.number().min(0).max(1).optional().default(1.0),
 });
-
-// Covers the recognizer's drain after stop() plus the save's own round trip,
-// so a member's last line isn't rejected because they just left.
-const LEAVE_GRACE_MS = 30_000;
 
 function isUniqueViolation(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
@@ -177,6 +173,18 @@ export async function POST(
         if (isUniqueViolation(error)) return prisma.transcript.findUniqueOrThrow({ where: { meetingId } });
         throw error;
       });
+
+    // Reject a batch reusing another meeting's segment id before writing any
+    // of it, so a conflict can't leave the batch half-stored.
+    const segmentIds = rawSegments.flatMap((seg) => (seg.id ? [seg.id] : []));
+    if (segmentIds.length > 0) {
+      const foreign = await prisma.transcriptSegment.count({
+        where: { id: { in: segmentIds }, transcriptId: { not: transcript.id } },
+      });
+      if (foreign > 0) {
+        return NextResponse.json({ error: "Segment id already in use" }, { status: 409 });
+      }
+    }
 
     // Resolve participant for each segment. Kept in sync as segments create
     // new participants so a batch introducing several new speakers reuses

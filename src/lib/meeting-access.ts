@@ -3,6 +3,13 @@ import { getUserFromRequest } from "@/lib/auth";
 import { activeSessionWhereClause } from "@/lib/presence";
 
 /**
+ * How long after leaving a session may still write. It covers the in-flight
+ * work of leaving: the recognizer's drain after stop(), the recording upload
+ * starting, and the client's whole transcript retry schedule (~31 s).
+ */
+export const LEAVE_GRACE_MS = 60_000;
+
+/**
  * A caller may view/post meeting data if they're the meeting's host (via
  * session cookie) or a participant of that specific meeting proven by the
  * session's `connectionId` — the same pair used for LiveKit token issuance.

@@ -4,7 +4,9 @@
  * the old one, so a recorder bound to it keeps "recording" silence. Route the
  * current track through one audio graph so the recorder never sees a swap.
  */
-export function createRecordingBus(context: AudioContext = new AudioContext()) {
+// Match the mic capture and RNNoise rate: Firefox refuses to connect a track
+// whose sample rate differs from its context's.
+export function createRecordingBus(context: AudioContext = new AudioContext({ sampleRate: 48000 })) {
   const destination = context.createMediaStreamDestination();
   let source: MediaStreamAudioSourceNode | undefined;
   let current: MediaStreamTrack | undefined;
@@ -20,7 +22,14 @@ export function createRecordingBus(context: AudioContext = new AudioContext()) {
       source = undefined;
       current = next;
       if (!next) return;
-      source = context.createMediaStreamSource(new MediaStream([next]));
+      try {
+        source = context.createMediaStreamSource(new MediaStream([next]));
+      } catch (error) {
+        // Still a mismatch (e.g. a device that ignored the rate constraint):
+        // record silence for this track rather than fail the whole recording.
+        console.error("Recording bus could not use the mic track:", error);
+        return;
+      }
       source.connect(destination);
     },
     close() {

@@ -58,3 +58,17 @@ test("a missing or ended track feeds silence instead of the old track", () => {
   assert.equal(h.connected.size, 0);
   assert.equal(h.context.closed, true);
 });
+
+test("a track the context refuses records silence instead of throwing", () => {
+  const h = setup();
+  const refuse = () => { throw new DOMException("sample rate mismatch", "NotSupportedError"); };
+  h.context.createMediaStreamSource = refuse as never;
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    assert.doesNotThrow(() => h.bus.setTrack({ id: "44k", readyState: "live" } as unknown as MediaStreamTrack));
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(h.connected.size, 0);
+});
