@@ -1437,15 +1437,6 @@ export function MeetingRoomView({
             )}
           </button>
         )}
-        {!isHost && isRecording && (
-          <div
-            className="meeting-control meeting-control--muted"
-            title="ผู้จัดประชุมกำลังบันทึกเสียงอยู่"
-            aria-label="กำลังบันทึกเสียง"
-          >
-            <Disc aria-hidden="true" className="icon-20 animate-pulse text-red-500" />
-          </div>
-        )}
 
         {/* Live Transcript Drawer Button */}
         <button
