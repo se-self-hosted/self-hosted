@@ -44,6 +44,31 @@ export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplay
   const displayedSummary = selectMeetingSummaryContent(summary);
   if (!displayedSummary) return null;
 
+  function exportPdf() {
+    const previousTitle = document.title;
+    const printClass = "summary-export-printing";
+    let cleanedUp = false;
+
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      document.documentElement.classList.remove(printClass);
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    setExportError("");
+    try {
+      document.title = createSummaryPdfFilename(roomName, startedAt).replace(/\.pdf$/i, "");
+      document.documentElement.classList.add(printClass);
+      window.addEventListener("afterprint", cleanup);
+      window.print();
+    } catch {
+      cleanup();
+      setExportError("ไม่สามารถเปิดหน้าต่างส่งออก PDF ได้ กรุณาลองอีกครั้ง");
+    }
+  }
+
   return (
     <MeetingSummaryEditor
       key={`${summary.id}:${displayedSummary.content}`}

@@ -460,6 +460,51 @@
   .meeting-summary__empty-description {
     @apply mt-1 text-xs leading-5;
   }
+
+  @media print {
+    html.summary-export-printing .meeting-detail__content > :not(.meeting-summary) {
+      display: none;
+    }
+    html.summary-export-printing body * {
+      visibility: hidden;
+    }
+    html.summary-export-printing .meeting-summary,
+    html.summary-export-printing .meeting-summary * {
+      visibility: visible;
+    }
+    html.summary-export-printing .meeting-summary {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      overflow: visible;
+      border: 0;
+      background: #fff;
+      color: #111827;
+      box-shadow: none;
+      font-family: Tahoma, "Noto Sans Thai", Arial, sans-serif;
+    }
+    html.summary-export-printing .meeting-summary__title,
+    html.summary-export-printing .meeting-summary__content,
+    html.summary-export-printing .meeting-summary__metadata dd {
+      color: #111827;
+    }
+    html.summary-export-printing .meeting-summary__subtitle,
+    html.summary-export-printing .meeting-summary__metadata dt {
+      color: #4b5563;
+    }
+    html.summary-export-printing .meeting-summary__content {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    html.summary-export-printing .meeting-summary__actions,
+    html.summary-export-printing .meeting-summary__export-error {
+      display: none;
+    }
+    html.summary-export-printing .meeting-summary__metadata {
+      break-inside: avoid;
+      border-color: #d1d5db;
+    }
+  }
   /* ---------- meeting room lobby ---------- */
   .meeting-lobby,
   .meeting-unavailable {
