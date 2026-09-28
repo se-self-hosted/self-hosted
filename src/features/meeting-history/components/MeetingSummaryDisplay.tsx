@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Bot, Download, FileText } from "lucide-react";
-import { createSummaryPdfFilename, selectMeetingSummaryContent } from "../summary";
+import { FormEvent, useState } from "react";
+import { Bot, FileText, Loader2, Pencil } from "lucide-react";
+import {
+  canSubmitSummaryDraft,
+  getSummaryDraftState,
+  selectMeetingSummaryContent,
+} from "../summary";
+import type { DisplayedMeetingSummary } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
-  roomName: string;
-  startedAt: string;
+  onSave?: (content: string) => Promise<void> | void;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", {
@@ -17,9 +21,7 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeZone: "Asia/Bangkok",
 });
 
-export function MeetingSummaryDisplay({ summary, roomName, startedAt }: MeetingSummaryDisplayProps) {
-  const [exportError, setExportError] = useState("");
-
+export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplayProps) {
   if (!summary) {
     return (
       <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
@@ -68,6 +70,63 @@ export function MeetingSummaryDisplay({ summary, roomName, startedAt }: MeetingS
   }
 
   return (
+    <MeetingSummaryEditor
+      key={`${summary.id}:${displayedSummary.content}`}
+      summary={summary}
+      displayedSummary={displayedSummary}
+      onSave={onSave}
+    />
+  );
+}
+
+type MeetingSummaryEditorProps = {
+  summary: MeetingSummary;
+  displayedSummary: DisplayedMeetingSummary;
+  onSave?: (content: string) => Promise<void> | void;
+};
+
+function MeetingSummaryEditor({
+  summary,
+  displayedSummary,
+  onSave,
+}: MeetingSummaryEditorProps) {
+  const originalContent = displayedSummary.content;
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftContent, setDraftContent] = useState(originalContent);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const draftState = getSummaryDraftState(originalContent, draftContent);
+  const canSave = canSubmitSummaryDraft(originalContent, draftContent, Boolean(onSave)) && !isSaving;
+
+  function startEditing() {
+    setDraftContent(originalContent);
+    setSaveError("");
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    setDraftContent(originalContent);
+    setSaveError("");
+    setIsEditing(false);
+  }
+
+  async function submitEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onSave || !canSave) return;
+
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await onSave(draftContent);
+    } catch {
+      setSaveError("ไม่สามารถบันทึกสรุปการประชุมได้ กรุณาลองอีกครั้ง");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
     <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
       <div className="meeting-summary__header">
         <div>
@@ -78,25 +137,71 @@ export function MeetingSummaryDisplay({ summary, roomName, startedAt }: MeetingS
             {displayedSummary.source === "edited" ? "ฉบับแก้ไข" : "สร้างจากบทสนทนาการประชุม"}
           </p>
         </div>
-        <div className="meeting-summary__actions">
+        <div className="meeting-summary__header-actions">
           <span className="meeting-summary__model">{summary.llmModel}</span>
-          <button
-            type="button"
-            className="meeting-summary__export focus-ring"
-            onClick={exportPdf}
-            aria-describedby="meeting-summary-export-help"
-          >
-            <Download aria-hidden="true" className="icon-14" /> ส่งออก PDF
-          </button>
+          {!isEditing && (
+            <button
+              type="button"
+              className="meeting-summary__edit-btn focus-ring"
+              onClick={startEditing}
+              aria-label="แก้ไขสรุปการประชุม"
+            >
+              <Pencil aria-hidden="true" className="icon-14" /> แก้ไข
+            </button>
+          )}
         </div>
       </div>
 
-      <p id="meeting-summary-export-help" className="sr-only">
-        เปิดหน้าต่างพิมพ์เพื่อบันทึกสรุปการประชุมเป็นไฟล์ PDF
-      </p>
-      {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
-
-      <p className="meeting-summary__content">{displayedSummary.content}</p>
+      {isEditing ? (
+        <form className="meeting-summary__form" onSubmit={submitEdit}>
+          <label htmlFor={`meeting-summary-${summary.id}`} className="meeting-summary__label">
+            เนื้อหาสรุปการประชุม
+          </label>
+          <textarea
+            id={`meeting-summary-${summary.id}`}
+            className="meeting-summary__textarea"
+            value={draftContent}
+            onChange={(event) => {
+              setDraftContent(event.target.value);
+              setSaveError("");
+            }}
+            rows={10}
+            autoFocus
+          />
+          {!onSave && (
+            <p className="meeting-summary__notice" role="status">
+              ยังไม่สามารถบันทึกการแก้ไขได้ จนกว่าระบบบันทึกสรุปจะพร้อมใช้งาน
+            </p>
+          )}
+          {!draftState.hasContent && (
+            <p className="meeting-summary__validation" role="alert">
+              กรุณากรอกเนื้อหาสรุปการประชุม
+            </p>
+          )}
+          {saveError && <p className="meeting-summary__validation" role="alert">{saveError}</p>}
+          <div className="meeting-summary__form-actions">
+            <button
+              type="button"
+              className="meeting-summary__cancel-btn focus-ring"
+              onClick={cancelEditing}
+              disabled={isSaving}
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
+              className="meeting-summary__save-btn focus-ring"
+              disabled={!canSave}
+              aria-label="บันทึกสรุปการประชุม"
+            >
+              {isSaving && <Loader2 aria-hidden="true" className="icon-14 animate-spin" />}
+              บันทึก
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className="meeting-summary__content">{displayedSummary.content}</p>
+      )}
 
       <dl className="meeting-summary__metadata">
         <div>
