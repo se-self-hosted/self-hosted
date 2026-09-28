@@ -1,19 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Bot, FileText, Loader2, RefreshCw } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { Bot, FileText, Loader2, Pencil } from "lucide-react";
 import {
-  canStartSummaryRegeneration,
-  getSummaryRegenerationCompletionStatus,
+  canSubmitSummaryDraft,
+  getSummaryDraftState,
   selectMeetingSummaryContent,
 } from "../summary";
-import type { SummaryRegenerationStatus } from "../summary";
+import type { DisplayedMeetingSummary } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
-  onRegenerate?: () => Promise<void> | void;
-  showRegenerate?: boolean;
+  onSave?: (content: string) => Promise<void> | void;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", {
@@ -22,11 +21,7 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeZone: "Asia/Bangkok",
 });
 
-export function MeetingSummaryDisplay({
-  summary,
-  onRegenerate,
-  showRegenerate,
-}: MeetingSummaryDisplayProps) {
+export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplayProps) {
   if (!summary) {
     return (
       <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
@@ -50,46 +45,59 @@ export function MeetingSummaryDisplay({
   if (!displayedSummary) return null;
 
   return (
-    <MeetingSummaryContent
-      key={`${summary.id}:${summary.generatedAt}:${summary.editedAt ?? ""}`}
+    <MeetingSummaryEditor
+      key={`${summary.id}:${displayedSummary.content}`}
       summary={summary}
-      onRegenerate={onRegenerate}
-      showRegenerate={showRegenerate ?? Boolean(onRegenerate)}
+      displayedSummary={displayedSummary}
+      onSave={onSave}
     />
   );
 }
 
-type MeetingSummaryContentProps = {
+type MeetingSummaryEditorProps = {
   summary: MeetingSummary;
-  onRegenerate?: () => Promise<void> | void;
-  showRegenerate: boolean;
+  displayedSummary: DisplayedMeetingSummary;
+  onSave?: (content: string) => Promise<void> | void;
 };
 
-function MeetingSummaryContent({
+function MeetingSummaryEditor({
   summary,
-  onRegenerate,
-  showRegenerate,
-}: MeetingSummaryContentProps) {
-  const displayedSummary = selectMeetingSummaryContent(summary);
-  const [regenerationStatus, setRegenerationStatus] = useState<SummaryRegenerationStatus>("idle");
-  const regenerationInFlight = useRef(false);
-  const regenerationAvailable = Boolean(onRegenerate);
-  const canRegenerate = canStartSummaryRegeneration(regenerationAvailable, regenerationStatus);
+  displayedSummary,
+  onSave,
+}: MeetingSummaryEditorProps) {
+  const originalContent = displayedSummary.content;
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftContent, setDraftContent] = useState(originalContent);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  if (!displayedSummary) return null;
+  const draftState = getSummaryDraftState(originalContent, draftContent);
+  const canSave = canSubmitSummaryDraft(originalContent, draftContent, Boolean(onSave)) && !isSaving;
 
-  async function regenerateSummary() {
-    if (!onRegenerate || regenerationInFlight.current) return;
+  function startEditing() {
+    setDraftContent(originalContent);
+    setSaveError("");
+    setIsEditing(true);
+  }
 
-    regenerationInFlight.current = true;
-    setRegenerationStatus("regenerating");
+  function cancelEditing() {
+    setDraftContent(originalContent);
+    setSaveError("");
+    setIsEditing(false);
+  }
+
+  async function submitEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onSave || !canSave) return;
+
+    setIsSaving(true);
+    setSaveError("");
     try {
-      await onRegenerate();
-      setRegenerationStatus(getSummaryRegenerationCompletionStatus(true));
+      await onSave(draftContent);
     } catch {
-      setRegenerationStatus(getSummaryRegenerationCompletionStatus(false));
+      setSaveError("ไม่สามารถบันทึกสรุปการประชุมได้ กรุณาลองอีกครั้ง");
     } finally {
-      regenerationInFlight.current = false;
+      setIsSaving(false);
     }
   }
 
@@ -104,39 +112,71 @@ function MeetingSummaryContent({
             {displayedSummary.source === "edited" ? "ฉบับแก้ไข" : "สร้างจากบทสนทนาการประชุม"}
           </p>
         </div>
-        <div className="meeting-summary__actions">
+        <div className="meeting-summary__header-actions">
           <span className="meeting-summary__model">{summary.llmModel}</span>
-          {showRegenerate && (
+          {!isEditing && (
             <button
               type="button"
-              className="meeting-summary__regenerate focus-ring"
-              onClick={() => void regenerateSummary()}
-              disabled={!canRegenerate}
-              aria-describedby={!regenerationAvailable ? "meeting-summary-regenerate-unavailable" : undefined}
+              className="meeting-summary__edit-btn focus-ring"
+              onClick={startEditing}
+              aria-label="แก้ไขสรุปการประชุม"
             >
-              {regenerationStatus === "regenerating" ? (
-                <Loader2 aria-hidden="true" className="icon-14 animate-spin" />
-              ) : (
-                <RefreshCw aria-hidden="true" className="icon-14" />
-              )}
-              {regenerationStatus === "regenerating" ? "Regenerating..." : "Regenerate Summary"}
+              <Pencil aria-hidden="true" className="icon-14" /> แก้ไข
             </button>
           )}
         </div>
       </div>
 
-      {showRegenerate && !regenerationAvailable && (
-        <p id="meeting-summary-regenerate-unavailable" className="meeting-summary__notice" role="status">
-          ยังไม่เชื่อมต่อระบบสร้างสรุปใหม่
-        </p>
+      {isEditing ? (
+        <form className="meeting-summary__form" onSubmit={submitEdit}>
+          <label htmlFor={`meeting-summary-${summary.id}`} className="meeting-summary__label">
+            เนื้อหาสรุปการประชุม
+          </label>
+          <textarea
+            id={`meeting-summary-${summary.id}`}
+            className="meeting-summary__textarea"
+            value={draftContent}
+            onChange={(event) => {
+              setDraftContent(event.target.value);
+              setSaveError("");
+            }}
+            rows={10}
+            autoFocus
+          />
+          {!onSave && (
+            <p className="meeting-summary__notice" role="status">
+              ยังไม่สามารถบันทึกการแก้ไขได้ จนกว่าระบบบันทึกสรุปจะพร้อมใช้งาน
+            </p>
+          )}
+          {!draftState.hasContent && (
+            <p className="meeting-summary__validation" role="alert">
+              กรุณากรอกเนื้อหาสรุปการประชุม
+            </p>
+          )}
+          {saveError && <p className="meeting-summary__validation" role="alert">{saveError}</p>}
+          <div className="meeting-summary__form-actions">
+            <button
+              type="button"
+              className="meeting-summary__cancel-btn focus-ring"
+              onClick={cancelEditing}
+              disabled={isSaving}
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
+              className="meeting-summary__save-btn focus-ring"
+              disabled={!canSave}
+              aria-label="บันทึกสรุปการประชุม"
+            >
+              {isSaving && <Loader2 aria-hidden="true" className="icon-14 animate-spin" />}
+              บันทึก
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className="meeting-summary__content">{displayedSummary.content}</p>
       )}
-      {regenerationStatus === "error" && (
-        <p className="meeting-summary__error" role="alert">
-          ไม่สามารถสร้างสรุปใหม่ได้ กรุณาลองอีกครั้ง
-        </p>
-      )}
-
-      <p className="meeting-summary__content">{displayedSummary.content}</p>
 
       <dl className="meeting-summary__metadata">
         <div>

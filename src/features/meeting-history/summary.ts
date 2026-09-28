@@ -5,20 +5,10 @@ export type DisplayedMeetingSummary = {
   source: "ai" | "edited";
 };
 
-export type SummaryRegenerationStatus = "idle" | "regenerating" | "error";
-
-export function canStartSummaryRegeneration(
-  regenerationAvailable: boolean,
-  status: SummaryRegenerationStatus,
-): boolean {
-  return regenerationAvailable && status !== "regenerating";
-}
-
-export function getSummaryRegenerationCompletionStatus(
-  succeeded: boolean,
-): SummaryRegenerationStatus {
-  return succeeded ? "idle" : "error";
-}
+export type SummaryDraftState = {
+  hasChanges: boolean;
+  hasContent: boolean;
+};
 
 export function selectMeetingSummaryContent(
   summary: MeetingSummary | null,
@@ -30,4 +20,23 @@ export function selectMeetingSummaryContent(
   }
 
   return { content: summary.aiSummary, source: "ai" };
+}
+
+export function getSummaryDraftState(
+  originalContent: string,
+  draftContent: string,
+): SummaryDraftState {
+  return {
+    hasChanges: draftContent !== originalContent,
+    hasContent: draftContent.trim().length > 0,
+  };
+}
+
+export function canSubmitSummaryDraft(
+  originalContent: string,
+  draftContent: string,
+  persistenceAvailable: boolean,
+): boolean {
+  const state = getSummaryDraftState(originalContent, draftContent);
+  return persistenceAvailable && state.hasChanges && state.hasContent;
 }

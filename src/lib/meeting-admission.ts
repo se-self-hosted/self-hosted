@@ -11,7 +11,7 @@ export class AdmissionError extends Error {
 }
 
 // A background tab can miss heartbeats while its audio connection is still alive.
-async function isConnected(roomHash: string, participantId: string) {
+export async function isConnected(roomHash: string, participantId: string) {
   const publicUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880";
   const useDockerHost = fs.existsSync("/.dockerenv") &&
     ["localhost", "127.0.0.1", "[::1]"].includes(new URL(publicUrl).hostname);

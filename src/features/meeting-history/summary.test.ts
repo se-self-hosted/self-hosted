@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { canStartSummaryRegeneration, getSummaryRegenerationCompletionStatus, selectMeetingSummaryContent } from "./summary.ts";
+import { canSubmitSummaryDraft, getSummaryDraftState, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -42,18 +42,32 @@ test("preserves multiline Thai and English summary content", () => {
   assert.equal(displayedSummary.content, content);
 });
 
-test("disables regeneration when no callback is available", () => {
-  assert.equal(canStartSummaryRegeneration(false, "idle"), false);
-  assert.equal(canStartSummaryRegeneration(false, "error"), false);
+test("marks an unchanged draft as not changed", () => {
+  assert.deepEqual(getSummaryDraftState("Original summary", "Original summary"), {
+    hasChanges: false,
+    hasContent: true,
+  });
+  assert.equal(canSubmitSummaryDraft("Original summary", "Original summary", true), false);
 });
 
-test("allows available regeneration while idle and prevents duplicate loading requests", () => {
-  assert.equal(canStartSummaryRegeneration(true, "idle"), true);
-  assert.equal(canStartSummaryRegeneration(true, "regenerating"), false);
+test("rejects a whitespace-only draft", () => {
+  assert.deepEqual(getSummaryDraftState("Original summary", "  \n\t"), {
+    hasChanges: true,
+    hasContent: false,
+  });
+  assert.equal(canSubmitSummaryDraft("Original summary", "  \n\t", true), false);
 });
 
-test("returns to idle after success and allows retry after an error", () => {
-  assert.equal(getSummaryRegenerationCompletionStatus(true), "idle");
-  assert.equal(getSummaryRegenerationCompletionStatus(false), "error");
-  assert.equal(canStartSummaryRegeneration(true, "error"), true);
+test("accepts changed multiline Thai and English content", () => {
+  const draft = "สรุปฉบับแก้ไข\n- Owner: Product team\n- Next step: ทดสอบระบบ";
+
+  assert.deepEqual(getSummaryDraftState("Original summary", draft), {
+    hasChanges: true,
+    hasContent: true,
+  });
+  assert.equal(canSubmitSummaryDraft("Original summary", draft, true), true);
+});
+
+test("does not submit a valid change while persistence is unavailable", () => {
+  assert.equal(canSubmitSummaryDraft("Original summary", "Changed summary", false), false);
 });

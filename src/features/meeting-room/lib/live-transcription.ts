@@ -25,6 +25,13 @@ type Options = {
   onStatus: (message: string, isError?: boolean) => void;
 };
 
+/**
+ * A final result that arrives with no interim or speechstart before it has no
+ * observed onset, so the carried-over start time may be minutes stale. Cap how
+ * far back such an utterance can claim to have started.
+ */
+const UNOBSERVED_ONSET_MAX_SECONDS = 3;
+
 /** Keep interim hypotheses separate; only the recognizer's final result is saved. */
 export function startLiveTranscription(recognition: SpeechRecognizer, options: Options) {
   let active = true;
@@ -32,6 +39,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let drainTimer: ReturnType<typeof setTimeout> | undefined;
   let startTime = options.elapsedSeconds();
+  let onsetObserved = false;
   let interim = "";
   const finalized = new Set<number>();
 
@@ -63,6 +71,7 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     if (!active) return;
     finalized.clear();
     startTime = options.elapsedSeconds();
+    onsetObserved = false;
     try {
       // LiveKit exposes the RNNoise-processed track. Older browsers may ignore
       // the optional argument and continue using their default microphone.
@@ -87,6 +96,10 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
     if (active) options.onStatus("กำลังฟังเสียง");
   };
   recognition.onspeechstart = () => {
+    // A closer start time, but not proof of an utterance: noise can fire it
+    // with no result following, then nothing clears it through the silence.
+    // Only a draft confirms the onset, so a later draft-less final stays
+    // capped instead of stretching back to that stale speechstart.
     if (!interim) startTime = options.elapsedSeconds();
   };
   recognition.onresult = (event) => {
@@ -106,13 +119,15 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
       finalized.add(index);
       const endTime = options.elapsedSeconds();
       const confidence = alternative.confidence;
-      options.onFinal(text, startTime, Math.max(0, endTime - startTime),
+      const segmentStart = onsetObserved ? startTime : Math.max(startTime, endTime - UNOBSERVED_ONSET_MAX_SECONDS);
+      options.onFinal(text, segmentStart, Math.max(0, endTime - segmentStart),
         typeof confidence === "number" && Number.isFinite(confidence) ? Math.max(0, Math.min(1, confidence)) : 0);
       // `endTime` is when the recognizer finished processing, not when the
       // next utterance's audio actually begins — `onspeechstart` should
       // overwrite this, but it fires unreliably in continuous mode across
       // browsers. Fall back to it only until a closer signal arrives below.
       startTime = endTime;
+      onsetObserved = false;
     }
     interim = drafts.join(" ");
     if (!hadInterim && interim) {
@@ -121,6 +136,9 @@ export function startLiveTranscription(recognition: SpeechRecognizer, options: O
       // than the finalize-time carried over above.
       startTime = options.elapsedSeconds();
     }
+    // A live draft means the utterance's onset was seen, either just now or
+    // right as the previous sentence finalized in this same event.
+    if (interim) onsetObserved = true;
     if (active) options.onInterim(interim);
   };
   recognition.onerror = ({ error }) => {

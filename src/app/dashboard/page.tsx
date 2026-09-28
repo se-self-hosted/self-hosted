@@ -136,6 +136,10 @@ export default function DashboardPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
+  // Bumped per open/close so a slow earlier response can't fill the modal
+  // after the user has moved on to another meeting.
+  const detailsRequestRef = useRef(0);
 
   // Audio Player State
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
@@ -227,7 +231,10 @@ export default function DashboardPage() {
 
   // Open Meeting Details / Playback
   const openMeetingDetails = async (meetingId: string) => {
+    const request = ++detailsRequestRef.current;
     setSelectedMeetingId(meetingId);
+    setMeetingDetails(null);
+    setDetailsError("");
     setLoadingDetails(true);
     setIsPlaying(false);
     setCurrentTime(0);
@@ -237,14 +244,18 @@ export default function DashboardPage() {
 
     try {
       const res = await fetch(`/api/meetings/${meetingId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMeetingDetails(data.meeting || null);
+      const data = res.ok ? await res.json().catch(() => null) : null;
+      if (request !== detailsRequestRef.current) return;
+      if (data?.meeting) {
+        setMeetingDetails(data.meeting);
+      } else {
+        setDetailsError(`ไม่สามารถโหลดข้อมูลการประชุมได้ (HTTP ${res.status})`);
       }
     } catch (e) {
       console.error("Load meeting details error:", e);
+      if (request === detailsRequestRef.current) setDetailsError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
     } finally {
-      setLoadingDetails(false);
+      if (request === detailsRequestRef.current) setLoadingDetails(false);
     }
   };
 
@@ -252,8 +263,10 @@ export default function DashboardPage() {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
     }
+    detailsRequestRef.current += 1;
     setSelectedMeetingId(null);
     setMeetingDetails(null);
+    setDetailsError("");
     setIsPlaying(false);
   };
 
@@ -796,7 +809,11 @@ export default function DashboardPage() {
                   {meetingDetails?.roomName || "รายละเอียดการประชุม"}
                 </h2>
                 <p className="modal__subtitle">
-                  {meetingDetails ? formatDate(meetingDetails.startedAt) : "กำลังโหลดข้อมูล..."}
+                  {meetingDetails
+                    ? formatDate(meetingDetails.startedAt)
+                    : detailsError
+                    ? "โหลดข้อมูลไม่สำเร็จ"
+                    : "กำลังโหลดข้อมูล..."}
                 </p>
               </div>
               <button
@@ -810,7 +827,18 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {loadingDetails || !meetingDetails ? (
+              {detailsError ? (
+                <div className="dashboard-loading">
+                  <p role="alert" className="text-sm text-red-400">{detailsError}</p>
+                  <button
+                    type="button"
+                    onClick={() => selectedMeetingId && void openMeetingDetails(selectedMeetingId)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 focus-ring"
+                  >
+                    ลองอีกครั้ง
+                  </button>
+                </div>
+              ) : loadingDetails || !meetingDetails ? (
                 <div className="dashboard-loading">
                   <p className="dashboard-loading__text">กำลังโหลดข้อมูลการประชุม...</p>
                 </div>
