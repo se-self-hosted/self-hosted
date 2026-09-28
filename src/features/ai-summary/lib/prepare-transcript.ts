@@ -97,6 +97,9 @@ export function prepareTranscriptForAI(
   options: PrepareTranscriptOptions = {},
 ): PreparedTranscript {
   const opts = { ...DEFAULTS, ...options };
+  // A non-positive or non-numeric chunk size would never advance chunkLines.
+  if (!(opts.maxChunkChars >= 1)) opts.maxChunkChars = DEFAULTS.maxChunkChars;
+  opts.maxChunkChars = Math.floor(opts.maxChunkChars);
   const input = Array.isArray(segments) ? segments : [];
   const stats: TranscriptStats = {
     inputSegments: input.length,

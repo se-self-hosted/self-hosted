@@ -11,9 +11,13 @@ export function normalizeGeneratedSummary(raw: unknown, maxChars = MAX_SUMMARY_C
     return { ok: false, reason: "INVALID_OUTPUT", message: "The AI returned no summary text." };
   }
 
-  // Models sometimes wrap the whole answer in a ```markdown fence.
-  const fenced = raw.trim().match(/^```[\w-]*\n([\s\S]*?)\n?```$/);
-  const text = (fenced ? fenced[1] : raw).replace(/\r\n/g, "\n").trim();
+  // Models sometimes wrap the whole answer in a ```markdown fence. Normalize
+  // line endings first so a CRLF fence is recognized, and only unwrap when the
+  // body has no fences of its own (otherwise it is several code blocks).
+  const normalized = raw.replace(/\r\n?/g, "\n").trim();
+  const fenced = normalized.match(/^```[\w-]*\n([\s\S]*?)\n?```$/);
+  const unwrap = fenced && !/^```/m.test(fenced[1]);
+  const text = (unwrap ? fenced[1] : normalized).trim();
 
   if (text.length === 0) {
     return { ok: false, reason: "EMPTY_OUTPUT", message: "The AI returned an empty summary." };

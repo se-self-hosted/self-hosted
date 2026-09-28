@@ -90,3 +90,18 @@ test("normalizes AI output and rejects empty or invalid responses", () => {
   assert.equal(normalizeGeneratedSummary(undefined).ok, false);
   assert.equal(normalizeGeneratedSummary("x".repeat(11), 10).ok, false);
 });
+
+test("unwraps a CRLF fence but leaves separate code blocks intact", () => {
+  assert.deepEqual(normalizeGeneratedSummary("```markdown\r\n# Summary\r\n- a\r\n```"), { ok: true, text: "# Summary\n- a" });
+  const twoBlocks = "```js\nx\n```\nprose\n```py\ny\n```";
+  assert.deepEqual(normalizeGeneratedSummary(twoBlocks), { ok: true, text: twoBlocks });
+});
+
+test("falls back to the default chunk size for a non-positive maxChunkChars", () => {
+  const segments = [seg("A", 0, "Welcome everyone to the planning meeting.")];
+  for (const maxChunkChars of [0, -5, Number.NaN]) {
+    const result = prepareTranscriptForAI(segments, { maxChunkChars });
+    assert.equal(result.ok, true);
+    if (result.ok) assert.deepEqual(result.chunks, [result.text]);
+  }
+});
