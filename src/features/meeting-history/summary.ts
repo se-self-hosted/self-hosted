@@ -74,3 +74,51 @@ export function createSummaryPdfFilename(roomName: string, startedAt: string): s
 
   return `${safeRoomName || "meeting-summary"}-${date}-summary.pdf`;
 }
+
+const SUMMARY_ERROR_MESSAGES: Record<string, string> = {
+  TRANSCRIPT_EMPTY: "การประชุมนี้ยังไม่มีบทสนทนาสำหรับสร้างสรุป",
+  TRANSCRIPT_INVALID: "บทสนทนาไม่มีเนื้อหาที่ใช้สร้างสรุปได้",
+  TRANSCRIPT_TOO_SHORT: "บทสนทนาสั้นเกินไปสำหรับการสร้างสรุป",
+  AI_NOT_CONFIGURED: "ยังไม่ได้ตั้งค่าบริการ AI กรุณาติดต่อผู้ดูแลระบบ",
+  AI_AUTH_FAILED: "บริการ AI ปฏิเสธคีย์ API กรุณาติดต่อผู้ดูแลระบบ",
+  AI_QUOTA_EXCEEDED: "โควตาบริการ AI หมดแล้ว กรุณาติดต่อผู้ดูแลระบบ",
+  AI_RATE_LIMITED: "มีการใช้งาน AI มากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง",
+  AI_TIMEOUT: "บริการ AI ตอบสนองช้าเกินไป กรุณาลองอีกครั้ง",
+  AI_UNAVAILABLE: "ไม่สามารถเชื่อมต่อบริการ AI ได้ในขณะนี้ กรุณาลองอีกครั้ง",
+  AI_CONTENT_FILTERED: "AI ไม่สามารถสรุปเนื้อหาของการประชุมนี้ได้",
+  SUMMARY_IN_PROGRESS: "กำลังสร้างสรุปอยู่ กรุณารอสักครู่",
+};
+
+const DEFAULT_SUMMARY_ERROR_MESSAGE = "ไม่สามารถสร้างสรุปการประชุมได้ กรุณาลองอีกครั้ง";
+
+/** Thai message for an error code from POST /api/meetings/[id]/summary. */
+export function getSummaryErrorMessage(code: unknown): string {
+  return (typeof code === "string" && SUMMARY_ERROR_MESSAGES[code]) || DEFAULT_SUMMARY_ERROR_MESSAGE;
+}
+
+/**
+ * Asks the server to generate (or regenerate) the meeting's AI summary.
+ * Resolves with the stored summary; rejects with a user-facing Thai message.
+ */
+export async function requestMeetingSummary(
+  meetingId: string,
+  { discardEdits = false }: { discardEdits?: boolean } = {},
+  fetchImpl: typeof fetch = fetch,
+): Promise<MeetingSummary> {
+  let response: Response;
+  try {
+    response = await fetchImpl(`/api/meetings/${encodeURIComponent(meetingId)}/summary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discardEdits }),
+    });
+  } catch {
+    throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง");
+  }
+
+  const data = (await response.json().catch(() => null)) as { summary?: MeetingSummary; code?: unknown } | null;
+  if (!response.ok || !data?.summary) {
+    throw new Error(getSummaryErrorMessage(data?.code));
+  }
+  return data.summary;
+}

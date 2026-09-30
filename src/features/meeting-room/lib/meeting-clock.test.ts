@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { createMeetingClock } from "./meeting-clock.ts";
+import { createMeetingClock, resolveSegmentSpokenAt } from "./meeting-clock.ts";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
 import { startLiveTranscription, type SpeechRecognizer } from "./live-transcription.ts";
 
@@ -68,4 +68,16 @@ test("device wall-clock changes do not move transcript timestamps", (t) => {
 test("invalid server timestamps cannot silently reset the timeline to join time", () => {
   assert.throws(() => createMeetingClock("invalid", meetingStartedAt), /Invalid meeting clock/);
   assert.throws(() => createMeetingClock(meetingStartedAt, "invalid"), /Invalid meeting clock/);
+});
+
+test("keeps a valid client spokenAt for a stored segment", () => {
+  const spokenAt = resolveSegmentSpokenAt(new Date(meetingStartedAt), 90, "2026-09-13T10:01:30.250Z");
+  assert.equal(spokenAt.toISOString(), "2026-09-13T10:01:30.250Z");
+});
+
+test("derives spokenAt from the meeting start when the client sends none or garbage", () => {
+  const start = new Date(meetingStartedAt);
+  assert.equal(resolveSegmentSpokenAt(start, 301.5).toISOString(), "2026-09-13T10:05:01.500Z");
+  assert.equal(resolveSegmentSpokenAt(start, 12, "not-a-date").toISOString(), "2026-09-13T10:00:12.000Z");
+  assert.equal(resolveSegmentSpokenAt(start, -5, null).toISOString(), meetingStartedAt);
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { Bot, Download, FileText, Loader2, Pencil, RefreshCw } from "lucide-react";
+import { Bot, Download, FileText, Loader2, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import {
   canStartSummaryRegeneration,
   canSubmitSummaryDraft,
@@ -13,12 +13,15 @@ import {
 import type { DisplayedMeetingSummary, SummaryRegenerationStatus } from "../summary";
 import type { MeetingSummary } from "../types";
 
+type RegenerateSummary = (options: { discardEdits: boolean }) => Promise<void> | void;
+
 type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
   roomName: string;
   startedAt: string;
   onSave?: (content: string) => Promise<void> | void;
-  onRegenerate?: () => Promise<void> | void;
+  /** Generates the first summary, or regenerates an existing one. */
+  onRegenerate?: RegenerateSummary;
   showRegenerate?: boolean;
 };
 
@@ -27,6 +30,35 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeStyle: "short",
   timeZone: "Asia/Bangkok",
 });
+
+const DEFAULT_REGENERATION_ERROR = "ไม่สามารถสร้างสรุปใหม่ได้ กรุณาลองอีกครั้ง";
+
+/** Shared by the empty state (first generation) and the summary card. */
+function useSummaryRegeneration(onRegenerate?: RegenerateSummary) {
+  const [status, setStatus] = useState<SummaryRegenerationStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const inFlight = useRef(false);
+  const available = Boolean(onRegenerate);
+
+  async function run(discardEdits: boolean) {
+    if (!onRegenerate || inFlight.current) return;
+
+    inFlight.current = true;
+    setStatus("regenerating");
+    setErrorMessage("");
+    try {
+      await onRegenerate({ discardEdits });
+      setStatus(getSummaryRegenerationCompletionStatus(true));
+    } catch (error) {
+      setErrorMessage(error instanceof Error && error.message ? error.message : DEFAULT_REGENERATION_ERROR);
+      setStatus(getSummaryRegenerationCompletionStatus(false));
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  return { status, errorMessage, available, canStart: canStartSummaryRegeneration(available, status), run };
+}
 
 export function MeetingSummaryDisplay({
   summary,
@@ -38,20 +70,10 @@ export function MeetingSummaryDisplay({
 }: MeetingSummaryDisplayProps) {
   if (!summary) {
     return (
-      <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
-        <h3 id="meeting-summary-title" className="meeting-summary__title">
-          <Bot aria-hidden="true" className="icon-20" /> สรุปการประชุมด้วย AI
-        </h3>
-        <div className="meeting-summary__empty" role="status">
-          <FileText aria-hidden="true" className="icon-20" />
-          <div>
-            <p className="meeting-summary__empty-title">ยังไม่มีสรุปการประชุม</p>
-            <p className="meeting-summary__empty-description">
-              เมื่อสรุปพร้อมแล้ว เนื้อหาสรุปการประชุมจะแสดงที่นี่
-            </p>
-          </div>
-        </div>
-      </section>
+      <MeetingSummaryEmpty
+        onGenerate={onRegenerate}
+        showGenerate={showRegenerate ?? Boolean(onRegenerate)}
+      />
     );
   }
 
@@ -72,13 +94,63 @@ export function MeetingSummaryDisplay({
   );
 }
 
+function MeetingSummaryEmpty({
+  onGenerate,
+  showGenerate,
+}: {
+  onGenerate?: RegenerateSummary;
+  showGenerate: boolean;
+}) {
+  const generation = useSummaryRegeneration(onGenerate);
+  const isGenerating = generation.status === "regenerating";
+
+  return (
+    <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
+      <h3 id="meeting-summary-title" className="meeting-summary__title">
+        <Bot aria-hidden="true" className="icon-20" /> สรุปการประชุมด้วย AI
+      </h3>
+      <div className="meeting-summary__empty" role="status">
+        <FileText aria-hidden="true" className="icon-20" />
+        <div>
+          <p className="meeting-summary__empty-title">
+            {isGenerating ? "กำลังสร้างสรุปการประชุม..." : "ยังไม่มีสรุปการประชุม"}
+          </p>
+          <p className="meeting-summary__empty-description">
+            {showGenerate
+              ? "สร้างสรุปจากบทสนทนาของการประชุมนี้ด้วย AI (อาจใช้เวลาสักครู่)"
+              : "เมื่อสรุปพร้อมแล้ว เนื้อหาสรุปการประชุมจะแสดงที่นี่"}
+          </p>
+        </div>
+      </div>
+      {showGenerate && generation.available && (
+        <button
+          type="button"
+          className="meeting-summary__generate focus-ring"
+          onClick={() => void generation.run(false)}
+          disabled={!generation.canStart}
+        >
+          {isGenerating ? (
+            <Loader2 aria-hidden="true" className="icon-14 animate-spin" />
+          ) : (
+            <Sparkles aria-hidden="true" className="icon-14" />
+          )}
+          {isGenerating ? "กำลังสร้างสรุป..." : "สร้างสรุปด้วย AI"}
+        </button>
+      )}
+      {generation.status === "error" && (
+        <p className="meeting-summary__error" role="alert">{generation.errorMessage}</p>
+      )}
+    </section>
+  );
+}
+
 type MeetingSummaryEditorProps = {
   summary: MeetingSummary;
   displayedSummary: DisplayedMeetingSummary;
   roomName: string;
   startedAt: string;
   onSave?: (content: string) => Promise<void> | void;
-  onRegenerate?: () => Promise<void> | void;
+  onRegenerate?: RegenerateSummary;
   showRegenerate: boolean;
 };
 
@@ -96,14 +168,14 @@ function MeetingSummaryEditor({
   const [draftContent, setDraftContent] = useState(originalContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [regenerationStatus, setRegenerationStatus] = useState<SummaryRegenerationStatus>("idle");
-  const regenerationInFlight = useRef(false);
+  const regeneration = useSummaryRegeneration(onRegenerate);
+  const regenerationStatus = regeneration.status;
   const [exportError, setExportError] = useState("");
 
   const draftState = getSummaryDraftState(originalContent, draftContent);
   const canSave = canSubmitSummaryDraft(originalContent, draftContent, Boolean(onSave)) && !isSaving;
-  const regenerationAvailable = Boolean(onRegenerate);
-  const canRegenerate = canStartSummaryRegeneration(regenerationAvailable, regenerationStatus) && !isEditing;
+  const regenerationAvailable = regeneration.available;
+  const canRegenerate = regeneration.canStart && !isEditing;
 
   function startEditing() {
     setDraftContent(originalContent);
@@ -132,19 +204,17 @@ function MeetingSummaryEditor({
     }
   }
 
-  async function regenerateSummary() {
-    if (!onRegenerate || regenerationInFlight.current) return;
-
-    regenerationInFlight.current = true;
-    setRegenerationStatus("regenerating");
-    try {
-      await onRegenerate();
-      setRegenerationStatus(getSummaryRegenerationCompletionStatus(true));
-    } catch {
-      setRegenerationStatus(getSummaryRegenerationCompletionStatus(false));
-    } finally {
-      regenerationInFlight.current = false;
+  function regenerateSummary() {
+    // The edited version is what's displayed, so a regeneration that kept it
+    // would appear to do nothing. Replace it, but only once the host agrees.
+    const hasEdits = displayedSummary.source === "edited";
+    if (
+      hasEdits &&
+      !window.confirm("สรุปนี้ถูกแก้ไขแล้ว การสร้างสรุปใหม่จะแทนที่ฉบับแก้ไข ต้องการดำเนินการต่อหรือไม่?")
+    ) {
+      return;
     }
+    void regeneration.run(hasEdits);
   }
 
   function exportPdf() {
@@ -189,7 +259,7 @@ function MeetingSummaryEditor({
             <button
               type="button"
               className="meeting-summary__regenerate focus-ring"
-              onClick={() => void regenerateSummary()}
+              onClick={regenerateSummary}
               disabled={!canRegenerate}
               aria-describedby={!regenerationAvailable ? "meeting-summary-regenerate-unavailable" : undefined}
             >
@@ -233,9 +303,7 @@ function MeetingSummaryEditor({
         </p>
       )}
       {regenerationStatus === "error" && (
-        <p className="meeting-summary__error" role="alert">
-          ไม่สามารถสร้างสรุปใหม่ได้ กรุณาลองอีกครั้ง
-        </p>
+        <p className="meeting-summary__error" role="alert">{regeneration.errorMessage}</p>
       )}
       {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
 

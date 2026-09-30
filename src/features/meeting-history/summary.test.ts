@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { canStartSummaryRegeneration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryRegenerationCompletionStatus, selectMeetingSummaryContent } from "./summary.ts";
+import { canStartSummaryRegeneration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, requestMeetingSummary, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -100,4 +100,32 @@ test("creates a safe fallback PDF filename", () => {
     createSummaryPdfFilename("  <>:\"/\\|?*...  ", "not-a-date"),
     "meeting-summary-undated-summary.pdf",
   );
+});
+
+test("maps summary API error codes to Thai messages with a fallback", () => {
+  assert.equal(getSummaryErrorMessage("TRANSCRIPT_EMPTY"), "การประชุมนี้ยังไม่มีบทสนทนาสำหรับสร้างสรุป");
+  assert.equal(getSummaryErrorMessage("AI_RATE_LIMITED"), "มีการใช้งาน AI มากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง");
+  assert.equal(getSummaryErrorMessage("SOMETHING_NEW"), getSummaryErrorMessage(undefined));
+});
+
+test("requests a summary and returns the stored row", async () => {
+  let request: { url: string; body: unknown } | undefined;
+  const fetchStub = (async (url: string, init: RequestInit) => {
+    request = { url, body: JSON.parse(String(init.body)) };
+    return new Response(JSON.stringify({ summary: baseSummary }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  assert.deepEqual(await requestMeetingSummary("m 1", { discardEdits: true }, fetchStub), baseSummary);
+  assert.deepEqual(request, { url: "/api/meetings/m%201/summary", body: { discardEdits: true } });
+});
+
+test("turns a failed summary request into a user-facing message", async () => {
+  const failing = (async () =>
+    new Response(JSON.stringify({ error: "x", code: "AI_TIMEOUT" }), { status: 504 })) as unknown as typeof fetch;
+  await assert.rejects(requestMeetingSummary("m1", {}, failing), { message: getSummaryErrorMessage("AI_TIMEOUT") });
+
+  const offline = (async () => {
+    throw new TypeError("fetch failed");
+  }) as unknown as typeof fetch;
+  await assert.rejects(requestMeetingSummary("m1", {}, offline), /เชื่อมต่อเซิร์ฟเวอร์/);
 });
