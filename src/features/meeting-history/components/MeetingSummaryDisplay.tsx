@@ -3,14 +3,18 @@
 import { FormEvent, useRef, useState } from "react";
 import { Bot, Download, FileText, Loader2, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import {
+  buildMeetingReport,
   canStartSummaryRegeneration,
   canSubmitSummaryDraft,
-  createSummaryPdfFilename,
+  createSummaryReportFilename,
+  formatMeetingReportHtml,
+  formatMeetingReportText,
   getSummaryDraftState,
   getSummaryRegenerationCompletionStatus,
+  parseSummaryMarkdown,
   selectMeetingSummaryContent,
 } from "../summary";
-import type { DisplayedMeetingSummary, SummaryRegenerationStatus } from "../summary";
+import type { DisplayedMeetingSummary, SummaryInline, SummaryRegenerationStatus } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type RegenerateSummary = (options: { discardEdits: boolean }) => Promise<void> | void;
@@ -19,6 +23,9 @@ type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
   roomName: string;
   startedAt: string;
+  /** Included in the exported report when given. */
+  durationSeconds?: number | null;
+  participantNames?: string[];
   onSave?: (content: string) => Promise<void> | void;
   /** Generates the first summary, or regenerates an existing one. */
   onRegenerate?: RegenerateSummary;
@@ -64,6 +71,8 @@ export function MeetingSummaryDisplay({
   summary,
   roomName,
   startedAt,
+  durationSeconds,
+  participantNames,
   onSave,
   onRegenerate,
   showRegenerate,
@@ -87,6 +96,8 @@ export function MeetingSummaryDisplay({
       displayedSummary={displayedSummary}
       roomName={roomName}
       startedAt={startedAt}
+      durationSeconds={durationSeconds}
+      participantNames={participantNames}
       onSave={onSave}
       onRegenerate={onRegenerate}
       showRegenerate={showRegenerate ?? Boolean(onRegenerate)}
@@ -149,6 +160,8 @@ type MeetingSummaryEditorProps = {
   displayedSummary: DisplayedMeetingSummary;
   roomName: string;
   startedAt: string;
+  durationSeconds?: number | null;
+  participantNames?: string[];
   onSave?: (content: string) => Promise<void> | void;
   onRegenerate?: RegenerateSummary;
   showRegenerate: boolean;
@@ -159,6 +172,8 @@ function MeetingSummaryEditor({
   displayedSummary,
   roomName,
   startedAt,
+  durationSeconds,
+  participantNames,
   onSave,
   onRegenerate,
   showRegenerate,
@@ -217,25 +232,76 @@ function MeetingSummaryEditor({
     void regeneration.run(hasEdits);
   }
 
+  function currentReport() {
+    return buildMeetingReport({ roomName, startedAt, durationSeconds, participantNames, summary });
+  }
+
+  function exportText() {
+    const report = currentReport();
+    if (!report) return;
+
+    setExportError("");
+    try {
+      const blob = new Blob([formatMeetingReportText(report)], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = createSummaryReportFilename(roomName, startedAt, "txt");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setExportError("ไม่สามารถดาวน์โหลดไฟล์ข้อความได้ กรุณาลองอีกครั้ง");
+    }
+  }
+
+  // Prints the report from a hidden iframe so the PDF holds only the report,
+  // whatever page or modal the summary card is shown in.
   function exportPdf() {
+    const report = currentReport();
+    if (!report) return;
+
+    const pdfTitle = createSummaryReportFilename(roomName, startedAt, "pdf").replace(/\.pdf$/i, "");
     const previousTitle = document.title;
-    const printClass = "summary-export-printing";
+    const frame = document.createElement("iframe");
     let cleanedUp = false;
 
     const cleanup = () => {
       if (cleanedUp) return;
       cleanedUp = true;
-      document.documentElement.classList.remove(printClass);
       document.title = previousTitle;
-      window.removeEventListener("afterprint", cleanup);
+      frame.remove();
     };
 
     setExportError("");
     try {
-      document.title = createSummaryPdfFilename(roomName, startedAt).replace(/\.pdf$/i, "");
-      document.documentElement.classList.add(printClass);
-      window.addEventListener("afterprint", cleanup);
-      window.print();
+      frame.setAttribute("aria-hidden", "true");
+      frame.tabIndex = -1;
+      frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+      document.body.appendChild(frame);
+
+      const frameWindow = frame.contentWindow;
+      if (!frameWindow) throw new Error("Print frame unavailable");
+      frameWindow.document.open();
+      frameWindow.document.write(formatMeetingReportHtml(report, pdfTitle));
+      frameWindow.document.close();
+
+      // Browsers name the saved PDF after the top-level document's title.
+      document.title = pdfTitle;
+      frameWindow.addEventListener("afterprint", () => setTimeout(cleanup, 0));
+      frameWindow.focus();
+      const printStartedAt = Date.now();
+      frameWindow.print();
+      // Chrome, Edge and Firefox block in print() until the dialog closes, so a
+      // slow return means printing is over. Otherwise wait for the dialog to
+      // hand focus back, with a timeout in case no event ever arrives.
+      if (Date.now() - printStartedAt > 250) {
+        cleanup();
+      } else {
+        window.addEventListener("focus", () => setTimeout(cleanup, 500), { once: true });
+        setTimeout(cleanup, 60_000);
+      }
     } catch {
       cleanup();
       setExportError("ไม่สามารถเปิดหน้าต่างส่งออก PDF ได้ กรุณาลองอีกครั้ง");
@@ -283,6 +349,13 @@ function MeetingSummaryEditor({
               </button>
               <button
                 type="button"
+                className="meeting-summary__export focus-ring"
+                onClick={exportText}
+              >
+                <FileText aria-hidden="true" className="icon-14" /> ดาวน์โหลดข้อความ
+              </button>
+              <button
+                type="button"
                 className="meeting-summary__edit-btn focus-ring"
                 onClick={startEditing}
                 aria-label="แก้ไขสรุปการประชุม"
@@ -295,7 +368,7 @@ function MeetingSummaryEditor({
       </div>
 
       <p id="meeting-summary-export-help" className="sr-only">
-        เปิดหน้าต่างพิมพ์เพื่อบันทึกสรุปการประชุมเป็นไฟล์ PDF
+        เปิดหน้าต่างพิมพ์เพื่อบันทึกรายงานสรุปการประชุมเป็นไฟล์ PDF
       </p>
       {showRegenerate && !regenerationAvailable && (
         <p id="meeting-summary-regenerate-unavailable" className="meeting-summary__notice" role="status">
@@ -355,7 +428,7 @@ function MeetingSummaryEditor({
           </div>
         </form>
       ) : (
-        <p className="meeting-summary__content">{displayedSummary.content}</p>
+        <SummaryMarkdown content={displayedSummary.content} />
       )}
 
       <dl className="meeting-summary__metadata">
@@ -371,5 +444,47 @@ function MeetingSummaryEditor({
         )}
       </dl>
     </section>
+  );
+}
+
+function SummaryInlines({ inlines }: { inlines: SummaryInline[] }) {
+  return inlines.map((inline, index) => {
+    if (inline.type === "strong") return <strong key={index}>{inline.text}</strong>;
+    if (inline.type === "code") return <code key={index}>{inline.text}</code>;
+    return inline.text;
+  });
+}
+
+function SummaryMarkdown({ content }: { content: string }) {
+  return (
+    <div className="meeting-summary__content">
+      {parseSummaryMarkdown(content).map((block, index) => {
+        switch (block.type) {
+          case "heading":
+            return block.level === 3 ? (
+              <h5 key={index}><SummaryInlines inlines={block.inlines} /></h5>
+            ) : (
+              <h4 key={index}><SummaryInlines inlines={block.inlines} /></h4>
+            );
+          case "list": {
+            const items = block.items.map((item, itemIndex) => (
+              <li key={itemIndex}><SummaryInlines inlines={item} /></li>
+            ));
+            return block.ordered ? <ol key={index}>{items}</ol> : <ul key={index}>{items}</ul>;
+          }
+          case "paragraph":
+            return (
+              <p key={index}>
+                {block.lines.map((line, lineIndex) => (
+                  <span key={lineIndex}>
+                    {lineIndex > 0 && <br />}
+                    <SummaryInlines inlines={line} />
+                  </span>
+                ))}
+              </p>
+            );
+        }
+      })}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { canStartSummaryRegeneration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, requestMeetingSummary, selectMeetingSummaryContent } from "./summary.ts";
+import { buildMeetingReport, canStartSummaryRegeneration, createSummaryReportFilename, formatMeetingReportHtml, formatMeetingReportText, formatReportDuration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, parseSummaryMarkdown, requestMeetingSummary, summaryMarkdownToHtml, summaryMarkdownToText, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -128,4 +128,115 @@ test("turns a failed summary request into a user-facing message", async () => {
     throw new TypeError("fetch failed");
   }) as unknown as typeof fetch;
   await assert.rejects(requestMeetingSummary("m1", {}, offline), /เชื่อมต่อเซิร์ฟเวอร์/);
+});
+
+test("builds a text report with meeting details and the displayed summary", () => {
+  const report = buildMeetingReport({
+    roomName: "Weekly Sync",
+    startedAt: "2026-09-27T02:00:00.000Z",
+    durationSeconds: 3725,
+    participantNames: ["Alice", "Bob"],
+    summary: { ...baseSummary, editedSummary: "  Edited summary  ", editedAt: "2026-09-27T05:00:00.000Z" },
+  });
+  assert.ok(report);
+  const text = formatMeetingReportText(report);
+
+  assert.match(text, /^รายงานสรุปการประชุม\n/);
+  assert.match(text, /ห้องประชุม: Weekly Sync/);
+  assert.match(text, /ระยะเวลา: 1 ชั่วโมง 2 นาที/);
+  assert.match(text, /ผู้เข้าร่วม \(2 คน\): Alice, Bob/);
+  assert.match(text, /แก้ไขล่าสุด: .*\(gpt-4o-mini\)/);
+  assert.ok(text.endsWith("\nEdited summary\n"));
+});
+
+test("omits optional report details that were not given", () => {
+  const report = buildMeetingReport({ roomName: "Room", startedAt: "2026-09-27T02:00:00.000Z", summary: baseSummary });
+  assert.deepEqual(report?.details.map((d) => d.label), ["ห้องประชุม", "วันที่ประชุม", "สร้างสรุปเมื่อ"]);
+  assert.equal(report?.content, "AI summary");
+});
+
+test("escapes summary and meeting text in the printable report", () => {
+  const report = buildMeetingReport({
+    roomName: "<b>Room</b>",
+    startedAt: "2026-09-27T02:00:00.000Z",
+    summary: { ...baseSummary, aiSummary: "<script>alert(1)</script> & more" },
+  });
+  assert.ok(report);
+  const html = formatMeetingReportHtml(report, "a\"<title>");
+
+  assert.doesNotMatch(html, /<script>|<b>/);
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt; &amp; more/);
+  assert.match(html, /<title>a&quot;&lt;title&gt;<\/title>/);
+});
+
+test("formats report durations", () => {
+  assert.equal(formatReportDuration(null), "-");
+  assert.equal(formatReportDuration(0), "0 วินาที");
+  assert.equal(formatReportDuration(95), "1 นาที 35 วินาที");
+  assert.equal(formatReportDuration(7200), "2 ชั่วโมง");
+});
+
+test("names the text report like the PDF", () => {
+  assert.equal(createSummaryReportFilename("Weekly Sync", "2026-09-27T02:00:00.000Z", "txt"), "Weekly Sync-2026-09-27-summary.txt");
+});
+
+const sampleMarkdown = [
+  "## ภาพรวม",
+  "ประชุมเรื่อง **AI summary**",
+  "ต่อบรรทัด",
+  "",
+  "## Action Items",
+  "- [Alice] เขียน `e2e` test",
+  "  ภายในวันศุกร์",
+  "* [วิภา] ทำ API",
+  "1. first",
+  "2) second",
+  "---",
+  "### Note ###",
+].join("\n");
+
+test("parses the summary Markdown subset into blocks", () => {
+  assert.deepEqual(parseSummaryMarkdown(sampleMarkdown), [
+    { type: "heading", level: 2, inlines: [{ type: "text", text: "ภาพรวม" }] },
+    {
+      type: "paragraph",
+      lines: [
+        [{ type: "text", text: "ประชุมเรื่อง " }, { type: "strong", text: "AI summary" }],
+        [{ type: "text", text: "ต่อบรรทัด" }],
+      ],
+    },
+    { type: "heading", level: 2, inlines: [{ type: "text", text: "Action Items" }] },
+    {
+      type: "list",
+      ordered: false,
+      items: [
+        [
+          { type: "text", text: "[Alice] เขียน " },
+          { type: "code", text: "e2e" },
+          { type: "text", text: " test" },
+          { type: "text", text: " " },
+          { type: "text", text: "ภายในวันศุกร์" },
+        ],
+        [{ type: "text", text: "[วิภา] ทำ API" }],
+      ],
+    },
+    { type: "list", ordered: true, items: [[{ type: "text", text: "first" }], [{ type: "text", text: "second" }]] },
+    { type: "heading", level: 3, inlines: [{ type: "text", text: "Note" }] },
+  ]);
+});
+
+test("turns summary Markdown into plain text without markers", () => {
+  const text = summaryMarkdownToText(sampleMarkdown);
+  assert.doesNotMatch(text, /##|\*\*|`/);
+  assert.match(text, /^ภาพรวม\n---+\nประชุมเรื่อง AI summary\nต่อบรรทัด\n\n/);
+  assert.match(text, /• \[Alice\] เขียน e2e test ภายในวันศุกร์\n• \[วิภา\] ทำ API/);
+  assert.match(text, /1\. first\n2\. second/);
+});
+
+test("renders summary Markdown to escaped HTML", () => {
+  const html = summaryMarkdownToHtml("## <img src=x onerror=alert(1)>\n- **<b>bold</b>**\ntext `<i>`");
+  assert.equal(
+    html,
+    "<h2>&lt;img src=x onerror=alert(1)&gt;</h2>\n<ul><li><strong>&lt;b&gt;bold&lt;/b&gt;</strong></li></ul>\n<p>text <code>&lt;i&gt;</code></p>",
+  );
 });

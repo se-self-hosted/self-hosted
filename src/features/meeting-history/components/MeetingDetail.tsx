@@ -316,6 +316,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         summary={meeting.summary}
         roomName={meeting.roomName}
         startedAt={meeting.startedAt}
+        durationSeconds={meeting.durationSeconds}
+        participantNames={meeting.participants.map((p) => p.displayName)}
         showRegenerate={meeting.isHost}
         onRegenerate={meeting.isHost ? regenerateSummary : undefined}
       />
