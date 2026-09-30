@@ -86,7 +86,9 @@ const SUMMARY_ERROR_MESSAGES: Record<string, string> = {
   AI_TIMEOUT: "บริการ AI ตอบสนองช้าเกินไป กรุณาลองอีกครั้ง",
   AI_UNAVAILABLE: "ไม่สามารถเชื่อมต่อบริการ AI ได้ในขณะนี้ กรุณาลองอีกครั้ง",
   AI_CONTENT_FILTERED: "AI ไม่สามารถสรุปเนื้อหาของการประชุมนี้ได้",
+  AI_INPUT_TOO_LARGE: "บทสนทนายาวเกินกว่าที่ระบบจะสรุปได้",
   SUMMARY_IN_PROGRESS: "กำลังสร้างสรุปอยู่ กรุณารอสักครู่",
+  SUMMARY_COOLDOWN: "เพิ่งสร้างสรุปไป กรุณารอสักครู่แล้วลองอีกครั้ง",
 };
 
 const DEFAULT_SUMMARY_ERROR_MESSAGE = "ไม่สามารถสร้างสรุปการประชุมได้ กรุณาลองอีกครั้ง";

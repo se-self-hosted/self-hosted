@@ -81,3 +81,10 @@ test("derives spokenAt from the meeting start when the client sends none or garb
   assert.equal(resolveSegmentSpokenAt(start, 12, "not-a-date").toISOString(), "2026-09-13T10:00:12.000Z");
   assert.equal(resolveSegmentSpokenAt(start, -5, null).toISOString(), meetingStartedAt);
 });
+
+test("ignores a client spokenAt that drifts more than five minutes from the meeting clock", () => {
+  const start = new Date(meetingStartedAt);
+  assert.equal(resolveSegmentSpokenAt(start, 60, "3000-01-01T00:00:00.000Z").toISOString(), "2026-09-13T10:01:00.000Z");
+  assert.equal(resolveSegmentSpokenAt(start, 60, "2026-09-13T10:05:59.000Z").toISOString(), "2026-09-13T10:05:59.000Z");
+  assert.equal(resolveSegmentSpokenAt(start, 60, "2026-09-13T10:06:01.000Z").toISOString(), "2026-09-13T10:01:00.000Z");
+});

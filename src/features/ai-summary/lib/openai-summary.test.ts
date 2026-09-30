@@ -144,3 +144,13 @@ test("maps AI error codes to HTTP statuses", () => {
   assert.equal(httpStatusForSummaryAIError("AI_CONTENT_FILTERED"), 422);
   assert.equal(httpStatusForSummaryAIError("AI_AUTH_FAILED"), 502);
 });
+
+test("refuses a transcript with more chunks than maxChunks before calling OpenAI", async () => {
+  const { impl, calls } = fakeFetch([]);
+  await rejectsWith(
+    generator(impl, [], { maxChunks: 2 })({ ...input, chunks: ["a", "b", "c"] }),
+    "AI_INPUT_TOO_LARGE",
+  );
+  assert.equal(calls.length, 0);
+  assert.equal(httpStatusForSummaryAIError("AI_INPUT_TOO_LARGE"), 413);
+});

@@ -7,11 +7,11 @@ import { resolveSegmentSpokenAt } from "@/features/meeting-room/lib/meeting-cloc
 const segmentSchema = z.object({
   id: z.string().min(1).optional(),
   participantId: z.string().optional(),
-  speakerName: z.string().optional(),
+  speakerName: z.string().max(100, "Speaker name is too long").optional(),
   startTime: z.number().min(0, "Start time must be non-negative"),
   endTime: z.number().min(0, "End time must be non-negative"),
   spokenAt: z.string().optional(),
-  text: z.string().min(1, "Transcript text is required"),
+  text: z.string().min(1, "Transcript text is required").max(5000, "Transcript text is too long"),
   confidence: z.number().min(0).max(1).optional().default(1.0),
 });
 

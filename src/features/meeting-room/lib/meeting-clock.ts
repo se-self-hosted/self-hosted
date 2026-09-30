@@ -22,20 +22,24 @@ export function createMeetingClock(
   };
 }
 
+/** How far a client's spokenAt may drift from the meeting clock and still be trusted. */
+export const MAX_SPOKEN_AT_DRIFT_MS = 5 * 60_000;
+
 /**
  * Server-side wall-clock time for a stored segment. The client's `spokenAt`
- * comes from the same meeting clock as `startTime`, so it is kept when valid;
- * otherwise it is derived from the meeting start rather than the save time,
- * which lags by the client's retry delay.
+ * comes from the same meeting clock as `startTime`, so it is kept when valid
+ * and close to it; otherwise it is derived from the meeting start rather than
+ * the save time (which lags by the client's retry delay) or a bogus value.
  */
 export function resolveSegmentSpokenAt(
   meetingStartedAt: Date,
   startTimeSeconds: number,
   clientSpokenAt?: string | null,
 ): Date {
+  const derived = new Date(meetingStartedAt.getTime() + Math.max(0, startTimeSeconds) * 1000);
   if (clientSpokenAt) {
     const parsed = new Date(clientSpokenAt);
-    if (Number.isFinite(parsed.getTime())) return parsed;
+    if (Math.abs(parsed.getTime() - derived.getTime()) <= MAX_SPOKEN_AT_DRIFT_MS) return parsed;
   }
-  return new Date(meetingStartedAt.getTime() + Math.max(0, startTimeSeconds) * 1000);
+  return derived;
 }

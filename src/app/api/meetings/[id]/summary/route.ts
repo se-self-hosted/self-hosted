@@ -17,8 +17,19 @@ const generateSummarySchema = z.object({
 });
 
 // One generation per meeting at a time in this process, so a double click or
-// a second tab doesn't pay for the same summary twice.
+// a second tab doesn't pay for the same summary twice, and a pause between
+// generations so a looping client can't run up the OpenAI bill.
 const inFlight = new Set<string>();
+const lastFinishedAt = new Map<string, number>();
+const COOLDOWN_MS = 15_000;
+
+function startCooldown(meetingId: string) {
+  const now = Date.now();
+  for (const [id, finishedAt] of lastFinishedAt) {
+    if (now - finishedAt >= COOLDOWN_MS) lastFinishedAt.delete(id);
+  }
+  lastFinishedAt.set(meetingId, now);
+}
 
 export async function POST(
   req: Request,
@@ -55,6 +66,14 @@ export async function POST(
         { status: 409 },
       );
     }
+    const sinceLast = Date.now() - (lastFinishedAt.get(meetingId) ?? 0);
+    if (sinceLast < COOLDOWN_MS) {
+      const retryAfter = Math.ceil((COOLDOWN_MS - sinceLast) / 1000);
+      return NextResponse.json(
+        { error: "A summary was generated moments ago; try again shortly", code: "SUMMARY_COOLDOWN" },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } },
+      );
+    }
     inFlight.add(meetingId);
 
     try {
@@ -64,6 +83,10 @@ export async function POST(
         timeoutMs: 45_000,
       });
       const result = await summarizeMeeting(meetingId, generate, { discardEdits: body.data.discardEdits });
+      // Only a completed model answer costs tokens; failures stay retryable at once.
+      if (result.status === "saved" || result.status === "invalid_output") {
+        startCooldown(meetingId);
+      }
 
       switch (result.status) {
         case "saved": {

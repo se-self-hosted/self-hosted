@@ -18,6 +18,7 @@ export type SummaryAIErrorCode =
   | "AI_TIMEOUT"
   | "AI_UNAVAILABLE"
   | "AI_REQUEST_REJECTED"
+  | "AI_INPUT_TOO_LARGE"
   | "AI_CONTENT_FILTERED"
   | "AI_OUTPUT_TRUNCATED"
   | "AI_BAD_RESPONSE";
@@ -59,6 +60,8 @@ export type OpenAISummaryOptions = {
   baseDelayMs?: number;
   maxDelayMs?: number;
   maxOutputTokens?: number;
+  /** Refuse transcripts needing more chunk calls than this (cost bound). */
+  maxChunks?: number;
   sleep?: (ms: number) => Promise<void>;
 };
 
@@ -116,6 +119,7 @@ export function createOpenAISummaryGenerator(options: OpenAISummaryOptions) {
     baseDelayMs = 1_000,
     maxDelayMs = 20_000,
     maxOutputTokens = 2_000,
+    maxChunks = 20,
     sleep = defaultSleep,
   } = options;
 
@@ -158,6 +162,12 @@ export function createOpenAISummaryGenerator(options: OpenAISummaryOptions) {
   }
 
   return async function generateSummary({ language, text, chunks }: SummaryRequest) {
+    if (chunks.length > maxChunks) {
+      throw new SummaryAIError(
+        "AI_INPUT_TOO_LARGE",
+        `The transcript needs ${chunks.length} parts; at most ${maxChunks} are summarized.`,
+      );
+    }
     const system: ChatMessage = { role: "system", content: SYSTEM_PROMPT };
 
     if (chunks.length <= 1) {
@@ -262,6 +272,8 @@ export function httpStatusForSummaryAIError(code: SummaryAIErrorCode): number {
       return 503;
     case "AI_CONTENT_FILTERED":
       return 422;
+    case "AI_INPUT_TOO_LARGE":
+      return 413;
     default:
       return 502;
   }
