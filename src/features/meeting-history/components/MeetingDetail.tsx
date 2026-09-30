@@ -308,6 +308,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
       {/* 3. AI Summary */}
       <MeetingSummaryDisplay
         summary={meeting.summary}
+        roomName={meeting.roomName}
+        startedAt={meeting.startedAt}
         showRegenerate={meeting.isHost}
       />
 

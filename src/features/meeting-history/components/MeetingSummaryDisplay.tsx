@@ -1,18 +1,25 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { Bot, FileText, Loader2, Pencil } from "lucide-react";
+import { FormEvent, useRef, useState } from "react";
+import { Bot, Download, FileText, Loader2, Pencil, RefreshCw } from "lucide-react";
 import {
+  canStartSummaryRegeneration,
   canSubmitSummaryDraft,
+  createSummaryPdfFilename,
   getSummaryDraftState,
+  getSummaryRegenerationCompletionStatus,
   selectMeetingSummaryContent,
 } from "../summary";
-import type { DisplayedMeetingSummary } from "../summary";
+import type { DisplayedMeetingSummary, SummaryRegenerationStatus } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type MeetingSummaryDisplayProps = {
   summary: MeetingSummary | null;
+  roomName: string;
+  startedAt: string;
   onSave?: (content: string) => Promise<void> | void;
+  onRegenerate?: () => Promise<void> | void;
+  showRegenerate?: boolean;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", {
@@ -21,7 +28,14 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
   timeZone: "Asia/Bangkok",
 });
 
-export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplayProps) {
+export function MeetingSummaryDisplay({
+  summary,
+  roomName,
+  startedAt,
+  onSave,
+  onRegenerate,
+  showRegenerate,
+}: MeetingSummaryDisplayProps) {
   if (!summary) {
     return (
       <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
@@ -44,37 +58,16 @@ export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplay
   const displayedSummary = selectMeetingSummaryContent(summary);
   if (!displayedSummary) return null;
 
-  function exportPdf() {
-    const previousTitle = document.title;
-    const printClass = "summary-export-printing";
-    let cleanedUp = false;
-
-    const cleanup = () => {
-      if (cleanedUp) return;
-      cleanedUp = true;
-      document.documentElement.classList.remove(printClass);
-      document.title = previousTitle;
-      window.removeEventListener("afterprint", cleanup);
-    };
-
-    setExportError("");
-    try {
-      document.title = createSummaryPdfFilename(roomName, startedAt).replace(/\.pdf$/i, "");
-      document.documentElement.classList.add(printClass);
-      window.addEventListener("afterprint", cleanup);
-      window.print();
-    } catch {
-      cleanup();
-      setExportError("ไม่สามารถเปิดหน้าต่างส่งออก PDF ได้ กรุณาลองอีกครั้ง");
-    }
-  }
-
   return (
     <MeetingSummaryEditor
-      key={`${summary.id}:${displayedSummary.content}`}
+      key={`${summary.id}:${summary.generatedAt}:${displayedSummary.content}`}
       summary={summary}
       displayedSummary={displayedSummary}
+      roomName={roomName}
+      startedAt={startedAt}
       onSave={onSave}
+      onRegenerate={onRegenerate}
+      showRegenerate={showRegenerate ?? Boolean(onRegenerate)}
     />
   );
 }
@@ -82,22 +75,35 @@ export function MeetingSummaryDisplay({ summary, onSave }: MeetingSummaryDisplay
 type MeetingSummaryEditorProps = {
   summary: MeetingSummary;
   displayedSummary: DisplayedMeetingSummary;
+  roomName: string;
+  startedAt: string;
   onSave?: (content: string) => Promise<void> | void;
+  onRegenerate?: () => Promise<void> | void;
+  showRegenerate: boolean;
 };
 
 function MeetingSummaryEditor({
   summary,
   displayedSummary,
+  roomName,
+  startedAt,
   onSave,
+  onRegenerate,
+  showRegenerate,
 }: MeetingSummaryEditorProps) {
   const originalContent = displayedSummary.content;
   const [isEditing, setIsEditing] = useState(false);
   const [draftContent, setDraftContent] = useState(originalContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [regenerationStatus, setRegenerationStatus] = useState<SummaryRegenerationStatus>("idle");
+  const regenerationInFlight = useRef(false);
+  const [exportError, setExportError] = useState("");
 
   const draftState = getSummaryDraftState(originalContent, draftContent);
   const canSave = canSubmitSummaryDraft(originalContent, draftContent, Boolean(onSave)) && !isSaving;
+  const regenerationAvailable = Boolean(onRegenerate);
+  const canRegenerate = canStartSummaryRegeneration(regenerationAvailable, regenerationStatus) && !isEditing;
 
   function startEditing() {
     setDraftContent(originalContent);
@@ -126,6 +132,46 @@ function MeetingSummaryEditor({
     }
   }
 
+  async function regenerateSummary() {
+    if (!onRegenerate || regenerationInFlight.current) return;
+
+    regenerationInFlight.current = true;
+    setRegenerationStatus("regenerating");
+    try {
+      await onRegenerate();
+      setRegenerationStatus(getSummaryRegenerationCompletionStatus(true));
+    } catch {
+      setRegenerationStatus(getSummaryRegenerationCompletionStatus(false));
+    } finally {
+      regenerationInFlight.current = false;
+    }
+  }
+
+  function exportPdf() {
+    const previousTitle = document.title;
+    const printClass = "summary-export-printing";
+    let cleanedUp = false;
+
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      document.documentElement.classList.remove(printClass);
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    setExportError("");
+    try {
+      document.title = createSummaryPdfFilename(roomName, startedAt).replace(/\.pdf$/i, "");
+      document.documentElement.classList.add(printClass);
+      window.addEventListener("afterprint", cleanup);
+      window.print();
+    } catch {
+      cleanup();
+      setExportError("ไม่สามารถเปิดหน้าต่างส่งออก PDF ได้ กรุณาลองอีกครั้ง");
+    }
+  }
+
   return (
     <section className="meeting-summary card p-6" aria-labelledby="meeting-summary-title">
       <div className="meeting-summary__header">
@@ -139,18 +185,59 @@ function MeetingSummaryEditor({
         </div>
         <div className="meeting-summary__header-actions">
           <span className="meeting-summary__model">{summary.llmModel}</span>
-          {!isEditing && (
+          {showRegenerate && (
             <button
               type="button"
-              className="meeting-summary__edit-btn focus-ring"
-              onClick={startEditing}
-              aria-label="แก้ไขสรุปการประชุม"
+              className="meeting-summary__regenerate focus-ring"
+              onClick={() => void regenerateSummary()}
+              disabled={!canRegenerate}
+              aria-describedby={!regenerationAvailable ? "meeting-summary-regenerate-unavailable" : undefined}
             >
-              <Pencil aria-hidden="true" className="icon-14" /> แก้ไข
+              {regenerationStatus === "regenerating" ? (
+                <Loader2 aria-hidden="true" className="icon-14 animate-spin" />
+              ) : (
+                <RefreshCw aria-hidden="true" className="icon-14" />
+              )}
+              {regenerationStatus === "regenerating" ? "Regenerating..." : "Regenerate Summary"}
             </button>
+          )}
+          {!isEditing && (
+            <>
+              <button
+                type="button"
+                className="meeting-summary__export focus-ring"
+                onClick={exportPdf}
+                aria-describedby="meeting-summary-export-help"
+              >
+                <Download aria-hidden="true" className="icon-14" /> ส่งออก PDF
+              </button>
+              <button
+                type="button"
+                className="meeting-summary__edit-btn focus-ring"
+                onClick={startEditing}
+                aria-label="แก้ไขสรุปการประชุม"
+              >
+                <Pencil aria-hidden="true" className="icon-14" /> แก้ไข
+              </button>
+            </>
           )}
         </div>
       </div>
+
+      <p id="meeting-summary-export-help" className="sr-only">
+        เปิดหน้าต่างพิมพ์เพื่อบันทึกสรุปการประชุมเป็นไฟล์ PDF
+      </p>
+      {showRegenerate && !regenerationAvailable && (
+        <p id="meeting-summary-regenerate-unavailable" className="meeting-summary__notice" role="status">
+          ยังไม่เชื่อมต่อระบบสร้างสรุปใหม่
+        </p>
+      )}
+      {regenerationStatus === "error" && (
+        <p className="meeting-summary__error" role="alert">
+          ไม่สามารถสร้างสรุปใหม่ได้ กรุณาลองอีกครั้ง
+        </p>
+      )}
+      {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
 
       {isEditing ? (
         <form className="meeting-summary__form" onSubmit={submitEdit}>

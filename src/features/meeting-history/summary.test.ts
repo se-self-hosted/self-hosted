@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { canSubmitSummaryDraft, getSummaryDraftState, selectMeetingSummaryContent } from "./summary.ts";
+import { canStartSummaryRegeneration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryRegenerationCompletionStatus, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -70,4 +70,34 @@ test("accepts changed multiline Thai and English content", () => {
 
 test("does not submit a valid change while persistence is unavailable", () => {
   assert.equal(canSubmitSummaryDraft("Original summary", "Changed summary", false), false);
+});
+
+test("disables regeneration when no callback is available", () => {
+  assert.equal(canStartSummaryRegeneration(false, "idle"), false);
+  assert.equal(canStartSummaryRegeneration(false, "error"), false);
+});
+
+test("allows available regeneration while idle and prevents duplicate loading requests", () => {
+  assert.equal(canStartSummaryRegeneration(true, "idle"), true);
+  assert.equal(canStartSummaryRegeneration(true, "regenerating"), false);
+});
+
+test("returns to idle after success and allows retry after an error", () => {
+  assert.equal(getSummaryRegenerationCompletionStatus(true), "idle");
+  assert.equal(getSummaryRegenerationCompletionStatus(false), "error");
+  assert.equal(canStartSummaryRegeneration(true, "error"), true);
+});
+
+test("creates a meeting-specific PDF filename while preserving Thai", () => {
+  assert.equal(
+    createSummaryPdfFilename("ประชุมทีม: Sprint / Review", "2026-09-27T02:00:00.000Z"),
+    "ประชุมทีม- Sprint - Review-2026-09-27-summary.pdf",
+  );
+});
+
+test("creates a safe fallback PDF filename", () => {
+  assert.equal(
+    createSummaryPdfFilename("  <>:\"/\\|?*...  ", "not-a-date"),
+    "meeting-summary-undated-summary.pdf",
+  );
 });
