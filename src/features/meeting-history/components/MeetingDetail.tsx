@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
+import { requestMeetingSummary } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type Session = {
@@ -216,6 +217,11 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
       .finally(() => setIsLoading(false));
   }, [meetingId]);
 
+  async function regenerateSummary({ discardEdits }: { discardEdits: boolean }) {
+    const summary = await requestMeetingSummary(meetingId, { discardEdits });
+    setMeeting((previous) => (previous ? { ...previous, summary } : previous));
+  }
+
   if (isLoading) {
     return (
       <div className="meeting-detail__loading">
@@ -308,7 +314,12 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
       {/* 3. AI Summary */}
       <MeetingSummaryDisplay
         summary={meeting.summary}
+        roomName={meeting.roomName}
+        startedAt={meeting.startedAt}
+        durationSeconds={meeting.durationSeconds}
+        participantNames={meeting.participants.map((p) => p.displayName)}
         showRegenerate={meeting.isHost}
+        onRegenerate={meeting.isHost ? regenerateSummary : undefined}
       />
 
       {/* 4. Transcript */}

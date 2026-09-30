@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { LEAVE_GRACE_MS, resolveMeetingAccess } from "@/lib/meeting-access";
+import { resolveSegmentSpokenAt } from "@/features/meeting-room/lib/meeting-clock";
 
 const segmentSchema = z.object({
   id: z.string().min(1).optional(),
   participantId: z.string().optional(),
-  speakerName: z.string().optional(),
+  speakerName: z.string().max(100, "Speaker name is too long").optional(),
   startTime: z.number().min(0, "Start time must be non-negative"),
   endTime: z.number().min(0, "End time must be non-negative"),
   spokenAt: z.string().optional(),
-  text: z.string().min(1, "Transcript text is required"),
+  text: z.string().min(1, "Transcript text is required").max(5000, "Transcript text is too long"),
   confidence: z.number().min(0).max(1).optional().default(1.0),
 });
 
@@ -242,7 +243,7 @@ export async function POST(
         }
       }
 
-      const spokenAt = seg.spokenAt ? new Date(seg.spokenAt) : new Date();
+      const spokenAt = resolveSegmentSpokenAt(meeting.startedAt, seg.startTime, seg.spokenAt);
 
       const createdSegment = await prisma.transcriptSegment.create({
         data: {

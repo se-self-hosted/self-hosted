@@ -25,6 +25,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
+import { MeetingSummaryDisplay } from "@/features/meeting-history/components/MeetingSummaryDisplay";
+import { requestMeetingSummary } from "@/features/meeting-history/summary";
 
 type Room = {
   id: string;
@@ -257,6 +259,16 @@ export default function DashboardPage() {
     } finally {
       if (request === detailsRequestRef.current) setLoadingDetails(false);
     }
+  };
+
+  const regenerateMeetingSummary = async ({ discardEdits }: { discardEdits: boolean }) => {
+    if (!meetingDetails) return;
+    const meetingId = meetingDetails.id;
+    const summary = await requestMeetingSummary(meetingId, { discardEdits });
+    setMeetingDetails((previous) => (previous?.id === meetingId ? { ...previous, summary } : previous));
+    setMeetings((previous) =>
+      previous.map((meeting) => (meeting.id === meetingId ? { ...meeting, hasSummary: true } : meeting)),
+    );
   };
 
   const closeMeetingDetails = () => {
@@ -981,6 +993,19 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
+                  )}
+
+                  {/* AI summary report of the transcript below (text / PDF export) */}
+                  {(meetingDetails.summary || (meetingDetails.transcript?.segments.length ?? 0) > 0) && (
+                    <MeetingSummaryDisplay
+                      summary={meetingDetails.summary}
+                      roomName={meetingDetails.roomName}
+                      startedAt={meetingDetails.startedAt}
+                      durationSeconds={meetingDetails.durationSeconds}
+                      participantNames={meetingDetails.participants.map((p) => p.displayName)}
+                      showRegenerate={meetingDetails.isHost}
+                      onRegenerate={meetingDetails.isHost ? regenerateMeetingSummary : undefined}
+                    />
                   )}
 
                   {/* Chronological Transcript Timeline */}
