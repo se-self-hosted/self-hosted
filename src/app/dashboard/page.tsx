@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { AppSidebar } from "@/components/app-shell/AppSidebar";
 import Link from "next/link";
 import { MeetingSummaryDisplay } from "@/features/meeting-history/components/MeetingSummaryDisplay";
 import { requestMeetingSummary } from "@/features/meeting-history/summary";
