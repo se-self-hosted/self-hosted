@@ -1,42 +1,14 @@
 import { MeetingDetail } from "@/features/meeting-history/components/MeetingDetail";
 import Link from "next/link";
-import { Clock3, LayoutGrid, Video, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { AppSidebar } from "@/components/app-shell/AppSidebar";
 
 export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: meetingId } = await params;
   
   return (
     <div className="dashboard">
-      <aside className="sidebar">
-        <div className="sidebar__inner">
-          <div className="sidebar__header">
-            <Link href="/dashboard" className="sidebar__brand focus-ring">
-              <span className="sidebar__brand-icon">
-                <Video aria-hidden="true" className="icon-18" strokeWidth={2.2} />
-              </span>
-              <span className="sidebar__brand-name">MeetSync</span>
-            </Link>
-          </div>
-
-          <nav aria-label="เมนูหลัก" className="sidebar__nav">
-            <p className="sidebar__nav-label">เมนู</p>
-            <div className="sidebar__nav-grid">
-              <Link href="/dashboard" className="sidebar__nav-link focus-ring">
-                <LayoutGrid aria-hidden="true" className="icon-16" />
-                แดชบอร์ด
-              </Link>
-              <Link
-                href="/history"
-                aria-current="page"
-                className="sidebar__nav-link--active focus-ring"
-              >
-                <Clock3 aria-hidden="true" className="icon-16" />
-                ประวัติการประชุม
-              </Link>
-            </div>
-          </nav>
-        </div>
-      </aside>
+      <AppSidebar active="history" />
 
       <main className="dashboard__main">
         <div className="dashboard__container">

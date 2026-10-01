@@ -11,14 +11,16 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  CheckCircle2,
-  Disc,
+  Check,
+  ChevronLeft,
+  Circle,
+  CircleStop,
   FileText,
+  LogIn,
   Mic,
   MicOff,
-  Phone,
+  PhoneOff,
   RefreshCw,
-  Signal,
   Square,
   Users,
   Video,
@@ -1017,7 +1019,7 @@ export function MeetingRoomView({
       <main className="meeting-unavailable">
         <div className="meeting-unavailable__card">
           <span className="meeting-unavailable__icon">
-            <AlertTriangle aria-hidden="true" className="icon-20" />
+            <AlertTriangle aria-hidden="true" className="icon-24" strokeWidth={1.8} />
           </span>
           <h1 className="meeting-unavailable__title">
             {!room || roomStatusState === "invalid" ? "ไม่พบห้องประชุม" : "ห้องประชุมนี้สิ้นสุดแล้ว"}
@@ -1058,60 +1060,84 @@ export function MeetingRoomView({
       };
       return (
         <main className="meeting-lobby">
-          <div className="meeting-lobby__card flex flex-col items-center gap-4 py-10">
-            <RefreshCw aria-hidden="true" className="size-8 animate-spin text-indigo-400" />
-            <p aria-live="polite" className="text-sm font-medium text-slate-200">
-              {joinStep ? stepLabel[joinStep] : "กำลังเข้าร่วม..."}
-            </p>
+          <div className="meeting-lobby__card">
+            <div className="meeting-lobby__joining">
+              <RefreshCw aria-hidden="true" className="meeting-lobby__spinner" />
+              <p aria-live="polite" className="meeting-lobby__joining-text">
+                {joinStep ? stepLabel[joinStep] : "กำลังเข้าร่วม..."}
+              </p>
+            </div>
           </div>
         </main>
       );
     }
     return (
       <main className="meeting-lobby">
+        {isHost && (
+          <Link href="/dashboard" className="meeting-lobby__back focus-ring">
+            <ChevronLeft aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+            กลับไปที่แดชบอร์ด
+          </Link>
+        )}
+
         <form onSubmit={handleJoinSubmit} className="meeting-lobby__card">
-          <span className="meeting-lobby__room-icon">
-            <Video aria-hidden="true" className="meeting-lobby__video-icon" />
-          </span>
-          <h1 className="meeting-lobby__title">{room.roomName}</h1>
-          <p className="meeting-lobby__occupancy">
-            รองรับผู้เข้าร่วมสูงสุด {room.maxParticipants} คน
-          </p>
+          <div className="meeting-lobby__intro">
+            <span className="meeting-lobby__room-icon">
+              <Video aria-hidden="true" className="meeting-lobby__video-icon" strokeWidth={1.8} />
+            </span>
+            <div className="meeting-lobby__title-group">
+              <h1 className="meeting-lobby__title">{room.roomName}</h1>
+              <p className="meeting-lobby__occupancy">
+                รองรับผู้เข้าร่วมสูงสุด {room.maxParticipants} คน
+              </p>
+            </div>
+          </div>
 
           {/* Both roles see permission status independently of their mute choice. */}
-          <div className="my-3 rounded-lg border border-slate-700 bg-slate-800/80 p-3 text-left">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-              <span className="flex items-center gap-1.5">
-                <Mic className="size-4 text-indigo-400" /> สิทธิ์ใช้งานไมโครโฟน
-              </span>
+          <div className="meeting-lobby__mic-row">
+            <div className="meeting-lobby__mic-row-main">
+              <div className="meeting-lobby__mic-info">
+                <span className="meeting-lobby__mic-label">
+                  <Mic aria-hidden="true" className="icon-18" strokeWidth={1.8} /> สิทธิ์ใช้งานไมโครโฟน
+                </span>
+                {(micPermissionState === "prompt" || micPermissionState === "requesting") && (
+                  <span className="meeting-lobby__mic-state">
+                    {micPermissionState === "prompt" ? "ยังไม่ได้ตรวจสอบ" : "กำลังตรวจสอบ..."}
+                  </span>
+                )}
+              </div>
               {micPermissionState === "granted" && (
-                <span className="inline-flex items-center gap-1 text-emerald-400">
-                  <CheckCircle2 className="size-3.5" /> พร้อมใช้งาน
+                <span className="pill pill--sm pill--ok shrink-0">
+                  <Check aria-hidden="true" className="icon-14" strokeWidth={2.4} />
+                  <span className="pill__label">พร้อมใช้งาน</span>
                 </span>
               )}
               {micPermissionState === "denied" && (
-                <span className="inline-flex items-center gap-1 text-red-400">
-                  <AlertTriangle className="size-3.5" /> ถูกปฏิเสธ
+                <span className="pill pill--sm pill--bad shrink-0">
+                  <AlertTriangle aria-hidden="true" className="icon-14" />
+                  <span className="pill__label">ถูกปฏิเสธ</span>
                 </span>
               )}
               {micPermissionState === "prompt" && (
-                <span className="text-[11px] text-slate-500">ยังไม่ได้ตรวจสอบ</span>
-              )}
-              {micPermissionState === "requesting" && (
-                <span className="text-[11px] text-slate-400">กำลังตรวจสอบ...</span>
-              )}
-            </div>
-
-            {micPermissionState === "denied" && (
-              <div className="mt-2">
-                <p className="text-[11px] text-red-300">
-                  เบราว์เซอร์บล็อกไมโครโฟน โปรดอนุญาตไมโครโฟนที่แถบ address bar
-                </p>
                 <button
                   type="button"
                   onClick={requestMicrophonePermission}
                   disabled={isJoining}
-                  className="mt-2 text-xs font-semibold text-indigo-400 hover:underline"
+                  className="btn btn--secondary btn--sm focus-ring shrink-0"
+                >
+                  ตรวจสอบ
+                </button>
+              )}
+            </div>
+
+            {micPermissionState === "denied" && (
+              <div className="meeting-lobby__mic-denied">
+                <p>เบราว์เซอร์บล็อกไมโครโฟน โปรดอนุญาตไมโครโฟนที่แถบ address bar</p>
+                <button
+                  type="button"
+                  onClick={requestMicrophonePermission}
+                  disabled={isJoining}
+                  className="meeting-lobby__mic-retry"
                 >
                   ขอสิทธิ์ไมโครโฟนอีกครั้ง
                 </button>
@@ -1146,7 +1172,7 @@ export function MeetingRoomView({
             </div>
           )}
 
-          <div className="mt-5 flex flex-col items-center gap-2">
+          <div className="meeting-lobby__mic">
             <button
               type="button"
               onClick={() => setIsMicrophoneMuted((muted) => !muted)}
@@ -1155,21 +1181,21 @@ export function MeetingRoomView({
               aria-pressed={!isMicrophoneMuted}
               aria-describedby="lobby-microphone-status"
               title={isMicrophoneMuted ? "เปิดไมค์ก่อนเข้าห้อง" : "ปิดไมค์ก่อนเข้าห้อง"}
-              className={`flex size-12 items-center justify-center rounded-full border shadow-sm transition-colors focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                isMicrophoneMuted
-                  ? "border-red-500 bg-red-500 text-white hover:bg-red-600"
-                  : "border-slate-600 bg-slate-700 text-white hover:bg-slate-600"
-              }`}
+              className={`${isMicrophoneMuted ? "meeting-lobby__mic-toggle--off" : "meeting-lobby__mic-toggle"} focus-ring`}
             >
-              {isMicrophoneMuted ? <MicOff aria-hidden="true" className="size-5" /> : <Mic aria-hidden="true" className="size-5" />}
+              {isMicrophoneMuted ? (
+                <MicOff aria-hidden="true" className="icon-24" strokeWidth={1.8} />
+              ) : (
+                <Mic aria-hidden="true" className="icon-24" strokeWidth={1.8} />
+              )}
             </button>
-            <p id="lobby-microphone-status" aria-live="polite" className="text-xs text-slate-400">
+            <p id="lobby-microphone-status" aria-live="polite" className="meeting-lobby__mic-caption">
               {isMicrophoneMuted ? "เข้าห้องโดยปิดไมค์" : "เข้าห้องโดยเปิดไมค์"}
             </p>
           </div>
 
           {joinError && (
-            <p role="alert" className="meeting-lobby__error">
+            <p role="alert" className="meeting-lobby__error text-center">
               {joinError}
             </p>
           )}
@@ -1179,6 +1205,7 @@ export function MeetingRoomView({
             disabled={isJoining || micPermissionState === "requesting" || (isHost && !hostName?.trim())}
             className="meeting-lobby__join focus-ring"
           >
+            <LogIn aria-hidden="true" className="icon-18" strokeWidth={1.8} />
             {isJoining ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องประชุม"}
           </button>
         </form>
@@ -1189,7 +1216,7 @@ export function MeetingRoomView({
   // Construct UI Participants list
   const localUiParticipant: UiParticipant = {
     id: participantId || "local",
-    name: `${displayName} (คุณ)`,
+    name: displayName,
     initials: displayName.slice(0, 2).toUpperCase(),
     isHost,
     isLocal: true,
@@ -1235,6 +1262,16 @@ export function MeetingRoomView({
 
   const allUiParticipants: UiParticipant[] = [localUiParticipant, ...remoteParticipantsList];
 
+  const toneFor = (index: number) => `tone-${(index % 6) + 1}`;
+  const roleFor = (participant: UiParticipant) =>
+    participant.isLocal ? (participant.isHost ? "คุณ · host" : "คุณ") : participant.isHost ? "host" : "ผู้เข้าร่วม";
+  const isOwnSegment = (seg: LiveTranscriptSegment) =>
+    seg.participantId ? seg.participantId === participantId : seg.speakerName === displayName;
+  const segmentTone = (seg: LiveTranscriptSegment) => {
+    const index = allUiParticipants.findIndex((p) => p.id === seg.participantId);
+    return index === -1 ? "tone-6" : toneFor(index);
+  };
+
   return (
     <main className="meeting-room">
       {/* Hidden audio container for LiveKit remote tracks */}
@@ -1242,26 +1279,26 @@ export function MeetingRoomView({
 
       {/* Toast Banner */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-indigo-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-white shadow-xl backdrop-blur">
+        <div role="status" className="meeting-toast">
           {toastMessage}
         </div>
       )}
 
       {/* Reconnection Banner */}
       {isReconnecting && (
-        <div className="fixed top-0 inset-x-0 z-40 flex items-center justify-center gap-2 bg-amber-500/90 py-2 text-xs font-bold text-slate-950 shadow-md">
-          <RefreshCw className="size-3.5 animate-spin" />
+        <div role="status" className="meeting-reconnect">
+          <RefreshCw aria-hidden="true" className="icon-14 animate-spin" />
           สัญญาณขาดหาย กำลังเชื่อมต่อห้องประชุมใหม่อัตโนมัติ...
         </div>
       )}
 
       <header className="meeting-room__header">
-        <div>
-          <div className="flex items-center gap-2.5">
+        <div className="meeting-room__heading">
+          <div className="meeting-room__title-row">
             <h1 className="meeting-room__title">{room.roomName}</h1>
             {isRecording && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-bold text-red-400 border border-red-500/40 animate-pulse">
-                <span className="size-2 rounded-full bg-red-500" />
+              <span className="meeting-room__recording">
+                <span aria-hidden="true" className="meeting-room__recording-dot" />
                 REC {formatSeconds(recordingSeconds)}
               </span>
             )}
@@ -1270,140 +1307,137 @@ export function MeetingRoomView({
         </div>
 
         {/* Connection Status & Ping Badge */}
-        <div className="flex items-center gap-2">
-          <div
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+        <div className="meeting-room__status">
+          <span
+            className={`meeting-room__connection ${
               connectionStatus === "connected"
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                ? "pill--ok"
                 : connectionStatus === "reconnecting"
-                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse"
-                : "bg-red-500/15 text-red-400 border border-red-500/30"
+                ? "pill--warn"
+                : "pill--bad"
             }`}
           >
-            <span
-              className={`size-2 rounded-full ${
-                connectionStatus === "connected"
-                  ? "bg-emerald-400 animate-pulse"
-                  : connectionStatus === "reconnecting"
-                  ? "bg-amber-400"
-                  : "bg-red-400"
-              }`}
-            />
+            <span aria-hidden="true" className="pill__dot" />
             {connectionStatus === "connected" && (
-              <span>Connected {pingMs !== null ? `· ${pingMs} ms` : ""}</span>
+              <span>
+                Connected
+                {pingMs !== null && (
+                  <>
+                    {" · "}
+                    <span className="font-mono font-medium">{pingMs} ms</span>
+                  </>
+                )}
+              </span>
             )}
             {connectionStatus === "reconnecting" && <span>Reconnecting...</span>}
             {connectionStatus === "disconnected" && <span>Disconnected</span>}
-          </div>
+          </span>
 
           <span className="meeting-room__count">
-            <Users aria-hidden="true" className="icon-16" />
-            {allUiParticipants.length} / {room.maxParticipants}
+            <Users aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+            <span className="meeting-room__count-value">
+              {allUiParticipants.length} / {room.maxParticipants}
+            </span>
           </span>
+        </div>
+
+        <div className="meeting-room__header-end">
+          {showTranscriptPanel && (
+            <span className="pill pill--info h-[30px]">
+              <FileText aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+              Live transcript
+            </span>
+          )}
         </div>
       </header>
 
       <div className="meeting-room__layout">
         <section aria-label="ผู้เข้าร่วมประชุม" className="meeting-room__stage">
           <div className="meeting-room__tiles">
-            {allUiParticipants.map((participant, index) => (
-              <article
-                key={`${participant.id}-${index}`}
-                className={`meeting-participant relative transition-all duration-200 ${
-                  participant.isSpeaking && !participant.isMuted
-                    ? "meeting-participant--speaking ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
-                    : ""
-                }`}
-              >
-                {/* Active Speaker Indicator Badge */}
-                {participant.isSpeaking && !participant.isMuted && (
-                  <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-slate-950 uppercase tracking-wider shadow">
-                    <Signal className="size-3 animate-pulse" /> Speaking
-                  </span>
-                )}
-
-                <span
-                  className={`meeting-participant__avatar meeting-participant__avatar--${
-                    (index % 5) + 1
-                  }`}
+            {allUiParticipants.map((participant, index) => {
+              const isSpeaking = participant.isSpeaking && !participant.isMuted;
+              return (
+                <article
+                  key={`${participant.id}-${index}`}
+                  className={`meeting-participant${isSpeaking ? " meeting-participant--speaking" : ""}`}
                 >
-                  {participant.initials}
-                </span>
+                  {/* Active Speaker Indicator Badge */}
+                  {isSpeaking && <span className="meeting-participant__speaking">กำลังพูด</span>}
 
-                <h2 className="meeting-participant__name">
-                  {participant.name}
-                  {participant.isHost ? " (host)" : ""}
-                </h2>
+                  <div className="meeting-participant__corner">
+                    {/* Host Mute Remote Participant Button */}
+                    {isHost && !participant.isLocal && (
+                      <button
+                        type="button"
+                        onClick={() => hostMuteParticipant(participant.id)}
+                        title="ปิดไมโครโฟนผู้เข้าร่วมนี้"
+                        aria-label={`ปิดไมโครโฟนของ ${participant.name}`}
+                        className="meeting-participant__mute-btn focus-ring"
+                      >
+                        <VolumeX aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                      </button>
+                    )}
+                    {participant.isMuted && (
+                      <span title="ปิดไมโครโฟน" className="meeting-participant__muted">
+                        <MicOff aria-label="ปิดไมโครโฟน" className="icon-16" strokeWidth={1.8} />
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  {participant.isMuted ? (
-                    <MicOff aria-label="ปิดไมโครโฟน" className="meeting-participant__mic text-red-400" />
-                  ) : (
-                    <Mic
-                      aria-label="เปิดไมโครโฟน"
-                      className={
-                        participant.isSpeaking
-                          ? "meeting-participant__mic meeting-participant__mic--active text-emerald-400"
-                          : "meeting-participant__mic"
-                      }
-                    />
-                  )}
+                  <span className={`meeting-participant__avatar ${toneFor(index)}`}>
+                    {participant.initials}
+                  </span>
 
-                  {/* Host Mute Remote Participant Button */}
-                  {isHost && !participant.isLocal && (
-                    <button
-                      type="button"
-                      onClick={() => hostMuteParticipant(participant.id)}
-                      title="ปิดไมโครโฟนผู้เข้าร่วมนี้"
-                      className="rounded-full bg-slate-800/80 p-1.5 text-slate-400 transition hover:bg-red-500/20 hover:text-red-300"
-                    >
-                      <VolumeX className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+                  <div className="meeting-participant__identity">
+                    <h2 className="meeting-participant__name">{participant.name}</h2>
+                    <p className="meeting-participant__role">{roleFor(participant)}</p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
 
         {/* Participants Sidebar */}
-        <aside className="meeting-room__participants">
-          <h2 className="meeting-room__participants-title">
+        <aside aria-labelledby="meeting-participants-title" className="meeting-room__participants">
+          <h2 id="meeting-participants-title" className="meeting-room__participants-title">
             ผู้เข้าร่วม ({allUiParticipants.length})
           </h2>
           <ul className="meeting-room__participants-list">
             {allUiParticipants.map((participant, index) => (
               <li
                 key={`${participant.id}-list-${index}`}
-                className="meeting-room__participant-row flex items-center justify-between"
+                className="meeting-room__participant-row"
               >
-                <div className="flex items-center gap-2">
-                  <span>
-                    {participant.name}
-                    {participant.isHost ? " (host)" : ""}
-                  </span>
+                <span aria-hidden="true" className={`meeting-room__row-avatar ${toneFor(index)}`}>
+                  {participant.initials}
+                </span>
+                <div className="meeting-room__row-info">
+                  <span className="meeting-room__row-name">{participant.name}</span>
+                  <span className="meeting-room__row-role">{roleFor(participant)}</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {participant.isMuted ? (
-                    <MicOff aria-label="ปิดไมโครโฟน" className="icon-14 text-red-400" />
-                  ) : (
-                    <Mic
-                      aria-label="เปิดไมโครโฟน"
-                      className={participant.isSpeaking ? "icon-14 text-emerald-400" : "icon-14"}
-                    />
-                  )}
-
+                <div className="meeting-room__row-icons">
                   {/* Host Mute button in participant list */}
                   {isHost && !participant.isLocal && (
                     <button
                       type="button"
                       onClick={() => hostMuteParticipant(participant.id)}
                       title="ปิดไมค์"
-                      className="rounded p-1 text-slate-400 hover:bg-red-500/20 hover:text-red-300"
+                      aria-label={`ปิดไมค์ของ ${participant.name}`}
+                      className="meeting-room__row-mute-btn focus-ring"
                     >
-                      <VolumeX className="size-3.5" />
+                      <VolumeX aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                     </button>
+                  )}
+                  {participant.isMuted ? (
+                    <MicOff aria-label="ปิดไมโครโฟน" className="icon-18 text-bad" strokeWidth={1.8} />
+                  ) : (
+                    <Mic
+                      aria-label="เปิดไมโครโฟน"
+                      className={participant.isSpeaking ? "icon-18 text-ok-dot" : "icon-18"}
+                      strokeWidth={1.8}
+                    />
                   )}
                 </div>
               </li>
@@ -1415,22 +1449,21 @@ export function MeetingRoomView({
       {/* Live Transcript Timeline Panel */}
       {showTranscriptPanel && (
         <section
-          aria-label="บันทึกเสียงและข้อความการประชุม (Live Transcript)"
-          className="fixed right-4 bottom-20 z-40 flex h-[480px] w-96 flex-col rounded-xl border border-slate-700/80 bg-slate-900/95 shadow-2xl backdrop-blur"
+          aria-labelledby="live-transcript-title"
+          className="live-transcript"
         >
-          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <FileText className="size-4 text-indigo-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                Live Transcript ({transcriptSegments.length})
-              </h3>
-            </div>
+          <div className="live-transcript__header">
+            <h2 id="live-transcript-title" className="live-transcript__title">
+              <FileText aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+              Live Transcript ({transcriptSegments.length})
+            </h2>
             <button
               type="button"
               onClick={() => setShowTranscriptPanel(false)}
-              className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+              aria-label="ปิด Live Transcript"
+              className="close-btn focus-ring"
             >
-              <X className="size-4" />
+              <X aria-hidden="true" className="icon-18" />
             </button>
           </div>
 
@@ -1440,26 +1473,56 @@ export function MeetingRoomView({
               const list = event.currentTarget;
               followTranscriptRef.current = list.scrollHeight - list.scrollTop - list.clientHeight < 48;
             }}
-            className="flex-1 overflow-y-auto p-4 space-y-3"
+            aria-live="polite"
+            className="live-transcript__list"
           >
-            {transcriptSegments.map((seg) => (
-              <div
-                key={seg.id}
-                className="rounded-lg border border-slate-800/80 bg-slate-800/40 p-2.5 transition hover:border-indigo-500/30"
-              >
-                <div className="flex items-center justify-between text-[11px] font-semibold">
-                  <span className="text-indigo-300">{seg.speakerName}</span>
-                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">
-                    {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
+            {transcriptSegments.length === 0 && !(interimTranscript && !isMicrophoneMuted) && (
+              <p className="live-transcript__empty">ยังไม่มีข้อความ เมื่อมีคนพูด ข้อความจะแสดงที่นี่</p>
+            )}
+            {transcriptSegments.map((seg) =>
+              isOwnSegment(seg) ? (
+                <div key={seg.id} className="bubble-row--mine">
+                  <p className="bubble--mine">{seg.text}</p>
+                  <span className="bubble-row__time">
+                    คุณ · {formatSeconds(seg.startTime)} – {formatSeconds(seg.endTime)}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-200 leading-relaxed">{seg.text}</p>
-              </div>
-            ))}
+              ) : (
+                <div key={seg.id} className="bubble-row--theirs">
+                  <span aria-hidden="true" className={`bubble-row__avatar ${segmentTone(seg)}`}>
+                    {seg.speakerName.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="bubble-row__body">
+                    <span className="bubble-row__who">{seg.speakerName}</span>
+                    <p className="bubble--theirs">{seg.text}</p>
+                    <span className="bubble-row__time">
+                      {formatSeconds(seg.startTime)} – {formatSeconds(seg.endTime)}
+                    </span>
+                  </div>
+                </div>
+              ),
+            )}
             {interimTranscript && !isMicrophoneMuted && (
-              <div aria-label="ข้อความถอดเสียงที่ยังไม่ยืนยัน" className="rounded-lg border border-dashed border-indigo-400/40 p-2.5 text-xs text-slate-400">
-                <p>{interimTranscript}</p>
+              <div aria-label="ข้อความถอดเสียงที่ยังไม่ยืนยัน" className="bubble-row--mine">
+                <p className="bubble--interim">{interimTranscript}</p>
               </div>
+            )}
+          </div>
+
+          <div className="live-transcript__footer">
+            {isMicrophoneMuted ? (
+              <>
+                <span aria-hidden="true" className="live-transcript__dot bg-bad" />
+                <span className="flex-1 text-muted">ไมค์ของคุณปิดอยู่ จึงไม่ถูกถอดเสียง</span>
+                <button type="button" onClick={toggleMicrophone} className="btn btn--secondary btn--sm focus-ring">
+                  เปิดไมค์
+                </button>
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true" className="live-transcript__dot bg-ok-dot" />
+                <span>กำลังฟัง — พูดแล้วข้อความจะแสดงที่นี่</span>
+              </>
             )}
           </div>
         </section>
@@ -1467,79 +1530,98 @@ export function MeetingRoomView({
 
       <footer className="meeting-room__controls" aria-label="ตัวควบคุมการประชุม">
         {/* Mute / Unmute Microphone Toggle */}
-        <button
-          type="button"
-          onClick={toggleMicrophone}
-          aria-label={isMicrophoneMuted ? "เปิดไมโครโฟน" : "ปิดไมโครโฟน"}
-          aria-pressed={isMicrophoneMuted}
-          className={
-            isMicrophoneMuted
-              ? "meeting-control meeting-control--muted focus-ring"
-              : "meeting-control focus-ring"
-          }
-        >
-          {isMicrophoneMuted ? (
-            <MicOff aria-hidden="true" className="icon-20" />
-          ) : (
-            <Mic aria-hidden="true" className="icon-20" />
-          )}
-        </button>
+        <div className="meeting-control-group">
+          <button
+            type="button"
+            onClick={toggleMicrophone}
+            aria-label={isMicrophoneMuted ? "เปิดไมโครโฟน" : "ปิดไมโครโฟน"}
+            aria-pressed={isMicrophoneMuted}
+            className={
+              isMicrophoneMuted
+                ? "meeting-control meeting-control--muted focus-ring"
+                : "meeting-control focus-ring"
+            }
+          >
+            {isMicrophoneMuted ? (
+              <MicOff aria-hidden="true" className="icon-20" strokeWidth={1.8} />
+            ) : (
+              <Mic aria-hidden="true" className="icon-20" strokeWidth={1.8} />
+            )}
+          </button>
+          <span className="meeting-control-group__caption">{isMicrophoneMuted ? "ปิดไมค์" : "ไมค์เปิด"}</span>
+        </div>
 
         {/* Recording Toggle Button — host-only: starts/stops recording for every participant */}
         {isHost && (
-          <button
-            type="button"
-            onClick={() => void toggleRecording()}
-            aria-label={isRecording ? "หยุดบันทึกเสียง" : "เริ่มบันทึกเสียง"}
-            title={isRecording ? "หยุดบันทึกเสียงและอัปโหลด" : "บันทึกเสียงการประชุม (แยกไฟล์ตามผู้พูด)"}
-            className={`meeting-control focus-ring ${
-              isRecording ? "border-red-500 bg-red-600/80 text-white animate-pulse" : ""
-            }`}
-          >
-            {isRecording ? (
-              <Square aria-hidden="true" className="icon-18 fill-current" />
-            ) : (
-              <Disc aria-hidden="true" className="icon-20 text-red-400" />
-            )}
-          </button>
+          <div className="meeting-control-group">
+            <button
+              type="button"
+              onClick={() => void toggleRecording()}
+              aria-label={isRecording ? "หยุดบันทึกเสียง" : "เริ่มบันทึกเสียง"}
+              aria-pressed={isRecording}
+              title={isRecording ? "หยุดบันทึกเสียงและอัปโหลด" : "บันทึกเสียงการประชุม (แยกไฟล์ตามผู้พูด)"}
+              className={`meeting-control focus-ring ${
+                isRecording ? "meeting-control--recording" : "meeting-control--record"
+              }`}
+            >
+              {isRecording ? (
+                <Square aria-hidden="true" className="icon-18 fill-current" />
+              ) : (
+                <Circle aria-hidden="true" className="icon-20 fill-current" />
+              )}
+            </button>
+            <span className="meeting-control-group__caption">{isRecording ? "กำลังบันทึก" : "บันทึก"}</span>
+          </div>
         )}
 
         {/* Live Transcript Drawer Button */}
-        <button
-          type="button"
-          onClick={() => setShowTranscriptPanel(!showTranscriptPanel)}
-          aria-label="บันทึกข้อความสนทนา"
-          title="Live Transcript Timeline"
-          className={`meeting-control focus-ring ${
-            showTranscriptPanel ? "border-indigo-500 bg-indigo-600/30 text-indigo-300" : ""
-          }`}
-        >
-          <FileText aria-hidden="true" className="icon-20" />
-        </button>
-
-        {isHost && (
+        <div className="meeting-control-group">
           <button
             type="button"
-            onClick={handleHostEndRoom}
-            title="ปิดการประชุมสำหรับทุกคน"
-            className="rounded-lg bg-red-600/80 px-3 py-2 text-xs font-semibold text-white hover:bg-red-600 focus-ring"
+            onClick={() => setShowTranscriptPanel(!showTranscriptPanel)}
+            aria-label="บันทึกข้อความสนทนา"
+            aria-pressed={showTranscriptPanel}
+            title="Live Transcript Timeline"
+            className={`meeting-control focus-ring ${showTranscriptPanel ? "meeting-control--active" : ""}`}
           >
-            ปิดการประชุม
+            <FileText aria-hidden="true" className="icon-20" strokeWidth={1.8} />
           </button>
+          <span className="meeting-control-group__caption">Transcript</span>
+        </div>
+
+        <div aria-hidden="true" className="meeting-control-divider" />
+
+        {isHost && (
+          <div className="meeting-control-group">
+            <button
+              type="button"
+              onClick={handleHostEndRoom}
+              title="ปิดการประชุมสำหรับทุกคน"
+              className="meeting-control__end focus-ring-danger"
+            >
+              <CircleStop aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+              <span className="max-sm:sr-only">ปิดการประชุม</span>
+            </button>
+            <span className="meeting-control-group__caption">สำหรับทุกคน</span>
+          </div>
         )}
 
-        <button
-          type="button"
-          onClick={async () => {
-            await stopRecording();
-            await releaseSession().catch((error) => console.error("Leave room error:", error));
-            window.location.href = "/dashboard";
-          }}
-          aria-label="ออกจากห้อง"
-          className="meeting-control meeting-control--leave focus-ring"
-        >
-          <Phone aria-hidden="true" className="icon-20" />
-        </button>
+        <div className="meeting-control-group">
+          <button
+            type="button"
+            onClick={async () => {
+              await stopRecording();
+              await releaseSession().catch((error) => console.error("Leave room error:", error));
+              window.location.href = "/dashboard";
+            }}
+            aria-label="ออกจากห้อง"
+            title="ออกจากห้อง"
+            className="meeting-control__leave focus-ring-danger"
+          >
+            <PhoneOff aria-hidden="true" className="icon-20" strokeWidth={1.8} />
+          </button>
+          <span className="meeting-control-group__caption">ออก</span>
+        </div>
       </footer>
     </main>
   );
