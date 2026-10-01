@@ -93,7 +93,7 @@ export default function EditProfilePage() {
                     </button>
                   </div>
                   <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatar} className="sr-only" />
-                  <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-upload-btn focus-ring"><Upload size={16} strokeWidth={1.8} />Upload new photo</button>
+                  <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-upload-btn action-fill focus-ring"><Upload size={16} strokeWidth={1.8} />Upload new photo</button>
                   <p className="profile-photo-hint">JPG, PNG or WebP. Max 5MB.</p>
                 </div>
 
@@ -146,8 +146,8 @@ export default function EditProfilePage() {
                 <Check aria-hidden="true" size={16} strokeWidth={2.2} /> Changes saved
               </p>
               <div className="flex gap-3">
-                <Link href="/dashboard" className="profile-cancel-btn">Cancel</Link>
-                <button type="submit" disabled={passwordMismatch} className="profile-submit-btn">Save changes</button>
+                <Link href="/dashboard" className="profile-cancel-btn action-fill">Cancel</Link>
+                <button type="submit" disabled={passwordMismatch} className="profile-submit-btn action-fill">Save changes</button>
               </div>
             </div>
           </form>

@@ -644,22 +644,25 @@ export default function DashboardPage() {
                             {isActive ? (isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "Active") : "Ended"}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(room)}
-                          aria-label={`แก้ไขห้อง ${room.name}`}
-                          title="แก้ไข"
-                          className="room-card__edit-btn focus-ring"
-                        >
-                          <Pencil aria-hidden="true" className="icon-16" strokeWidth={1.8} />
-                        </button>
+                        <span className="room-card__edit-slot">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(room)}
+                            aria-label={`แก้ไขห้อง ${room.name}`}
+                            title="แก้ไข"
+                            className="room-card__edit-btn focus-ring"
+                          >
+                            <Pencil aria-hidden="true" className="room-card__edit-icon icon-16" strokeWidth={1.8} />
+                            <span className="room-card__edit-label">แก้ไข</span>
+                          </button>
+                        </span>
                       </div>
 
                       <div className="room-card__actions">
                         <button
                           type="button"
                           onClick={() => copyRoomLink(room.id, room.slug)}
-                          className="room-card__copy-btn focus-ring"
+                          className="room-card__copy-btn action-fill focus-ring"
                         >
                           {wasCopied ? (
                             <Check aria-hidden="true" className="icon-16 room-card__copy-icon" />
@@ -673,7 +676,7 @@ export default function DashboardPage() {
                           onClick={() => router.push(`/meeting/${room.slug}?role=host`)}
                           disabled={!isActive || isAlreadyInRoom || Boolean(activeRoomId)}
                           title={isAlreadyInRoom ? "คุณอยู่ในห้องประชุมนี้แล้ว" : activeRoomId ? "กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้" : undefined}
-                          className="room-card__join-btn focus-ring"
+                          className="room-card__join-btn action-fill focus-ring"
                         >
                           <LogIn aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                           {isAlreadyInRoom ? "เข้าร่วมแล้ว" : "เข้าร่วม"}
@@ -775,7 +778,7 @@ export default function DashboardPage() {
                           <button
                             type="button"
                             onClick={() => openMeetingDetails(m.id)}
-                            className="history-card__open-btn focus-ring"
+                            className="history-card__open-btn action-fill focus-ring"
                           >
                             <Headphones aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                             ดูบันทึก & ฟังเสียง
@@ -1156,10 +1159,10 @@ export default function DashboardPage() {
                     ลบห้อง
                   </button>
                 )}
-                <button type="button" onClick={closeModal} className="modal__cancel-btn focus-ring">
+                <button type="button" onClick={closeModal} className="modal__cancel-btn action-fill focus-ring">
                   ยกเลิก
                 </button>
-                <button type="submit" className="modal__submit-btn focus-ring">
+                <button type="submit" className="modal__submit-btn action-fill focus-ring">
                   {modalMode === "create" && <Plus aria-hidden="true" className="icon-16" strokeWidth={1.8} />}
                   {modalMode === "create" ? "สร้างห้อง" : "บันทึก"}
                 </button>

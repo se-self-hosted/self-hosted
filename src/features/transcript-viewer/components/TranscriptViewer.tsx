@@ -53,7 +53,7 @@ function ViewerStateMessage({ state }: TranscriptViewerProps) {
       </h1>
       {isError ? <p className="transcript-state__description">{state.message}</p> : null}
       {isError ? (
-        <Link href="/history" className="transcript-state__link focus-ring">
+        <Link href="/history" className="transcript-state__link action-fill focus-ring">
           กลับไปประวัติการประชุม
         </Link>
       ) : null}

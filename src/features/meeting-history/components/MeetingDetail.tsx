@@ -419,7 +419,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                       href={rec.playbackUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="recordings-list__download"
+                      className="recordings-list__download action-fill"
                     >
                       <Download className="icon-16" /> ดาวน์โหลด
                     </a>

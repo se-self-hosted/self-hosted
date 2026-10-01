@@ -1029,7 +1029,7 @@ export function MeetingRoomView({
               ? `ไม่พบห้องสำหรับรหัส ${requestedSlug}`
               : "ห้องประชุมสิ้นสุดการใช้งานหรือถูกปิดโดย Host แล้ว"}
           </p>
-          <Link href="/dashboard" className="meeting-unavailable__link focus-ring">
+          <Link href="/dashboard" className="meeting-unavailable__link action-fill focus-ring">
             กลับไปที่แดชบอร์ด
           </Link>
         </div>
@@ -1074,7 +1074,7 @@ export function MeetingRoomView({
     return (
       <main className="meeting-lobby">
         {isHost && (
-          <Link href="/dashboard" className="meeting-lobby__back focus-ring">
+          <Link href="/dashboard" className="meeting-lobby__back action-fill focus-ring">
             <ChevronLeft aria-hidden="true" className="icon-18" strokeWidth={1.8} />
             กลับไปที่แดชบอร์ด
           </Link>
@@ -1203,7 +1203,7 @@ export function MeetingRoomView({
           <button
             type="submit"
             disabled={isJoining || micPermissionState === "requesting" || (isHost && !hostName?.trim())}
-            className="meeting-lobby__join focus-ring"
+            className="meeting-lobby__join action-fill focus-ring"
           >
             <LogIn aria-hidden="true" className="icon-18" strokeWidth={1.8} />
             {isJoining ? "กำลังเข้าร่วม..." : "เข้าร่วมห้องประชุม"}

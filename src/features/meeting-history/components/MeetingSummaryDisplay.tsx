@@ -136,7 +136,7 @@ function MeetingSummaryEmpty({
       {showGenerate && generation.available && (
         <button
           type="button"
-          className="meeting-summary__generate focus-ring"
+          className="meeting-summary__generate action-fill focus-ring"
           onClick={() => void generation.run(false)}
           disabled={!generation.canStart}
         >
@@ -324,7 +324,7 @@ function MeetingSummaryEditor({
           {showRegenerate && (
             <button
               type="button"
-              className="meeting-summary__regenerate focus-ring"
+              className="meeting-summary__regenerate action-fill focus-ring"
               onClick={regenerateSummary}
               disabled={!canRegenerate}
               aria-describedby={!regenerationAvailable ? "meeting-summary-regenerate-unavailable" : undefined}
@@ -341,7 +341,7 @@ function MeetingSummaryEditor({
             <>
               <button
                 type="button"
-                className="meeting-summary__export focus-ring"
+                className="meeting-summary__export action-fill focus-ring"
                 onClick={exportPdf}
                 aria-describedby="meeting-summary-export-help"
               >
@@ -349,7 +349,7 @@ function MeetingSummaryEditor({
               </button>
               <button
                 type="button"
-                className="meeting-summary__export focus-ring"
+                className="meeting-summary__export action-fill focus-ring"
                 onClick={exportText}
               >
                 <FileText aria-hidden="true" className="icon-14" /> ดาวน์โหลดข้อความ
@@ -410,7 +410,7 @@ function MeetingSummaryEditor({
           <div className="meeting-summary__form-actions">
             <button
               type="button"
-              className="meeting-summary__cancel-btn focus-ring"
+              className="meeting-summary__cancel-btn action-fill focus-ring"
               onClick={cancelEditing}
               disabled={isSaving}
             >
@@ -418,7 +418,7 @@ function MeetingSummaryEditor({
             </button>
             <button
               type="submit"
-              className="meeting-summary__save-btn focus-ring"
+              className="meeting-summary__save-btn action-fill focus-ring"
               disabled={!canSave}
               aria-label="บันทึกสรุปการประชุม"
             >

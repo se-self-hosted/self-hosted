@@ -93,7 +93,7 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
             onChange={(event) => setDraftFilters((filters) => ({ ...filters, to: event.target.value }))}
           />
         </label>
-        <button type="submit" className="meeting-history__submit focus-ring" disabled={isLoading}>ค้นหา</button>
+        <button type="submit" className="meeting-history__submit action-fill focus-ring" disabled={isLoading}>ค้นหา</button>
       </form>
 
       <div className="meeting-history__results" aria-live="polite">
