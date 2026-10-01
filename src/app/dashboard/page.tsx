@@ -123,7 +123,7 @@ export default function DashboardPage() {
   const { user, isLoading, checkAuth } = useAuthStore();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
-  const [currentTab, setCurrentTab] = useState<"rooms" | "history">("rooms");
+  const [currentTab] = useState<"rooms" | "history">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
@@ -593,7 +593,6 @@ export default function DashboardPage() {
     <div className="dashboard">
       <AppSidebar
         active={currentTab === "rooms" ? "dashboard" : "history"}
-        onNavigate={(section) => setCurrentTab(section === "dashboard" ? "rooms" : "history")}
       />
 
       <main className="dashboard__main">
