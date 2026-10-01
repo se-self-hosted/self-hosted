@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import {
-  ArrowLeft,
+  AtSign,
   Camera,
   Check,
   Eye,
   EyeOff,
+  Info,
   KeyRound,
   Mail,
+  Upload,
   UserRound,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { AppSidebar } from "@/components/app-shell/AppSidebar";
 
 export default function EditProfilePage() {
   const { user, checkAuth } = useAuthStore();
@@ -57,105 +60,100 @@ export default function EditProfilePage() {
   }
 
   return (
-    <main className="profile-page">
-      <header className="profile-header">
-        <div className="profile-header__left">
-          <Link href="/dashboard" className="profile-header__back-link">
-            <ArrowLeft size={16} /> Dashboard
-          </Link>
-        </div>
-      </header>
+    <div className="dashboard">
+      <AppSidebar active="profile" />
 
-      <div className="profile-content">
-        <div className="profile-page-header">
-          <div>
-            <p className="profile-eyebrow">Account settings</p>
+      <main className="dashboard__main">
+        <div className="profile-content">
+          <div className="profile-page-header">
+            <p className="eyebrow">Account settings</p>
             <h1 className="profile-title">Edit profile</h1>
             <p className="profile-description">Manage personal information and sign-in credentials for your host account.</p>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="profile-form">
-          <section className="profile-section">
-            <div className="profile-section__header">
-              <h2 className="profile-section__title">Profile details</h2>
-              <p className="profile-section__subtitle">Information visible across your meeting rooms.</p>
-            </div>
-
-            <div className="profile-section__body">
-              <div>
-                <p className="profile-photo-label">Profile photo</p>
-                <div className="profile-photo-frame group">
-                  {avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatar} alt="Profile preview" className="profile-photo-image" />
-                  ) : (
-                    <div className="profile-photo-placeholder">{initials || "H"}</div>
-                  )}
-                  <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-change-btn">
-                    <Camera size={15} /> Change
-                  </button>
-                </div>
-                <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatar} className="sr-only" />
-                <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-upload-btn">Upload new photo</button>
-                <p className="profile-photo-hint">JPG, PNG or WebP. Max 5MB.</p>
+          <form onSubmit={handleSubmit} className="profile-form">
+            <section className="profile-section">
+              <div className="profile-section__header">
+                <h2 className="profile-section__title">Profile details</h2>
+                <p className="profile-section__subtitle">Information visible across your meeting rooms.</p>
               </div>
 
-              <div className="profile-fields-grid">
-                <Field label="Full name" icon={<UserRound size={17} />}>
-                  <input id="fullname" name="fullname" defaultValue={displayName} placeholder="Your full name" className="profile-input" />
-                </Field>
-                <Field label="Username" icon={<span className="text-sm font-bold">@</span>}>
-                  <input id="username" name="username" defaultValue={displayUsername} placeholder="Your username" autoComplete="username" className="profile-input" />
-                </Field>
-                <div className="profile-field-full">
-                  <Field label="Email address" icon={<Mail size={17} />}>
-                  <input id="email" name="email" type="email" required defaultValue={displayEmail} placeholder="name@company.com" className="profile-input" />
+              <div className="profile-section__body">
+                <div>
+                  <p className="profile-photo-label">Profile photo</p>
+                  <div className="profile-photo-frame group">
+                    {avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={avatar} alt="Profile preview" className="profile-photo-image" />
+                    ) : (
+                      <div className="profile-photo-placeholder">{initials || "H"}</div>
+                    )}
+                    <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-change-btn">
+                      <Camera size={15} /> Change
+                    </button>
+                  </div>
+                  <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatar} className="sr-only" />
+                  <button type="button" onClick={() => fileInput.current?.click()} className="profile-photo-upload-btn focus-ring"><Upload size={16} strokeWidth={1.8} />Upload new photo</button>
+                  <p className="profile-photo-hint">JPG, PNG or WebP. Max 5MB.</p>
+                </div>
+
+                <div className="profile-fields-grid">
+                  <Field label="Full name" icon={<UserRound size={15} />}>
+                    <input id="fullname" name="fullname" defaultValue={displayName} placeholder="Your full name" className="profile-input" />
                   </Field>
-                </div>
-                <div className="profile-callout">
-                  Email changes require verification before becoming active.
+                  <Field label="Username" icon={<AtSign size={15} />}>
+                    <input id="username" name="username" defaultValue={displayUsername} placeholder="Your username" autoComplete="username" className="profile-input" />
+                  </Field>
+                  <div className="profile-field-full">
+                    <Field label="Email address" icon={<Mail size={15} />}>
+                    <input id="email" name="email" type="email" required defaultValue={displayEmail} placeholder="name@company.com" className="profile-input" />
+                    </Field>
+                  </div>
+                  <div className="profile-callout">
+                    <Info aria-hidden="true" size={16} className="shrink-0" />
+                    Email changes require verification before becoming active.
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <section id="security" className="profile-section">
-            <div className="profile-section__header--with-icon">
-              <span className="profile-section__icon"><KeyRound size={19} /></span>
-              <div>
-                <h2 className="profile-section__title">Password & security</h2>
-                <p className="profile-section__subtitle">Leave blank to keep current password.</p>
+            <section id="security" className="profile-section">
+              <div className="profile-section__header--with-icon">
+                <span className="profile-section__icon"><KeyRound size={20} strokeWidth={1.8} /></span>
+                <div>
+                  <h2 className="profile-section__title">Password & security</h2>
+                  <p className="profile-section__subtitle">Leave blank to keep current password.</p>
+                </div>
+              </div>
+              <div className="profile-section__body-security">
+                <Field label="New password">
+                  <div className="profile-input-wrap">
+                    <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" minLength={8} className="profile-input pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="profile-input-eye-btn" aria-label={showPassword ? "Hide password" : "Show password"}>
+                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    </button>
+                  </div>
+                </Field>
+                <Field label="Confirm password">
+                  <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Repeat new password" className={`profile-input ${passwordMismatch ? "profile-input--mismatch" : ""}`} />
+                  {passwordMismatch && <p className="profile-mismatch-text">Passwords do not match.</p>}
+                </Field>
+              </div>
+            </section>
+
+            <div className="profile-actions-row">
+              <p className={`profile-saved-msg ${saved ? "opacity-100" : "opacity-0"}`} aria-live="polite">
+                <Check aria-hidden="true" size={16} strokeWidth={2.2} /> Changes saved
+              </p>
+              <div className="flex gap-3">
+                <Link href="/dashboard" className="profile-cancel-btn">Cancel</Link>
+                <button type="submit" disabled={passwordMismatch} className="profile-submit-btn">Save changes</button>
               </div>
             </div>
-            <div className="profile-section__body-security">
-              <Field label="New password">
-                <div className="profile-input-wrap">
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" minLength={8} className="profile-input pr-12" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="profile-input-eye-btn" aria-label={showPassword ? "Hide password" : "Show password"}>
-                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                  </button>
-                </div>
-              </Field>
-              <Field label="Confirm password">
-                <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Repeat new password" className={`profile-input ${passwordMismatch ? "profile-input--mismatch" : ""}`} />
-                {passwordMismatch && <p className="profile-mismatch-text">Passwords do not match.</p>}
-              </Field>
-            </div>
-          </section>
-
-          <div className="profile-actions-row">
-            <p className={`profile-saved-msg ${saved ? "opacity-100" : "opacity-0"}`} aria-live="polite">
-              <span className="profile-saved-icon"><Check size={14} /></span> Changes saved
-            </p>
-            <div className="flex gap-3">
-              <Link href="/dashboard" className="profile-cancel-btn">Cancel</Link>
-              <button type="submit" disabled={passwordMismatch} className="profile-submit-btn">Save changes</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </main>
+          </form>
+        </div>
+      </main>
+    </div>
   );
 }
 

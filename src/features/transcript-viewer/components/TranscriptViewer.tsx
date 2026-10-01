@@ -2,12 +2,10 @@ import Link from "next/link";
 import {
   Bot,
   ChevronLeft,
-  Clock3,
-  LayoutGrid,
   MessageCircle,
   Music2,
-  Video,
 } from "lucide-react";
+import { AppSidebar } from "@/components/app-shell/AppSidebar";
 import type {
   TranscriptMeetingViewModel,
   TranscriptSegmentViewModel,
@@ -41,33 +39,6 @@ function formatDuration(totalSeconds: number) {
   const seconds = totalSeconds % 60;
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m ${seconds}s`;
-}
-
-function ViewerSidebar() {
-  return (
-    <aside className="transcript-sidebar">
-      <div className="transcript-sidebar__inner">
-        <Link href="/dashboard" className="sidebar__brand transcript-sidebar__brand focus-ring">
-          <span className="sidebar__brand-icon">
-            <Video aria-hidden="true" className="icon-18" strokeWidth={2.2} />
-          </span>
-          <span className="sidebar__brand-name">MeetSync</span>
-        </Link>
-
-        <nav aria-label="เมนูหลัก" className="transcript-sidebar__nav">
-          <p className="sidebar__nav-label">เมนู</p>
-          <Link href="/dashboard" className="sidebar__nav-link focus-ring">
-            <LayoutGrid aria-hidden="true" className="icon-16" />
-            แดชบอร์ด
-          </Link>
-          <Link href="/history" className="sidebar__nav-link--active focus-ring">
-            <Clock3 aria-hidden="true" className="icon-16" />
-            ประวัติการประชุม
-          </Link>
-        </nav>
-      </div>
-    </aside>
-  );
 }
 
 function ViewerStateMessage({ state }: TranscriptViewerProps) {
@@ -191,10 +162,12 @@ function TranscriptContent({ state }: TranscriptViewerProps) {
 
 export function TranscriptViewer({ state }: TranscriptViewerProps) {
   return (
-    <div className="transcript-page">
-      <ViewerSidebar />
-      <main className="transcript-page__main">
-        <TranscriptContent state={state} />
+    <div className="dashboard">
+      <AppSidebar active="history" />
+      <main className="dashboard__main">
+        <div className="dashboard__container">
+          <TranscriptContent state={state} />
+        </div>
       </main>
     </div>
   );

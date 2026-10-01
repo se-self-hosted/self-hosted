@@ -1,24 +1,27 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
 import {
+  AudioLines,
+  CalendarDays,
   Check,
+  CircleSlash,
   Clock3,
   Disc,
-  DoorOpen,
+  Download,
   FileText,
   Headphones,
-  LayoutGrid,
-  LogOut,
+  Link2,
+  LogIn,
+  Minus,
   Pause,
   Pencil,
   Play,
   Plus,
   RotateCcw,
-  Sparkles,
+  Timer,
   Trash2,
   Users,
-  Video,
   Volume2,
   X,
 } from "lucide-react";
@@ -116,7 +119,7 @@ type MeetingDetails = {
 };
 
 export default function DashboardPage() {
-  const { user, isLoading, checkAuth, logout } = useAuthStore();
+  const { user, isLoading, checkAuth } = useAuthStore();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
   const [currentTab, setCurrentTab] = useState<"rooms" | "history">("rooms");
@@ -564,73 +567,33 @@ export default function DashboardPage() {
   }
 
   const activeRoomCount = rooms.filter((room) => room.status === "active").length;
+  const endedRoomCount = rooms.length - activeRoomCount;
+  const editingRoom = modalMode === "edit" ? rooms.find((room) => room.id === selectedRoomId) : undefined;
+  const parsedDraftCapacity = Number(capacity);
+
+  const stepCapacity = (delta: number) => {
+    const current = Number.isFinite(parsedDraftCapacity) ? Math.round(parsedDraftCapacity) : 2;
+    setCapacity(String(Math.min(40, Math.max(2, current + delta))));
+    setFormError("");
+  };
+
+  const selectRecording = (index: number) => {
+    audioPlayerRef.current?.pause();
+    setSelectedRecordingIndex(index);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setAudioError("");
+  };
+
+  const meetingGroups = groupMeetingsByDay(meetings);
 
   return (
     <div className="dashboard">
-      <aside className="sidebar">
-        <div className="sidebar__inner">
-          <div className="sidebar__header">
-            <div className="sidebar__brand">
-              <span className="sidebar__brand-icon">
-                <Video aria-hidden="true" className="icon-18" strokeWidth={2.2} />
-              </span>
-              <span className="sidebar__brand-name">MeetSync</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => logout()}
-              aria-label="ออกจากระบบ"
-              className="sidebar__logout-mobile"
-            >
-              <LogOut aria-hidden="true" className="icon-20" />
-            </button>
-          </div>
-
-          <nav aria-label="เมนูหลัก" className="sidebar__nav">
-            <p className="sidebar__nav-label">เมนู</p>
-            <div className="sidebar__nav-grid">
-              <button
-                type="button"
-                onClick={() => setCurrentTab("rooms")}
-                className={currentTab === "rooms" ? "sidebar__nav-link--active" : "sidebar__nav-link"}
-              >
-                <LayoutGrid aria-hidden="true" className="icon-16" />
-                แดชบอร์ด
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentTab("history")}
-                className={currentTab === "history" ? "sidebar__nav-link--active" : "sidebar__nav-link"}
-              >
-                <Clock3 aria-hidden="true" className="icon-16" />
-                ประวัติการประชุม
-              </button>
-            </div>
-          </nav>
-
-          <div className="sidebar__footer">
-            <div className="sidebar__user-row">
-              <Link href="/account/edit" className="flex items-center gap-3 min-w-0 flex-1 rounded-md transition-opacity hover:opacity-80">
-                <span className="sidebar__avatar">
-                  {(user.fullname || user.email).charAt(0).toUpperCase()}
-                </span>
-                <span className="sidebar__user-info">
-                  <span className="sidebar__user-name">{user.fullname || "Host"}</span>
-                  <span className="sidebar__user-email">{user.email}</span>
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => logout()}
-                aria-label="ออกจากระบบ"
-                className="sidebar__logout-desktop shrink-0"
-              >
-                <LogOut aria-hidden="true" className="icon-16" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
+      <AppSidebar
+        active={currentTab === "rooms" ? "dashboard" : "history"}
+        onNavigate={(section) => setCurrentTab(section === "dashboard" ? "rooms" : "history")}
+      />
 
       <main className="dashboard__main">
         <div className="dashboard__container">
@@ -638,16 +601,27 @@ export default function DashboardPage() {
           {currentTab === "rooms" && (
             <>
               <header className="dashboard__header">
-                <div>
+                <div className="dashboard__heading">
+                  <p className="dashboard__date">{formatToday()}</p>
                   <h1 className="dashboard__title">ห้องประชุม</h1>
-                  <p className="dashboard__subtitle">
-                    {activeRoomCount} ห้องใช้งานอยู่ · {rooms.length} ทั้งหมด
-                  </p>
                 </div>
-                <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
-                  <Plus aria-hidden="true" className="icon-18" />
-                  สร้างห้องประชุม
-                </button>
+                <div className="dashboard__tools">
+                  <div className="dashboard__counts">
+                    <span className="pill pill--ok">
+                      <span aria-hidden="true" className="pill__dot" />
+                      {activeRoomCount} ใช้งานอยู่
+                    </span>
+                    <span className="pill pill--idle">
+                      <span aria-hidden="true" className="pill__dot" />
+                      {endedRoomCount} สิ้นสุดแล้ว
+                    </span>
+                  </div>
+                  <LiveClock />
+                  <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
+                    <Plus aria-hidden="true" className="icon-18" strokeWidth={2} />
+                    สร้างห้องประชุม
+                  </button>
+                </div>
               </header>
 
               <section aria-label="รายการห้องประชุม" className="rooms-grid">
@@ -659,20 +633,26 @@ export default function DashboardPage() {
                   return (
                     <article key={room.id} className="room-card">
                       <div className="room-card__top">
-                        <span className="room-card__icon">
-                          <Video aria-hidden="true" className="icon-18" strokeWidth={1.9} />
-                        </span>
-                        <span className={isActive ? "room-card__badge--active" : "room-card__badge"}>
-                          {isActive && <span aria-hidden="true" className="icon-8 room-card__badge-dot" />}
-                          {isActive ? (isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "Active") : "Ended"}
-                        </span>
-                      </div>
-
-                      <div className="room-card__body">
-                        <h2 className="room-card__title">{room.name}</h2>
-                        <p className="room-card__subtitle">
-                          {isActive ? `${room.participants} / ${room.capacity} คน` : `สูงสุด ${room.capacity} คน`}
-                        </p>
+                        <div className="room-card__heading">
+                          <h2 className="room-card__title">{room.name}</h2>
+                          <p className="room-card__subtitle">
+                            <Users aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                            {isActive ? `${room.participants} / ${room.capacity} คน` : `สูงสุด ${room.capacity} คน`}
+                          </p>
+                          <span className={`room-card__status pill pill--sm ${isActive ? "pill--ok" : "pill--idle"}`}>
+                            <span aria-hidden="true" className="pill__dot" />
+                            {isActive ? (isAlreadyInRoom ? "อยู่ในห้องแล้ว" : "Active") : "Ended"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(room)}
+                          aria-label={`แก้ไขห้อง ${room.name}`}
+                          title="แก้ไข"
+                          className="room-card__edit-btn focus-ring"
+                        >
+                          <Pencil aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                        </button>
                       </div>
 
                       <div className="room-card__actions">
@@ -681,7 +661,11 @@ export default function DashboardPage() {
                           onClick={() => copyRoomLink(room.id, room.slug)}
                           className="room-card__copy-btn focus-ring"
                         >
-                          {wasCopied && <Check aria-hidden="true" className="icon-14 room-card__copy-icon" />}
+                          {wasCopied ? (
+                            <Check aria-hidden="true" className="icon-16 room-card__copy-icon" />
+                          ) : (
+                            <Link2 aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                          )}
                           {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
                         </button>
                         <button
@@ -691,21 +675,14 @@ export default function DashboardPage() {
                           title={isAlreadyInRoom ? "คุณอยู่ในห้องประชุมนี้แล้ว" : activeRoomId ? "กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้" : undefined}
                           className="room-card__join-btn focus-ring"
                         >
-                          <DoorOpen aria-hidden="true" className="icon-16" />
+                          <LogIn aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                           {isAlreadyInRoom ? "เข้าร่วมแล้ว" : "เข้าร่วม"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(room)}
-                          aria-label={`แก้ไขห้อง ${room.name}`}
-                          className="room-card__edit-btn focus-ring"
-                        >
-                          <Pencil aria-hidden="true" className="icon-16" />
                         </button>
                       </div>
                     </article>
                   );
                 })}
+                {rooms.length === 0 && <p className="rooms-empty">ยังไม่มีห้องประชุม</p>}
               </section>
             </>
           )}
@@ -714,7 +691,7 @@ export default function DashboardPage() {
           {currentTab === "history" && (
             <>
               <header className="dashboard__header">
-                <div>
+                <div className="dashboard__heading">
                   <h1 className="dashboard__title">ประวัติการประชุม</h1>
                   <p className="dashboard__subtitle">
                     การประชุมทั้งหมด {meetings.length} รายการ · บันทึกเสียงและถอดข้อความ
@@ -724,79 +701,88 @@ export default function DashboardPage() {
                   type="button"
                   onClick={loadMeetingsHistory}
                   disabled={loadingMeetings}
-                  className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 focus-ring"
+                  className="btn btn--secondary text-sm focus-ring"
                 >
-                  <RotateCcw className={`inline-block size-3.5 mr-1.5 ${loadingMeetings ? "animate-spin" : ""}`} />
+                  <RotateCcw aria-hidden="true" className={`icon-16 ${loadingMeetings ? "animate-spin" : ""}`} />
                   รีเฟรช
                 </button>
               </header>
 
               {loadingMeetings && meetings.length === 0 ? (
-                <div className="dashboard-loading">
-                  <p className="dashboard-loading__text">กำลังโหลดประวัติการประชุม...</p>
+                <div className="state-message">
+                  <p>กำลังโหลดประวัติการประชุม...</p>
                 </div>
               ) : meetings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-                  <Clock3 className="size-10 text-slate-600 mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-300">ยังไม่มีประวัติการประชุม</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                <div className="history-empty">
+                  <Clock3 aria-hidden="true" className="history-empty__icon" strokeWidth={1.6} />
+                  <h3 className="history-empty__title">ยังไม่มีประวัติการประชุม</h3>
+                  <p className="history-empty__description">
                     เมื่อคุณสร้างห้องประชุมและมีการใช้งาน ประวัติการประชุม บันทึกเสียง และบทสนทนาจะแสดงที่นี่
                   </p>
                 </div>
               ) : (
-                <section aria-label="ประวัติการประชุมทั้งหมด" className="space-y-3">
-                  {meetings.map((m) => (
-                    <article
-                      key={m.id}
-                      className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-sm font-bold text-white">{m.roomName}</h2>
-                          <span className="rounded bg-slate-800 px-2 py-0.5 text-[11px] font-mono text-slate-400">
-                            #{m.roomHash}
-                          </span>
-                        </div>
+                <section aria-label="ประวัติการประชุมทั้งหมด" className="history-list">
+                  {meetingGroups.map((group) => (
+                    <Fragment key={group.key}>
+                      <h2 className="history-group__label">{group.label}</h2>
+                      {group.meetings.map((m) => (
+                        <article key={m.id} className="history-card">
+                          <div className="history-card__info">
+                            <div className="history-card__title-row">
+                              <h3 className="history-card__title">{m.roomName}</h3>
+                              <span className="chip-mono">#{m.roomHash}</span>
+                            </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Clock3 className="size-3.5 text-indigo-400" />
-                            {formatDate(m.startedAt)}
-                          </span>
-                          {m.durationSeconds !== null && (
-                            <span>· ระยะเวลา {formatSeconds(m.durationSeconds)}</span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Users className="size-3.5 text-emerald-400" />
-                            {m.participantsCount} ผู้เข้าร่วม
-                          </span>
-                        </div>
+                            <div className="history-card__meta">
+                              <span className="history-card__meta-item">
+                                <CalendarDays aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                                {formatDate(m.startedAt)}
+                              </span>
+                              {m.durationSeconds !== null && (
+                                <span className="history-card__meta-item">
+                                  <Timer aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                                  ระยะเวลา {formatSeconds(m.durationSeconds)}
+                                </span>
+                              )}
+                              <span className="history-card__meta-item">
+                                <Users aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                                {m.participantsCount} ผู้เข้าร่วม
+                              </span>
+                            </div>
 
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                          {m.recordings.length > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-red-500/15 border border-red-500/30 px-2 py-0.5 text-[11px] font-semibold text-red-300">
-                              <Disc className="size-3 text-red-400" /> มีบันทึกเสียง ({m.recordings.length})
-                            </span>
-                          )}
-                          {m.hasTranscript && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[11px] font-semibold text-indigo-300">
-                              <FileText className="size-3 text-indigo-400" /> มีบทสนทนา (Transcript)
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                            <div className="history-card__badges">
+                              {m.recordings.length > 0 ? (
+                                <span className="badge badge--rec">
+                                  <Disc aria-hidden="true" className="icon-14" /> มีบันทึกเสียง ({m.recordings.length})
+                                </span>
+                              ) : (
+                                <span className="badge badge--none">
+                                  <CircleSlash aria-hidden="true" className="icon-14" /> ไม่มีบันทึกเสียง
+                                </span>
+                              )}
+                              {m.hasTranscript ? (
+                                <span className="badge badge--info">
+                                  <FileText aria-hidden="true" className="icon-14" /> มีบทสนทนา (Transcript)
+                                </span>
+                              ) : (
+                                <span className="badge badge--none">
+                                  <FileText aria-hidden="true" className="icon-14" /> ไม่มีบทสนทนา
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                      <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => openMeetingDetails(m.id)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 focus-ring"
-                        >
-                          <Headphones className="size-3.5" />
-                          ดูบันทึก & ฟังเสียง
-                        </button>
-                      </div>
-                    </article>
+                          <button
+                            type="button"
+                            onClick={() => openMeetingDetails(m.id)}
+                            className="history-card__open-btn focus-ring"
+                          >
+                            <Headphones aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                            ดูบันทึก & ฟังเสียง
+                          </button>
+                        </article>
+                      ))}
+                    </Fragment>
                   ))}
                 </section>
               )}
@@ -814,12 +800,15 @@ export default function DashboardPage() {
           }}
           className="modal-overlay"
         >
-          <div role="dialog" aria-modal="true" className="modal max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="modal__header">
-              <div>
-                <h2 className="modal__title">
-                  {meetingDetails?.roomName || "รายละเอียดการประชุม"}
-                </h2>
+          <div role="dialog" aria-modal="true" aria-labelledby="meeting-notes-title" className="modal modal--wide">
+            <div className="modal__header modal__header--divided">
+              <div className="modal__heading">
+                <div className="modal__title-row">
+                  <h2 id="meeting-notes-title" className="modal__title">
+                    {meetingDetails?.roomName || "รายละเอียดการประชุม"}
+                  </h2>
+                  {meetingDetails && <span className="chip-mono">#{meetingDetails.roomHash}</span>}
+                </div>
                 <p className="modal__subtitle">
                   {meetingDetails
                     ? formatDate(meetingDetails.startedAt)
@@ -834,84 +823,55 @@ export default function DashboardPage() {
                 aria-label="ปิดหน้าต่าง"
                 className="modal__close-btn focus-ring"
               >
-                <X className="size-5" />
+                <X aria-hidden="true" className="icon-18" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <div className="modal__body modal__body--scroll">
               {detailsError ? (
-                <div className="dashboard-loading">
-                  <p role="alert" className="text-sm text-red-400">{detailsError}</p>
+                <div className="state-message">
+                  <p role="alert" className="state-message__error">{detailsError}</p>
                   <button
                     type="button"
                     onClick={() => selectedMeetingId && void openMeetingDetails(selectedMeetingId)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 focus-ring"
+                    className="btn btn--primary btn--sm focus-ring"
                   >
                     ลองอีกครั้ง
                   </button>
                 </div>
               ) : loadingDetails || !meetingDetails ? (
-                <div className="dashboard-loading">
-                  <p className="dashboard-loading__text">กำลังโหลดข้อมูลการประชุม...</p>
+                <div className="state-message">
+                  <p>กำลังโหลดข้อมูลการประชุม...</p>
                 </div>
               ) : (
                 <>
                   {/* Stats Row */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div className="rounded-lg border border-slate-800 bg-slate-800/40 p-3">
-                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ระยะเวลา</p>
-                      <p className="text-sm font-bold text-white mt-0.5">
+                  <div className="stat-grid">
+                    <div className="stat-tile">
+                      <span className="stat-tile__label">ระยะเวลา</span>
+                      <span className="stat-tile__value">
                         {meetingDetails.durationSeconds !== null
                           ? formatSeconds(meetingDetails.durationSeconds)
                           : "กำลังประชุม"}
-                      </p>
+                      </span>
                     </div>
-                    <div className="rounded-lg border border-slate-800 bg-slate-800/40 p-3">
-                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ผู้เข้าร่วม</p>
-                      <p className="text-sm font-bold text-white mt-0.5">
-                        {meetingDetails.participants.length} คน
-                      </p>
+                    <div className="stat-tile">
+                      <span className="stat-tile__label">ผู้เข้าร่วม</span>
+                      <span className="stat-tile__value">{meetingDetails.participants.length} คน</span>
                     </div>
-                    <div className="rounded-lg border border-slate-800 bg-slate-800/40 p-3 col-span-2 md:col-span-1">
-                      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">ไฟล์เสียงบันทึก</p>
-                      <p className="text-sm font-bold text-white mt-0.5">
-                        {meetingDetails.recordings.length} ไฟล์
-                      </p>
+                    <div className="stat-tile">
+                      <span className="stat-tile__label">ไฟล์เสียงบันทึก</span>
+                      <span className="stat-tile__value">{meetingDetails.recordings.length} ไฟล์</span>
                     </div>
                   </div>
 
                   {/* Audio Player Component */}
                   {meetingDetails.recordings.length > 0 && (
-                    <div className="rounded-xl border border-indigo-500/30 bg-slate-950/80 p-4 shadow-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Volume2 className="size-4 text-indigo-400" />
-                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                            เล่นเสียงบันทึกการประชุม (MinIO/S3)
-                          </h3>
-                        </div>
-
-                        {meetingDetails.recordings.length > 1 && (
-                          <select
-                            value={selectedRecordingIndex}
-                            onChange={(e) => {
-                              audioPlayerRef.current?.pause();
-                              setSelectedRecordingIndex(Number(e.target.value));
-                              setIsPlaying(false);
-                              setCurrentTime(0);
-                              setDuration(0);
-                              setAudioError("");
-                            }}
-                            className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 border border-slate-700"
-                          >
-                            {meetingDetails.recordings.map((rec, idx) => (
-                              <option key={rec.id} value={idx}>
-                                บันทึก #{idx + 1} ({rec.fileName})
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
+                    <section aria-label="เสียงบันทึกการประชุม" className="player">
+                      <h3 className="player__heading">
+                        <Volume2 aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                        เล่นเสียงบันทึกการประชุม
+                      </h3>
 
                       <audio
                         key={meetingDetails.recordings[selectedRecordingIndex]?.id}
@@ -945,54 +905,82 @@ export default function DashboardPage() {
                       />
 
                       {audioError && (
-                        <p role="alert" className="mb-3 text-sm text-red-400">{audioError}</p>
+                        <p role="alert" className="player__error">{audioError}</p>
                       )}
 
                       {/* Custom Audio Controls */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={toggleAudioPlay}
-                            aria-label={isPlaying ? "หยุดเสียงชั่วคราว" : "เล่นเสียงบันทึก"}
-                            className="flex size-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow hover:bg-indigo-500 transition"
-                          >
-                            {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
-                          </button>
+                      <div className="player__row">
+                        <button
+                          type="button"
+                          onClick={toggleAudioPlay}
+                          aria-label={isPlaying ? "หยุดเสียงชั่วคราว" : "เล่นเสียงบันทึก"}
+                          className="player__play"
+                        >
+                          {isPlaying ? (
+                            <Pause aria-hidden="true" className="icon-20" fill="currentColor" />
+                          ) : (
+                            <Play aria-hidden="true" className="icon-20 ml-0.5" fill="currentColor" />
+                          )}
+                        </button>
 
-                          <div className="flex-1 space-y-1">
-                            <input
-                              type="range"
-                              min="0"
-                              max={duration || 100}
-                              step="0.1"
-                              value={currentTime}
-                              onChange={(e) => seekAudioToTime(Number(e.target.value))}
-                              className="w-full accent-indigo-500 cursor-pointer"
-                            />
-                            <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                              <span>{formatSeconds(currentTime)}</span>
-                              <span>{formatSeconds(duration)}</span>
-                            </div>
+                        <div className="player__track">
+                          <input
+                            type="range"
+                            min="0"
+                            max={duration || 100}
+                            step="0.1"
+                            value={currentTime}
+                            onChange={(e) => seekAudioToTime(Number(e.target.value))}
+                            aria-label="ตำแหน่งเสียง"
+                            className="player__range"
+                          />
+                          <div className="player__times">
+                            <span>{formatSeconds(currentTime)}</span>
+                            <span>{formatSeconds(duration)}</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2">
-                          <span className="truncate max-w-[280px]">
-                            {meetingDetails.recordings[selectedRecordingIndex]?.fileName}
-                          </span>
-                          <a
-                            href={
-                              meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
-                            }
-                            download
-                            className="text-indigo-400 hover:underline"
-                          >
-                            ดาวน์โหลดไฟล์เสียง
-                          </a>
-                        </div>
                       </div>
-                    </div>
+
+                      {meetingDetails.recordings.length > 1 && (
+                        <div className="flex flex-col gap-2">
+                          <p className="player__files-label">ไฟล์เสียง</p>
+                          <div className="player__files">
+                            {meetingDetails.recordings.map((rec, idx) => (
+                              <button
+                                key={rec.id}
+                                type="button"
+                                aria-pressed={idx === selectedRecordingIndex}
+                                onClick={() => selectRecording(idx)}
+                                className={idx === selectedRecordingIndex ? "player__file--selected" : "player__file"}
+                              >
+                                <AudioLines aria-hidden="true" className="icon-16 shrink-0" strokeWidth={1.8} />
+                                <span className="player__file-label">บันทึก #{idx + 1}</span>
+                                <span className="player__file-name">{rec.fileName}</span>
+                                {rec.durationSeconds !== null && (
+                                  <span className="player__file-name flex-none">{formatSeconds(rec.durationSeconds)}</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="player__footer">
+                        <a
+                          href={
+                            meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
+                          }
+                          download
+                          className="player__download"
+                        >
+                          <Download aria-hidden="true" className="icon-16" strokeWidth={1.8} />
+                          ดาวน์โหลดไฟล์เสียง
+                        </a>
+                        <span className="player__filename">
+                          {meetingDetails.recordings[selectedRecordingIndex]?.fileName}
+                        </span>
+                      </div>
+                    </section>
                   )}
 
                   {/* AI summary report of the transcript below (text / PDF export) */}
@@ -1009,46 +997,41 @@ export default function DashboardPage() {
                   )}
 
                   {/* Chronological Transcript Timeline */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="size-4 text-indigo-400" />
-                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                          Transcript Timeline (เรียงตามลำดับเวลา)
-                        </h3>
-                      </div>
-                      <span className="text-xs text-slate-400">
+                  <section aria-labelledby="meeting-timeline-title" className="timeline">
+                    <div className="timeline__header">
+                      <h3 id="meeting-timeline-title" className="timeline__title">
+                        <FileText aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                        Transcript Timeline
+                      </h3>
+                      <span className="timeline__count">
                         {meetingDetails.transcript?.segments.length || 0} ข้อความ
                       </span>
                     </div>
 
                     {!meetingDetails.transcript || meetingDetails.transcript.segments.length === 0 ? (
-                      <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-6 text-center text-slate-400">
-                        <Sparkles className="size-6 text-indigo-400/40 mx-auto mb-2" />
-                        <p className="text-xs">ไม่มีข้อความสนทนาในห้องประชุมนี้</p>
-                      </div>
+                      <p className="timeline__empty">ไม่มีข้อความสนทนาในห้องประชุมนี้</p>
                     ) : (
-                      <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                      <ol className="timeline__list">
                         {meetingDetails.transcript.segments.map((seg) => (
-                          <div
-                            key={seg.id}
-                            onClick={() => playSegment(seg)}
-                            className="rounded-lg border border-slate-800 bg-slate-900/90 p-3 hover:border-indigo-500/40 hover:bg-slate-800/50 cursor-pointer transition group"
-                          >
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="font-bold text-indigo-300 group-hover:text-indigo-200">
-                                {seg.speakerName}
+                          <li key={seg.id}>
+                            <button
+                              type="button"
+                              onClick={() => playSegment(seg)}
+                              className="timeline__item focus-ring"
+                            >
+                              <span className="timeline__item-head">
+                                <span className="timeline__speaker">{seg.speakerName}</span>
+                                <span className="timeline__time">
+                                  {formatSeconds(seg.startTime)} – {formatSeconds(seg.endTime)}
+                                </span>
                               </span>
-                              <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition">
-                                {formatSeconds(seg.startTime)} - {formatSeconds(seg.endTime)}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-200 leading-relaxed">{seg.text}</p>
-                          </div>
+                              <span className="timeline__text">{seg.text}</span>
+                            </button>
+                          </li>
                         ))}
-                      </div>
+                      </ol>
                     )}
-                  </div>
+                  </section>
                 </>
               )}
             </div>
@@ -1067,14 +1050,14 @@ export default function DashboardPage() {
         >
           <div role="dialog" aria-modal="true" aria-labelledby="room-modal-title" className="modal">
             <div className="modal__header">
-              <div>
+              <div className="modal__heading">
                 <h2 id="room-modal-title" className="modal__title">
                   {modalMode === "create" ? "สร้างห้องประชุม" : "แก้ไขห้องประชุม"}
                 </h2>
                 <p className="modal__subtitle">
                   {modalMode === "create"
-                    ? "กรอกรายละเอียดสำหรับห้องประชุมใหม่"
-                    : "แก้ไขชื่อหรือจำนวนผู้เข้าร่วมสูงสุด"}
+                    ? "ห้องใหม่จะแสดงบนแดชบอร์ด"
+                    : editingRoom?.name ?? "แก้ไขชื่อหรือจำนวนผู้เข้าร่วมสูงสุด"}
                 </p>
               </div>
               <button
@@ -1083,53 +1066,84 @@ export default function DashboardPage() {
                 aria-label="ปิดหน้าต่าง"
                 className="modal__close-btn focus-ring"
               >
-                <X aria-hidden="true" className="icon-20" />
+                <X aria-hidden="true" className="icon-18" />
               </button>
             </div>
 
             <form onSubmit={saveRoom} className="modal__form">
-              <div>
-                <label htmlFor="room-name" className="modal__label">
-                  ชื่อห้องประชุม
-                </label>
-                <input
-                  id="room-name"
-                  type="text"
-                  value={roomName}
-                  onChange={(event) => {
-                    setRoomName(event.target.value);
-                    setFormError("");
-                  }}
-                  autoFocus
-                  placeholder="เช่น Weekly Team Sync"
-                  className="modal__input"
-                />
-              </div>
+              <div className="modal__body">
+                <div className="modal__field">
+                  <label htmlFor="room-name" className="modal__label">
+                    ชื่อห้องประชุม
+                  </label>
+                  <input
+                    id="room-name"
+                    type="text"
+                    value={roomName}
+                    onChange={(event) => {
+                      setRoomName(event.target.value);
+                      setFormError("");
+                    }}
+                    autoFocus
+                    placeholder="เช่น Weekly Team Sync"
+                    className="modal__input"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="room-capacity" className="modal__label">
-                  จำนวนผู้เข้าร่วมสูงสุด
-                </label>
-                <input
-                  id="room-capacity"
-                  type="number"
-                  min="2"
-                  max="40"
-                  step="1"
-                  value={capacity}
-                  onChange={(event) => {
-                    setCapacity(event.target.value);
-                    setFormError("");
-                  }}
-                  className="modal__input"
-                />
-              </div>
+                <div className="modal__field">
+                  <label htmlFor="room-capacity" className="modal__label">
+                    จำนวนผู้เข้าร่วมสูงสุด
+                  </label>
+                  <div className="modal__stepper">
+                    <button
+                      type="button"
+                      onClick={() => stepCapacity(-1)}
+                      disabled={parsedDraftCapacity <= 2}
+                      aria-label="ลดจำนวนผู้เข้าร่วมสูงสุด"
+                      className="modal__stepper-btn focus-ring"
+                    >
+                      <Minus aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                    </button>
+                    <input
+                      id="room-capacity"
+                      type="number"
+                      min="2"
+                      max="40"
+                      step="1"
+                      inputMode="numeric"
+                      value={capacity}
+                      onChange={(event) => {
+                        setCapacity(event.target.value);
+                        setFormError("");
+                      }}
+                      className="modal__stepper-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => stepCapacity(1)}
+                      disabled={parsedDraftCapacity >= 40}
+                      aria-label="เพิ่มจำนวนผู้เข้าร่วมสูงสุด"
+                      className="modal__stepper-btn focus-ring"
+                    >
+                      <Plus aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                    </button>
+                    <span className="modal__stepper-unit">คน</span>
+                  </div>
+                  {editingRoom && (
+                    <p className="modal__hint">
+                      {editingRoom.participants
+                        ? `ขณะนี้มีผู้อยู่ในห้อง ${editingRoom.participants} คน`
+                        : "ขณะนี้ไม่มีผู้อยู่ในห้อง"}
+                    </p>
+                  )}
+                </div>
 
-              {formError && (
-                <p role="alert" className="modal__error">
-                  {formError}
-                </p>
-              )}
+                {formError && (
+                  <p role="alert" className="modal__error">
+                    {formError}
+                  </p>
+                )}
+              </div>
 
               <div className="modal__actions">
                 {modalMode === "edit" && (
@@ -1138,7 +1152,7 @@ export default function DashboardPage() {
                     onClick={deleteSelectedRoom}
                     className="modal__delete-btn focus-ring-danger"
                   >
-                    <Trash2 aria-hidden="true" className="icon-16" />
+                    <Trash2 aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                     ลบห้อง
                   </button>
                 )}
@@ -1146,6 +1160,7 @@ export default function DashboardPage() {
                   ยกเลิก
                 </button>
                 <button type="submit" className="modal__submit-btn focus-ring">
+                  {modalMode === "create" && <Plus aria-hidden="true" className="icon-16" strokeWidth={1.8} />}
                   {modalMode === "create" ? "สร้างห้อง" : "บันทึก"}
                 </button>
               </div>
@@ -1155,4 +1170,50 @@ export default function DashboardPage() {
       )}
     </div>
   );
+}
+
+function formatToday() {
+  return new Date().toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function LiveClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <time dateTime={now.toISOString()} className="dashboard__clock">
+      {now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false })}
+    </time>
+  );
+}
+
+function groupMeetingsByDay(meetings: PastMeeting[]) {
+  const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const groups: { key: string; label: string; meetings: PastMeeting[] }[] = [];
+  for (const meeting of meetings) {
+    const startedAt = new Date(meeting.startedAt);
+    const key = dayKey(startedAt);
+    let group = groups.find((g) => g.key === key);
+    if (!group) {
+      const dateLabel = startedAt.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+      const prefix = key === dayKey(today) ? "วันนี้ · " : key === dayKey(yesterday) ? "เมื่อวาน · " : "";
+      group = { key, label: `${prefix}${dateLabel}`, meetings: [] };
+      groups.push(group);
+    }
+    group.meetings.push(meeting);
+  }
+  return groups;
 }
