@@ -1127,25 +1127,68 @@ body {
 
   /* ---------- meeting summary ---------- */
   .meeting-summary {
-    @apply overflow-hidden text-ink;
+    @apply @container overflow-hidden border border-[#32415a] bg-[#1c293d] text-slate-100;
   }
+  /* Side by side only when the card itself is wide (not in the dashboard modal). */
   .meeting-summary__header {
-    @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
+    @apply flex flex-col gap-3 @3xl:flex-row @3xl:items-start @3xl:justify-between;
   }
   .meeting-summary__header-actions {
     @apply flex flex-wrap items-center gap-2;
   }
   .meeting-summary__title {
-    @apply flex items-center gap-2 text-lg font-semibold text-ink;
+    @apply flex items-center gap-2 whitespace-nowrap text-lg font-semibold text-white;
   }
   .meeting-summary__title svg {
     @apply text-info;
   }
   .meeting-summary__subtitle {
-    @apply mt-1 text-[13px] text-muted;
+    @apply mt-1 text-xs text-[#7183a2];
+  }
+  .meeting-summary__model {
+    @apply w-fit rounded-full border border-[#4b5870] bg-[#111c30] px-2.5 py-1 text-xs text-[#aebbd0];
+  }
+  .meeting-summary__regenerate {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#596d8d] bg-[#26354b] px-3 text-xs font-semibold text-[#d8e2f0] transition-colors hover:bg-[#3a4d6a] hover:text-white disabled:cursor-not-allowed disabled:border-[#3b475b] disabled:bg-[#202c40] disabled:text-[#7183a2];
+  }
+  .meeting-summary__generate {
+    @apply mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#5145e5] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#6054ef] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .meeting-summary__export {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#596d8d] bg-[#26354b] px-3 text-xs font-semibold text-[#d8e2f0] transition-colors hover:bg-[#3a4d6a] hover:text-white;
+  }
+  .meeting-summary__error {
+    @apply mt-3 text-xs text-red-300;
+  }
+  .meeting-summary__export-error {
+    @apply mt-4 text-sm text-red-300;
+  }
+  .meeting-summary__edit-btn {
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[#4b5870] bg-[#26354b] px-3 text-xs font-semibold text-[#c4d0e1] transition-colors hover:border-[#675cf0] hover:text-white;
   }
   .meeting-summary__content {
-    @apply mt-6 text-[15px] leading-7 break-words whitespace-pre-wrap text-ink;
+    @apply mt-6 break-words text-sm leading-7 text-[#e5eaf2];
+  }
+  .meeting-summary__content h4 {
+    @apply mt-5 mb-1.5 border-b border-[#32415a] pb-1 text-[15px] font-semibold text-white first:mt-0;
+  }
+  .meeting-summary__content h5 {
+    @apply mt-4 mb-1 text-sm font-semibold text-white first:mt-0;
+  }
+  .meeting-summary__content p {
+    @apply my-2;
+  }
+  .meeting-summary__content ul {
+    @apply my-2 list-disc space-y-1 pl-5 marker:text-[#8078ff];
+  }
+  .meeting-summary__content ol {
+    @apply my-2 list-decimal space-y-1 pl-5 marker:text-[#8078ff];
+  }
+  .meeting-summary__content strong {
+    @apply font-semibold text-white;
+  }
+  .meeting-summary__content code {
+    @apply rounded bg-[#111c30] px-1 py-0.5 font-mono text-[13px] text-[#c4d0e1];
   }
   .meeting-summary__form {
     @apply mt-6;
@@ -1186,50 +1229,147 @@ body {
   .meeting-summary__empty-description {
     @apply mt-1 text-[13px] leading-5;
   }
+  /* ---------- meeting room lobby ---------- */
+  .meeting-lobby,
+  .meeting-unavailable {
+    @apply flex min-h-screen items-center justify-center bg-[#090a12] px-5 py-10 text-white;
+  }
+  .meeting-lobby__card,
+  .meeting-unavailable__card {
+    @apply w-full max-w-[400px] rounded-xl border border-[#292b3e] bg-[#171827] px-10 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.25)];
+  }
+  .meeting-lobby__room-icon {
+    @apply mx-auto flex size-12 items-center justify-center rounded-xl bg-[#6263ec] text-white;
+  }
+  .meeting-lobby__video-icon {
+    @apply size-6;
+  }
+  .meeting-lobby__title {
+    @apply mt-5 text-center text-xl font-bold tracking-[-0.03em];
+  }
+  .meeting-lobby__occupancy {
+    @apply mt-1 text-center text-xs text-[#898ba8];
+  }
+  .meeting-lobby__field {
+    @apply mt-8;
+  }
+  .meeting-lobby__label {
+    @apply mb-2 block text-xs text-[#b8bbdc];
+  }
+  .meeting-lobby__input {
+    @apply h-11 w-full rounded-lg border border-[#303247] bg-[#10111c] px-3.5 text-sm text-white outline-none placeholder:text-[#6e7087] focus:border-[#6263ec] focus:ring-2 focus:ring-[#6263ec]/20;
+  }
+  .meeting-lobby__error {
+    @apply mt-2 text-xs text-red-300;
+  }
+  .meeting-lobby__join {
+    @apply mt-6 h-11 w-full rounded-lg bg-[#6263ec] text-sm font-semibold text-white transition hover:bg-[#7273f4];
+  }
 
-  @media print {
-    html.summary-export-printing .meeting-detail__content > :not(.meeting-summary) {
-      display: none;
-    }
-    html.summary-export-printing body * {
-      visibility: hidden;
-    }
-    html.summary-export-printing .meeting-summary,
-    html.summary-export-printing .meeting-summary * {
-      visibility: visible;
-    }
-    html.summary-export-printing .meeting-summary {
-      position: absolute;
-      inset: 0 auto auto 0;
-      width: 100%;
-      overflow: visible;
-      border: 0;
-      background: #fff;
-      color: #111827;
-      box-shadow: none;
-      font-family: Tahoma, "Noto Sans Thai", Arial, sans-serif;
-    }
-    html.summary-export-printing .meeting-summary__title,
-    html.summary-export-printing .meeting-summary__content,
-    html.summary-export-printing .meeting-summary__metadata dd {
-      color: #111827;
-    }
-    html.summary-export-printing .meeting-summary__subtitle,
-    html.summary-export-printing .meeting-summary__metadata dt {
-      color: #4b5563;
-    }
-    html.summary-export-printing .meeting-summary__content {
-      overflow-wrap: anywhere;
-      white-space: pre-wrap;
-    }
-    html.summary-export-printing .meeting-summary__actions,
-    html.summary-export-printing .meeting-summary__export-error {
-      display: none;
-    }
-    html.summary-export-printing .meeting-summary__metadata {
-      break-inside: avoid;
-      border-color: #d1d5db;
-    }
+  /* ---------- unavailable meeting ---------- */
+  .meeting-unavailable__card {
+    @apply text-center;
+  }
+  .meeting-unavailable__icon {
+    @apply mx-auto flex size-12 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300;
+  }
+  .meeting-unavailable__title {
+    @apply mt-5 text-xl font-bold;
+  }
+  .meeting-unavailable__description {
+    @apply mt-2 break-words text-sm leading-6 text-[#9294ab];
+  }
+  .meeting-unavailable__link {
+    @apply mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-[#6263ec] px-5 text-sm font-semibold transition hover:bg-[#7273f4];
+  }
+
+  /* ---------- active meeting room ---------- */
+  .meeting-room {
+    @apply relative flex min-h-screen flex-col overflow-hidden bg-[#090a12] text-white;
+  }
+  .meeting-room__header {
+    @apply grid min-h-16 grid-cols-[1fr_auto] items-center gap-3 border-b border-[#202130] px-5 py-3 sm:grid-cols-[1fr_auto_1fr];
+  }
+  .meeting-room__title {
+    @apply text-sm font-bold;
+  }
+  .meeting-room__meta {
+    @apply mt-0.5 text-[10px] text-[#777991];
+  }
+  .meeting-room__recording {
+    @apply hidden items-center gap-1.5 rounded-md bg-red-500/15 px-3 py-1.5 text-[10px] font-bold text-red-300 sm:inline-flex;
+  }
+  .meeting-room__recording-dot {
+    @apply size-1.5 rounded-full bg-red-400;
+  }
+  .meeting-room__count {
+    @apply flex items-center justify-end gap-1.5 text-xs text-[#a2a4b8];
+  }
+  .meeting-room__layout {
+    @apply flex min-h-0 flex-1 flex-col pb-20 lg:flex-row;
+  }
+  .meeting-room__stage {
+    @apply flex-1 p-4 sm:p-6;
+  }
+  .meeting-room__tiles {
+    @apply grid max-w-3xl gap-4 sm:grid-cols-2 xl:grid-cols-3;
+  }
+  .meeting-participant {
+    @apply relative flex min-h-[174px] flex-col items-center justify-center rounded-xl border border-[#222435] bg-[#171825];
+  }
+  .meeting-participant--speaking {
+    @apply border-emerald-400 ring-1 ring-emerald-400;
+  }
+  .meeting-participant__avatar {
+    @apply flex size-14 items-center justify-center rounded-full text-base font-bold;
+  }
+  .meeting-participant__avatar--1 {
+    @apply bg-[#6263ec];
+  }
+  .meeting-participant__avatar--2 {
+    @apply bg-[#20212f] text-[#8c8ea2];
+  }
+  .meeting-participant__avatar--3 {
+    @apply bg-[#292a3a];
+  }
+  .meeting-participant__name {
+    @apply mt-3 text-xs font-semibold;
+  }
+  .meeting-participant__mic {
+    @apply absolute right-4 top-4 size-4 text-[#525467];
+  }
+  .meeting-participant__mic--active {
+    @apply text-emerald-400;
+  }
+  .meeting-room__notice {
+    @apply mt-4 flex w-fit items-center gap-2 rounded-lg bg-amber-500/20 px-4 py-3 text-xs text-amber-300;
+  }
+  .meeting-room__participants {
+    @apply border-t border-[#202130] px-5 py-5 lg:w-[280px] lg:border-l lg:border-t-0;
+  }
+  .meeting-room__participants-title {
+    @apply text-sm font-bold;
+  }
+  .meeting-room__participants-list {
+    @apply mt-4 divide-y divide-[#202130];
+  }
+  .meeting-room__participant-row {
+    @apply flex items-center justify-between py-3 text-xs text-[#d7d8e2];
+  }
+  .meeting-room__participant-row svg {
+    @apply text-[#5e6072];
+  }
+  .meeting-room__controls {
+    @apply fixed inset-x-0 bottom-0 z-10 flex h-20 items-center justify-center gap-3 border-t border-[#202130] bg-[#090a12]/95 px-5 backdrop-blur;
+  }
+  .meeting-control {
+    @apply flex size-11 items-center justify-center rounded-full bg-[#20212f] text-[#dcdee8] transition hover:bg-[#2b2d3e];
+  }
+  .meeting-control--muted {
+    @apply bg-red-500/15 text-red-300 hover:bg-red-500/25;
+  }
+  .meeting-control--leave {
+    @apply bg-red-600 hover:bg-red-500;
   }
 
   /* ---------- transcript viewer ---------- */
