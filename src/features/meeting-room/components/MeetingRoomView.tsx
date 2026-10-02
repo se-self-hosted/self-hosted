@@ -42,6 +42,7 @@ import {
   type LocalTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
+import { TypewriterLoader } from "@/components/TypewriterLoader";
 
 // Our token route writes this metadata and grants no canUpdateOwnMetadata,
 // so a participant can't claim to be the host by rewriting their own.
@@ -1062,10 +1063,7 @@ export function MeetingRoomView({
         <main className="meeting-lobby">
           <div className="meeting-lobby__card">
             <div className="meeting-lobby__joining">
-              <RefreshCw aria-hidden="true" className="meeting-lobby__spinner" />
-              <p aria-live="polite" className="meeting-lobby__joining-text">
-                {joinStep ? stepLabel[joinStep] : "กำลังเข้าร่วม..."}
-              </p>
+              <TypewriterLoader label={joinStep ? stepLabel[joinStep] : "กำลังเข้าร่วม..."} />
             </div>
           </div>
         </main>
@@ -1343,7 +1341,7 @@ export function MeetingRoomView({
 
         <div className="meeting-room__header-end">
           {showTranscriptPanel && (
-            <span className="pill pill--info h-[30px]">
+            <span className="pill meeting-room__transcript-status h-[30px]">
               <FileText aria-hidden="true" className="icon-16" strokeWidth={1.8} />
               Live transcript
             </span>
@@ -1582,7 +1580,7 @@ export function MeetingRoomView({
             aria-label="บันทึกข้อความสนทนา"
             aria-pressed={showTranscriptPanel}
             title="Live Transcript Timeline"
-            className={`meeting-control focus-ring ${showTranscriptPanel ? "meeting-control--active" : ""}`}
+            className={`meeting-control meeting-control--transcript focus-ring ${showTranscriptPanel ? "meeting-control--transcript-active" : ""}`}
           >
             <FileText aria-hidden="true" className="icon-20" strokeWidth={1.8} />
           </button>

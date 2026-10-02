@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { MeetingRoomView } from "@/features/meeting-room/components/MeetingRoomView";
+import { TypewriterLoader } from "@/components/TypewriterLoader";
 
 type Room = {
   id: string;
@@ -78,7 +79,7 @@ export default function MeetingRoomPage({ params }: MeetingRoomPageProps) {
   if (room === undefined) {
     return (
       <main className="meeting-unavailable">
-        <p className="dashboard-loading__text">กำลังโหลดห้องประชุม...</p>
+        <TypewriterLoader label="กำลังโหลดห้องประชุม..." />
       </main>
     );
   }

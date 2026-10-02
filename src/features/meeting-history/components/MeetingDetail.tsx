@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
+import { Users, FileText, Video, AlertCircle, Download, Play, Pause } from "lucide-react";
+import { TypewriterLoader } from "@/components/TypewriterLoader";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
 import { requestMeetingSummary, saveMeetingSummaryEdit } from "../summary";
 import type { MeetingSummary } from "../types";
@@ -190,7 +191,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   if (isLoading) {
     return (
       <div className="meeting-detail__loading">
-        <Loader2 className="animate-spin icon-24" /> กำลังโหลดข้อมูล...
+        <TypewriterLoader label="กำลังโหลดข้อมูลการประชุม..." />
       </div>
     );
   }

@@ -7,11 +7,11 @@ import {
   Check,
   CircleSlash,
   Clock3,
+  Copy,
   Disc,
   Download,
   FileText,
   Headphones,
-  Link2,
   LogIn,
   Minus,
   Pause,
@@ -28,6 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { AppSidebar } from "@/components/app-shell/AppSidebar";
+import { TypewriterLoader } from "@/components/TypewriterLoader";
 import Link from "next/link";
 import { MeetingSummaryDisplay } from "@/features/meeting-history/components/MeetingSummaryDisplay";
 import { requestMeetingSummary, saveMeetingSummaryEdit } from "@/features/meeting-history/summary";
@@ -566,7 +567,7 @@ export default function DashboardPage() {
   if (isChecking || isLoading) {
     return (
       <div className="dashboard-loading">
-        <p className="dashboard-loading__text">Loading dashboard...</p>
+        <TypewriterLoader label="กำลังโหลดแดชบอร์ด..." />
       </div>
     );
   }
@@ -670,14 +671,19 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => copyRoomLink(room.id, room.slug)}
-                          className="room-card__copy-btn action-fill action-fill--accent focus-ring"
+                          aria-label={wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
+                          className={`room-card__copy-btn action-fill action-fill--accent focus-ring${wasCopied ? " room-card__copy-btn--copied" : ""}`}
                         >
-                          {wasCopied ? (
-                            <Check aria-hidden="true" className="icon-16 room-card__copy-icon" />
-                          ) : (
-                            <Link2 aria-hidden="true" className="icon-16" strokeWidth={1.8} />
-                          )}
-                          {wasCopied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
+                          <span aria-hidden="true" className="room-card__copy-content">
+                            <span className="room-card__copy-state room-card__copy-state--normal">
+                              <Copy className="icon-16" strokeWidth={1.8} />
+                              คัดลอกลิงก์
+                            </span>
+                            <span className="room-card__copy-state room-card__copy-state--success">
+                              <Check className="icon-16 room-card__copy-icon" strokeWidth={1.8} />
+                              คัดลอกแล้ว
+                            </span>
+                          </span>
                         </button>
                         <button
                           type="button"

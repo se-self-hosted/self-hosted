@@ -18,11 +18,15 @@
   --color-line-soft: #eeebe4;
   --color-line-strong: #d6d1c6;
   --color-field: #cfc9bd;
+  --color-placeholder: #8e918f;
+  --color-row-surface: #fbfaf7;
 
   /* text */
   --color-ink: #1b1d1c;
   --color-ink-soft: #55595a;
   --color-muted: #5e625f;
+  --color-ink-contrast: #ffffff;
+  --color-ink-hover: #000000;
 
   /* accent */
   --color-accent: #d4f36b;
@@ -66,6 +70,40 @@
 
 :root {
   --sidebar-width: 248px;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #141614;
+  --color-surface: #1b1f1c;
+  --color-surface-2: #222722;
+  --color-surface-3: #282e29;
+  --color-chip: #2c322c;
+  --color-line: #343b35;
+  --color-line-soft: #2a302b;
+  --color-line-strong: #465047;
+  --color-field: #59635a;
+  --color-placeholder: #879087;
+  --color-row-surface: #202420;
+  --color-ink: #f2f0e8;
+  --color-ink-soft: #c9cec8;
+  --color-muted: #aeb6ae;
+  --color-ink-contrast: #141614;
+  --color-ink-hover: #ffffff;
+  --color-ok-bg: #193124;
+  --color-ok: #8bd9a2;
+  --color-ok-dot: #4fc875;
+  --color-idle-bg: #30342f;
+  --color-idle-dot: #9da39d;
+  --color-bad-bg: #3b211f;
+  --color-bad: #ff8d83;
+  --color-bad-deep: #ffaaa2;
+  --color-bad-line: #6f3732;
+  --color-info-bg: #292d3a;
+  --color-info: #c4cae8;
+  --color-warn-bg: #3b301b;
+  --color-warn: #f2c56b;
 }
 
 body {
@@ -118,6 +156,7 @@ body {
   .modal__cancel-btn,
   .modal__submit-btn,
   .meeting-lobby__back,
+  .meeting-detail__back,
   .meeting-lobby__join,
   .meeting-lobby__mic-retry,
   .meeting-unavailable__link,
@@ -147,11 +186,12 @@ body {
   .meeting-summary__generate,
   .transcript-state__link,
   .profile-submit-btn {
-    @apply border-ink bg-ink text-white hover:bg-black;
+    @apply border-ink bg-ink text-ink-contrast hover:bg-ink-hover;
   }
   .btn--secondary,
   .modal__cancel-btn,
   .meeting-lobby__back,
+  .meeting-detail__back,
   .meeting-lobby__mic-retry,
   .recordings-list__download,
   .meeting-summary__edit-btn,
@@ -256,7 +296,7 @@ body {
   .modal__input,
   .meeting-lobby__input,
   .profile-input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-placeholder focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .display-title,
   .dashboard__title,
@@ -287,6 +327,209 @@ body {
     @apply text-sm text-muted;
   }
 
+  /* ---------- reusable page loader ---------- */
+  .typewriter-loader {
+    --typewriter-machine: var(--color-night);
+    --typewriter-machine-detail: var(--color-night-2);
+    --typewriter-paper: var(--color-surface);
+    --typewriter-paper-border: var(--color-line-strong);
+    --typewriter-paper-line: var(--color-ink-soft);
+    --typewriter-key: var(--color-surface-2);
+    --typewriter-label: var(--color-muted);
+    @apply flex flex-col items-center justify-center gap-3 py-5 text-center;
+  }
+  .typewriter-loader__animation {
+    position: relative;
+    width: 120px;
+    height: 96px;
+    animation: typewriter-loader-bounce 3000ms ease-in-out infinite;
+  }
+  .typewriter-loader__paper {
+    position: absolute;
+    top: 7px;
+    left: 31px;
+    z-index: 1;
+    display: flex;
+    width: 58px;
+    height: 54px;
+    flex-direction: column;
+    gap: 7px;
+    overflow: hidden;
+    border: 1px solid var(--typewriter-paper-border);
+    border-radius: 4px 4px 1px 1px;
+    background: var(--typewriter-paper);
+    padding: 12px 9px;
+    box-shadow: 0 5px 12px rgba(27, 29, 28, 0.1);
+    animation: typewriter-loader-paper 3000ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  .typewriter-loader__paper span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--typewriter-paper-line);
+    opacity: 0.48;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: typewriter-loader-line 3000ms steps(6, end) infinite;
+  }
+  .typewriter-loader__paper span:nth-child(2) {
+    width: 82%;
+    animation-delay: 180ms;
+  }
+  .typewriter-loader__paper span:nth-child(3) {
+    width: 64%;
+    animation-delay: 360ms;
+  }
+  .typewriter-loader__slide {
+    position: absolute;
+    top: 43px;
+    left: 13px;
+    z-index: 3;
+    width: 94px;
+    height: 10px;
+    border-radius: 9999px;
+    background: var(--typewriter-machine);
+    box-shadow: inset 0 -2px 0 var(--typewriter-machine-detail);
+  }
+  .typewriter-loader__slide::before,
+  .typewriter-loader__slide::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    width: 8px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-accent);
+  }
+  .typewriter-loader__slide::before {
+    left: -4px;
+  }
+  .typewriter-loader__slide::after {
+    right: -4px;
+  }
+  .typewriter-loader__slide i {
+    position: absolute;
+    top: -5px;
+    left: 9px;
+    width: 19px;
+    height: 20px;
+    border: 3px solid var(--color-accent);
+    border-radius: 5px;
+    background: var(--typewriter-machine-detail);
+    animation: typewriter-loader-carriage 3000ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  .typewriter-loader__body {
+    position: absolute;
+    top: 49px;
+    left: 18px;
+    z-index: 2;
+    width: 84px;
+    height: 34px;
+    border-radius: 7px 7px 12px 12px;
+    background: var(--typewriter-machine);
+    box-shadow: 0 9px 18px rgba(27, 29, 28, 0.18), inset 0 -5px 0 var(--typewriter-machine-detail);
+  }
+  .typewriter-loader__keyboard {
+    position: absolute;
+    top: 61px;
+    left: 25px;
+    z-index: 4;
+    display: grid;
+    width: 70px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    border-radius: 5px 5px 8px 8px;
+    background: var(--typewriter-machine-detail);
+    padding: 6px;
+    transform: perspective(70px) rotateX(12deg);
+  }
+  .typewriter-loader__keyboard i {
+    height: 5px;
+    border-radius: 2px;
+    background: var(--typewriter-key);
+    box-shadow: 0 1px 0 var(--typewriter-paper-border);
+    animation: typewriter-loader-key 3000ms ease-in-out infinite;
+  }
+  .typewriter-loader__keyboard i:nth-child(2n) {
+    animation-delay: 120ms;
+  }
+  .typewriter-loader__keyboard i:nth-child(3n) {
+    animation-delay: 260ms;
+  }
+  .typewriter-loader__keyboard i:nth-child(5n) {
+    animation-delay: 420ms;
+  }
+  .typewriter-loader__label {
+    color: var(--typewriter-label);
+    @apply text-sm font-medium;
+  }
+
+  @keyframes typewriter-loader-bounce {
+    0%, 8%, 100% { transform: translateY(0); }
+    12%, 16%, 34%, 38%, 56%, 60%, 78%, 82% { transform: translateY(1px); }
+    14%, 36%, 58%, 80% { transform: translateY(-1px); }
+  }
+  @keyframes typewriter-loader-paper {
+    0%, 8% { transform: translateY(8px); }
+    26% { transform: translateY(4px); }
+    48% { transform: translateY(0); }
+    70%, 88% { transform: translateY(-5px); }
+    100% { transform: translateY(8px); }
+  }
+  @keyframes typewriter-loader-line {
+    0%, 12% { transform: scaleX(0); }
+    42%, 88% { transform: scaleX(1); }
+    100% { transform: scaleX(0); }
+  }
+  @keyframes typewriter-loader-carriage {
+    0%, 8%, 100% { transform: translateX(0); }
+    20% { transform: translateX(47px); }
+    31% { transform: translateX(9px); }
+    43% { transform: translateX(53px); }
+    54% { transform: translateX(15px); }
+    66% { transform: translateX(48px); }
+    78%, 88% { transform: translateX(22px); }
+  }
+  @keyframes typewriter-loader-key {
+    0%, 10%, 100% { transform: translateY(0); background: var(--typewriter-key); }
+    14%, 18% { transform: translateY(2px); background: var(--color-accent); }
+    22% { transform: translateY(0); background: var(--typewriter-key); }
+  }
+  html[data-theme="dark"] .typewriter-loader {
+    --typewriter-machine: var(--color-night-strong);
+    --typewriter-machine-detail: var(--color-night-muted);
+    --typewriter-paper: var(--color-night-strong);
+    --typewriter-paper-border: var(--color-night-muted);
+    --typewriter-paper-line: var(--color-night-2);
+    --typewriter-key: var(--color-night-strong);
+    --typewriter-label: var(--color-ink);
+  }
+  html[data-theme="dark"] .typewriter-loader__keyboard {
+    background: var(--color-night-2);
+  }
+  html[data-theme="dark"] .typewriter-loader__slide i {
+    background: var(--color-night-2);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .typewriter-loader__animation,
+    .typewriter-loader__paper,
+    .typewriter-loader__paper span,
+    .typewriter-loader__slide i,
+    .typewriter-loader__keyboard i {
+      animation: none;
+    }
+    .typewriter-loader__paper {
+      transform: translateY(-2px);
+    }
+    .typewriter-loader__paper span {
+      transform: scaleX(1);
+    }
+    .typewriter-loader__slide i {
+      transform: translateX(34px);
+    }
+  }
+
   /* ---------- page shell ---------- */
   .dashboard {
     @apply min-h-screen bg-paper text-ink lg:flex;
@@ -302,7 +545,7 @@ body {
     }
   }
   .sidebar__inner {
-    @apply flex h-full flex-col px-4 pt-4 pb-3 lg:gap-9 lg:pt-6 lg:pb-6;
+    @apply flex h-full flex-col px-4 pt-4 pb-3 lg:pt-6 lg:pb-6;
   }
   .sidebar__header {
     @apply flex items-center justify-between gap-3 px-2;
@@ -322,11 +565,69 @@ body {
   .sidebar__brand-tagline {
     @apply text-xs text-night-muted;
   }
+  .sidebar__logout-mobile,
+  .sidebar__logout-desktop {
+    @apply flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-night-line-2 bg-transparent px-3 text-[#e9ece8];
+    gap: 0;
+    transition: width 240ms cubic-bezier(0.23, 1, 0.32, 1),
+      gap 240ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      box-shadow 180ms ease,
+      transform 120ms ease;
+  }
   .sidebar__logout-mobile {
-    @apply flex size-11 items-center justify-center rounded-[10px] border border-night-line-2 text-[#e9ece8] transition-colors hover:bg-night-3 lg:hidden;
+    @apply lg:hidden;
+  }
+  .sidebar__logout-mobile svg,
+  .sidebar__logout-desktop svg {
+    @apply shrink-0;
+  }
+  .sidebar__logout-label {
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(-4px);
+    @apply text-[13px] font-semibold whitespace-nowrap;
+    transition: max-width 240ms cubic-bezier(0.23, 1, 0.32, 1),
+      opacity 160ms ease,
+      transform 240ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .sidebar__logout-mobile:hover,
+    .sidebar__logout-desktop:hover {
+      width: 104px;
+      gap: 0.5rem;
+      @apply border-bad-solid bg-bad-solid text-white;
+      box-shadow: 0 0 16px color-mix(in srgb, var(--color-bad-solid) 32%, transparent);
+    }
+    .sidebar__logout-mobile:hover .sidebar__logout-label,
+    .sidebar__logout-desktop:hover .sidebar__logout-label {
+      max-width: 3rem;
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .sidebar__logout-mobile:focus-visible,
+  .sidebar__logout-desktop:focus-visible {
+    width: 104px;
+    gap: 0.5rem;
+    @apply border-bad-solid bg-bad-solid text-white;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-bad-solid) 32%, transparent);
+  }
+  .sidebar__logout-mobile:focus-visible .sidebar__logout-label,
+  .sidebar__logout-desktop:focus-visible .sidebar__logout-label {
+    max-width: 3rem;
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .sidebar__logout-mobile:active,
+  .sidebar__logout-desktop:active {
+    transform: translateY(1px);
   }
   .sidebar__nav {
-    @apply pt-4 lg:pt-0;
+    @apply pt-4 lg:pt-5;
   }
   .sidebar__nav-grid {
     @apply grid grid-cols-2 gap-1 lg:flex lg:flex-col;
@@ -340,6 +641,51 @@ body {
   }
   .sidebar__nav-link--active {
     @apply bg-accent font-semibold text-accent-ink;
+  }
+  .sidebar__theme {
+    @apply flex justify-center pt-3 lg:mt-6 lg:justify-start lg:px-1 lg:pt-0;
+  }
+  .theme-switch {
+    @apply flex items-center gap-2.5;
+  }
+  .theme-switch__indicator {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-full border border-night-line-2 bg-night-2 text-accent;
+  }
+  .theme-switch__control {
+    @apply relative;
+  }
+  .theme-switch__input {
+    @apply sr-only;
+  }
+  .theme-switch__track {
+    @apply relative grid h-9 w-[140px] cursor-pointer grid-cols-2 items-center overflow-hidden rounded-full border border-night-line-2 bg-night-2 text-center text-xs font-semibold text-night-text;
+    transition: border-color 300ms ease, background-color 300ms ease;
+  }
+  .theme-switch__label {
+    @apply relative z-10 select-none;
+    transition: color 300ms ease;
+  }
+  .theme-switch__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 65px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 300ms ease;
+  }
+  .theme-switch__input:not(:checked) + .theme-switch__track .theme-switch__label:first-child,
+  .theme-switch__input:checked + .theme-switch__track .theme-switch__label:nth-child(2) {
+    color: var(--color-accent-ink);
+  }
+  .theme-switch__input:checked + .theme-switch__track .theme-switch__thumb {
+    transform: translateX(68px);
+  }
+  .theme-switch__input:focus-visible + .theme-switch__track {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
   .sidebar__footer {
     @apply mt-auto hidden items-center gap-2.5 border-t border-night-line pt-4 lg:flex;
@@ -370,7 +716,14 @@ body {
     @apply block truncate text-xs text-night-muted;
   }
   .sidebar__logout-desktop {
-    @apply flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-night-line-2 text-[#e9ece8] transition-colors hover:bg-night-3;
+    @apply flex;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar__logout-mobile,
+    .sidebar__logout-desktop,
+    .sidebar__logout-label {
+      transition-duration: 0ms;
+    }
   }
 
   /* ---------- main content ---------- */
@@ -407,7 +760,38 @@ body {
     @apply flex items-center gap-2;
   }
   .dashboard__clock {
-    @apply hidden border-l border-[#dad5ca] pl-5 font-mono text-[28px] font-medium tracking-[-0.02em] sm:block;
+    background-color: #d4f36b;
+    border-color: #000000;
+    color: #000000;
+    @apply relative hidden h-11 items-center justify-center rounded-full border px-4 font-mono text-[28px] font-medium tracking-[-0.02em] sm:inline-flex;
+  }
+  .dashboard__clock::before {
+    content: "";
+    position: absolute;
+    inset: 5px 6px;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+  .dashboard__clock::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 32px;
+    height: 6px;
+    border-radius: 0 0 9999px 9999px;
+    background-color: #000000;
+    transform: translateX(-50%);
+  }
+  html[data-theme="dark"] .dashboard__clock {
+    border-color: var(--color-placeholder);
+  }
+  html[data-theme="dark"] .dashboard__clock::before {
+    border-color: var(--color-placeholder);
+  }
+  html[data-theme="dark"] .dashboard__clock::after {
+    background-color: var(--color-accent);
   }
   .dashboard__create-btn svg {
     transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
@@ -480,7 +864,7 @@ body {
       width: 92px;
       border-color: var(--color-ink);
       background-color: var(--color-ink);
-      color: #fff;
+      color: var(--color-ink-contrast);
     }
     .room-card__edit-btn:hover .room-card__edit-icon {
       transform: translateX(1px) rotate(-4deg);
@@ -524,8 +908,71 @@ body {
   .room-card__copy-btn {
     @apply border-line-strong bg-surface font-medium text-ink hover:bg-surface-2;
   }
+  .room-card__copy-content {
+    @apply relative block h-5 w-full overflow-hidden;
+  }
+  .room-card__copy-state {
+    @apply absolute inset-0 flex items-center justify-center gap-1.5 whitespace-nowrap;
+  }
+  .room-card__copy-state--normal {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .room-card__copy-state--success {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .room-card__copy-btn--copied .room-card__copy-state--normal {
+    animation: copy-content-normal 1800ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+  .room-card__copy-btn--copied .room-card__copy-state--success {
+    animation: copy-content-success 1800ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
   .room-card__copy-icon {
     @apply text-ok;
+  }
+  @keyframes copy-content-normal {
+    0%, 8% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    18%, 82% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    83% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    92%, 100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes copy-content-success {
+    0%, 8% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    18%, 82% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    92%, 100% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .room-card__copy-btn--copied .room-card__copy-state--normal {
+      animation: none;
+      opacity: 0;
+    }
+    .room-card__copy-btn--copied .room-card__copy-state--success {
+      animation: none;
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .room-card__join-btn {
     @apply border-accent-ink bg-accent-ink font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:border-line disabled:bg-chip disabled:text-muted;
@@ -625,7 +1072,7 @@ body {
     @apply text-sm font-semibold;
   }
   .modal__input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-placeholder focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .modal__stepper {
     @apply flex items-center gap-2;
@@ -771,7 +1218,7 @@ body {
     @apply flex flex-col gap-2;
   }
   .timeline__item {
-    @apply flex w-full flex-col gap-1.5 rounded-xl border border-line-soft bg-[#fbfaf7] px-3.5 py-3 text-left transition-colors hover:border-line-strong hover:bg-surface-3;
+    @apply flex w-full flex-col gap-1.5 rounded-xl border border-line-soft bg-row-surface px-3.5 py-3 text-left transition-colors hover:border-line-strong hover:bg-surface-3;
   }
   .timeline__item-head {
     @apply flex items-center justify-between gap-3;
@@ -858,7 +1305,7 @@ body {
     @apply flex size-[60px] items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-45;
   }
   .meeting-lobby__mic-toggle {
-    @apply border-ink bg-ink text-white hover:bg-black;
+    @apply border-ink bg-ink text-ink-contrast hover:bg-ink-hover;
   }
   .meeting-lobby__mic-toggle--off {
     @apply border-bad-line bg-bad-bg text-bad-deep hover:bg-[#fbd9d5];
@@ -871,12 +1318,6 @@ body {
   }
   .meeting-lobby__joining {
     @apply flex flex-col items-center gap-4 py-4 text-center;
-  }
-  .meeting-lobby__spinner {
-    @apply size-8 animate-spin text-ink;
-  }
-  .meeting-lobby__joining-text {
-    @apply text-sm font-medium text-ink;
   }
 
   /* ---------- unavailable meeting ---------- */
@@ -935,6 +1376,9 @@ body {
   }
   .meeting-room__header-end {
     @apply hidden justify-end lg:flex;
+  }
+  .meeting-room__transcript-status {
+    @apply border border-accent bg-accent text-accent-ink;
   }
   .meeting-room__layout {
     @apply flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden;
@@ -1050,8 +1494,21 @@ body {
   .meeting-control--recording {
     @apply border-bad-solid bg-bad-solid text-white hover:bg-[#c4271b];
   }
-  .meeting-control--active {
-    @apply border-info bg-info text-white hover:bg-[#283689];
+  .meeting-control--transcript {
+    @apply border-line-strong bg-surface text-ink;
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
+  }
+  .meeting-control--transcript:hover {
+    @apply border-accent bg-surface text-ink;
+  }
+  .meeting-control--transcript-active {
+    @apply border-accent bg-accent text-accent-ink;
+  }
+  .meeting-control--transcript-active:hover {
+    @apply border-accent bg-accent text-accent-ink;
+  }
+  .meeting-control--transcript:active {
+    transform: scale(0.97);
   }
   .meeting-control-divider {
     @apply mx-1.5 mb-[18px] hidden h-11 w-px shrink-0 bg-line sm:block;
@@ -1094,7 +1551,7 @@ body {
     @apply text-xs font-semibold text-ink;
   }
   .bubble--mine {
-    @apply rounded-[16px_16px_4px_16px] bg-ink px-3.5 py-2.5 text-sm leading-[1.45] text-white;
+    @apply rounded-[16px_16px_4px_16px] bg-ink px-3.5 py-2.5 text-sm leading-[1.45] text-ink-contrast;
   }
   .bubble--theirs {
     @apply rounded-[16px_16px_16px_4px] bg-chip px-3.5 py-2.5 text-sm leading-[1.45] text-ink;
@@ -1113,7 +1570,7 @@ body {
   }
 
   .meeting-toast {
-    @apply fixed top-5 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-[10px] bg-ink px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_12px_32px_rgba(27,29,28,0.25)];
+    @apply fixed top-5 left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-[10px] bg-ink px-4 py-2.5 text-[13px] font-semibold text-ink-contrast shadow-[0_12px_32px_rgba(27,29,28,0.25)];
   }
   .meeting-reconnect {
     @apply fixed inset-x-0 top-0 z-40 flex items-center justify-center gap-2 bg-warn-bg py-2 text-[13px] font-semibold text-warn shadow-sm;
@@ -1130,16 +1587,121 @@ body {
     @apply mb-5 grid gap-3 rounded-2xl border border-line bg-surface p-4 md:grid-cols-[minmax(220px,1fr)_auto_auto_auto] md:items-end;
   }
   .meeting-history__search {
-    @apply flex h-11 items-center gap-2 rounded-[10px] border border-field bg-surface px-3.5 text-muted focus-within:border-ink focus-within:ring-2 focus-within:ring-ink/10;
+    @apply flex h-11 items-center gap-2 rounded-[10px] border border-line-soft bg-surface-2 px-3.5 text-muted;
+    transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
   }
   .meeting-history__search input {
-    @apply min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-[#8e918f];
+    @apply min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .meeting-history__search:hover {
+      border-color: var(--color-accent);
+      background-color: var(--color-surface);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent);
+    }
+  }
+  .meeting-history__search:focus-within {
+    border-color: var(--color-accent);
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 24%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .meeting-history__search {
+      transition-duration: 0ms;
+    }
   }
   .meeting-history__date {
-    @apply grid gap-1 text-xs font-semibold text-muted;
+    @apply relative grid gap-1 text-xs font-semibold text-muted;
   }
-  .meeting-history__date input {
-    @apply h-11 rounded-[10px] border border-field bg-surface px-3 text-sm text-ink outline-none focus:border-ink;
+  .meeting-history__date-label {
+    @apply block;
+  }
+  .meeting-history__date-trigger {
+    @apply flex h-11 min-w-[152px] items-center justify-between gap-3 rounded-[10px] border border-field bg-surface px-3 text-sm font-normal text-ink outline-none transition-colors hover:border-line-strong hover:bg-surface-2 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25;
+  }
+  .meeting-history__date-placeholder {
+    @apply text-muted;
+  }
+  .meeting-history__date-trigger svg {
+    @apply shrink-0 text-muted;
+  }
+  .meeting-history__calendar {
+    top: calc(100% + 0.5rem);
+    width: min(19rem, calc(100vw - 2rem));
+    @apply absolute left-0 z-40 rounded-2xl border border-line-strong bg-surface p-3.5 text-ink shadow-[0_18px_45px_rgba(27,29,28,0.16)];
+  }
+  .meeting-history__date--end .meeting-history__calendar {
+    @apply right-0 left-auto;
+  }
+  .meeting-history__calendar-header {
+    @apply mb-3 flex items-center justify-between gap-2;
+  }
+  .meeting-history__calendar-header strong {
+    @apply text-center text-sm font-semibold text-ink;
+  }
+  .meeting-history__calendar-nav {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-lg text-ink transition-colors hover:bg-chip disabled:cursor-not-allowed disabled:opacity-35;
+  }
+  .meeting-history__calendar-grid {
+    @apply grid gap-1;
+  }
+  .meeting-history__calendar-weekdays,
+  .meeting-history__calendar-days {
+    @apply grid grid-cols-7 gap-1;
+  }
+  .meeting-history__calendar-weekdays span {
+    @apply flex h-7 items-center justify-center text-[11px] font-semibold text-muted;
+  }
+  .meeting-history__calendar-day {
+    @apply flex aspect-square w-full min-w-0 items-center justify-center rounded-lg text-xs font-medium text-ink outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-25;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .meeting-history__calendar-day:not(:disabled):hover {
+      background-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-surface));
+    }
+  }
+  .meeting-history__calendar-day--outside {
+    @apply text-muted opacity-55;
+  }
+  .meeting-history__calendar-day--today {
+    @apply font-bold ring-1 ring-inset ring-accent;
+  }
+  .meeting-history__calendar-day--selected {
+    background-color: #D4F36B;
+    @apply font-bold text-accent-ink ring-1 ring-inset ring-ink/15;
+  }
+  .meeting-history__calendar-actions {
+    @apply mt-3 flex items-center justify-between border-t border-line-soft pt-2.5;
+  }
+  .meeting-history__calendar-action {
+    @apply rounded-lg px-2 py-1 text-xs font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-35;
+  }
+  .meeting-history__calendar-action--today {
+    @apply text-accent-ink hover:bg-accent;
+  }
+  html[data-theme="dark"] .meeting-history__calendar-nav,
+  html[data-theme="dark"] .meeting-history__calendar-action {
+    color: var(--color-ink);
+  }
+  html[data-theme="dark"] .meeting-history__calendar-day--outside {
+    opacity: 0.7;
+  }
+  html[data-theme="dark"] .meeting-history__calendar-day--selected {
+    color: var(--color-accent-ink);
+  }
+  html[data-theme="dark"] .meeting-history__calendar-action--today {
+    color: var(--color-accent);
+  }
+  html[data-theme="dark"] .meeting-history__calendar-action:disabled {
+    opacity: 0.5;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .meeting-history__date-trigger,
+    .meeting-history__calendar-nav,
+    .meeting-history__calendar-day,
+    .meeting-history__calendar-action {
+      transition-duration: 0ms;
+    }
   }
   .meeting-history__results {
     @apply min-h-32 overflow-hidden rounded-2xl border border-line bg-surface;
@@ -1153,8 +1715,37 @@ body {
   .meeting-history__table {
     @apply w-full min-w-[720px] border-collapse text-left text-sm;
   }
+  .meeting-history__table--overview {
+    table-layout: fixed;
+    min-width: 980px;
+  }
+  .meeting-history__table--overview th:nth-child(1),
+  .meeting-history__table--overview td:nth-child(1) {
+    width: 30%;
+  }
+  .meeting-history__table--overview th:nth-child(2),
+  .meeting-history__table--overview td:nth-child(2) {
+    width: 24%;
+  }
+  .meeting-history__table--overview th:nth-child(3),
+  .meeting-history__table--overview td:nth-child(3) {
+    width: 14%;
+  }
+  .meeting-history__table--overview th:nth-child(4),
+  .meeting-history__table--overview td:nth-child(4) {
+    width: 10%;
+    text-align: center;
+  }
+  .meeting-history__table--overview th:nth-child(5),
+  .meeting-history__table--overview td:nth-child(5) {
+    width: 22%;
+    @apply px-3;
+  }
+  .meeting-history__table--overview td:nth-child(5) .meeting-history__link {
+    @apply mx-auto;
+  }
   .meeting-history__table th {
-    @apply border-b border-line bg-surface-2 px-6 py-3.5 text-[13px] font-semibold text-muted;
+    @apply border-b border-line bg-surface-2 px-6 py-3.5 text-[15px] font-semibold text-ink;
   }
   .meeting-history__table td {
     @apply border-b border-line-soft px-6 py-4 align-top text-ink-soft;
@@ -1168,13 +1759,62 @@ body {
   .meeting-history__table small {
     @apply mt-1 block text-xs text-muted;
   }
+  .meeting-history__link {
+    @apply relative isolate h-12 w-48 cursor-pointer overflow-hidden rounded-full border-transparent bg-transparent p-0 text-[15px] font-semibold text-ink;
+    transition: transform 120ms ease;
+  }
+  .meeting-history__link-circle {
+    @apply absolute inset-y-0 left-0 z-0 block h-12 w-12 rounded-full bg-accent;
+    transition: width 450ms cubic-bezier(0.65, 0, 0.076, 1);
+  }
+  .meeting-history__link-arrow {
+    @apply absolute top-1/2 left-3.5 size-5 text-accent-ink;
+    transform: translateY(-50%);
+    transition: transform 450ms cubic-bezier(0.65, 0, 0.076, 1);
+  }
+  .meeting-history__link-text {
+    @apply absolute inset-0 z-10 flex items-center justify-center pl-8 whitespace-nowrap text-ink;
+    transition: color 450ms cubic-bezier(0.65, 0, 0.076, 1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .meeting-history__link:hover {
+      border-color: transparent;
+    }
+    .meeting-history__link:hover .meeting-history__link-circle {
+      width: 100%;
+    }
+    .meeting-history__link:hover .meeting-history__link-arrow {
+      transform: translate(8px, -50%);
+    }
+    .meeting-history__link:hover .meeting-history__link-text {
+      @apply text-accent-ink;
+    }
+  }
+  .meeting-history__link:focus-visible .meeting-history__link-circle {
+    width: 100%;
+  }
+  .meeting-history__link:focus-visible .meeting-history__link-arrow {
+    transform: translate(8px, -50%);
+  }
+  .meeting-history__link:focus-visible .meeting-history__link-text {
+    @apply text-accent-ink;
+  }
+  .meeting-history__link:active {
+    transform: scale(0.95);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .meeting-history__link-circle,
+    .meeting-history__link-arrow {
+      transition-duration: 0ms;
+    }
+  }
 
   /* ---------- meeting detail page ---------- */
   .meeting-detail__header {
     @apply flex flex-col gap-4;
   }
   .meeting-detail__back {
-    @apply inline-flex w-fit items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-ink;
+    @apply w-fit gap-1.5 pr-3.5 pl-2.5 text-sm font-medium;
   }
   .meeting-detail__loading,
   .meeting-detail__error {
@@ -1216,7 +1856,7 @@ body {
     background-color: var(--color-field);
   }
   .transcript-segment {
-    @apply grid shrink-0 grid-cols-[56px_1fr] gap-3 rounded-xl border border-line-soft bg-[#fbfaf7] px-3.5 py-3;
+    @apply grid shrink-0 grid-cols-[56px_1fr] gap-3 rounded-xl border border-line-soft bg-row-surface px-3.5 py-3;
   }
   .transcript-segment__time {
     @apply h-[22px] w-fit;
@@ -1385,7 +2025,7 @@ body {
     @apply mb-2 block text-sm font-semibold text-ink;
   }
   .meeting-summary__textarea {
-    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
+    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-placeholder focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .meeting-summary__notice {
     @apply mt-2 rounded-[10px] bg-warn-bg px-3.5 py-2.5 text-[13px] leading-5 text-warn;
@@ -1710,7 +2350,7 @@ body {
     .action-fill:not(:disabled):hover {
       border-color: var(--color-ink);
       background-color: transparent;
-      color: #fff;
+      color: var(--color-ink-contrast);
       box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
       transform: scale(1.05);
     }
@@ -1721,7 +2361,7 @@ body {
   .action-fill:not(:disabled):focus-visible {
     border-color: var(--color-ink);
     background-color: transparent;
-    color: #fff;
+    color: var(--color-ink-contrast);
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
   }
   .action-fill:not(:disabled):focus-visible::before {
@@ -1814,28 +2454,12 @@ body {
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
   }
 
-  /* Log out on the dark sidebar: light outline at rest, filling red on hover. */
-  .action-fill.action-fill--night-danger:not(:disabled) {
-    border-color: var(--color-night-line-2);
-    color: #e9ece8;
-  }
-  .action-fill.action-fill--night-danger::before {
-    background-color: var(--color-bad-solid);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .action-fill.action-fill--night-danger:not(:disabled):hover {
-      border-color: var(--color-bad-solid);
-      color: #fff;
-      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
-    }
-  }
-  .action-fill.action-fill--night-danger:not(:disabled):focus-visible {
-    border-color: var(--color-bad-solid);
-    color: #fff;
-    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
-  }
-
   @media (prefers-reduced-motion: reduce) {
+    .theme-switch__track,
+    .theme-switch__label,
+    .theme-switch__thumb {
+      transition-duration: 0ms;
+    }
     .action-fill {
       transform: none;
       transition-duration: 0ms;

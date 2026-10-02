@@ -14,7 +14,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
         <div className="dashboard__container">
           <section className="meeting-detail">
             <header className="meeting-detail__header">
-              <Link href="/history" className="meeting-detail__back focus-ring">
+              <Link href="/history" className="meeting-detail__back action-fill focus-ring">
                 <ChevronLeft aria-hidden="true" className="icon-16" />
                 กลับไปยังประวัติการประชุม
               </Link>

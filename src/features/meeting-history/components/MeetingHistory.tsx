@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState, useEffect } from "react";
-import { CalendarDays, ChevronRight, Search, Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarDays, Search } from "lucide-react";
+import { TypewriterLoader } from "@/components/TypewriterLoader";
+import { HistoryDatePicker } from "./HistoryDatePicker";
 import { filterMeetingHistory } from "../search";
 import type { MeetingHistoryFilters, MeetingHistoryItem, MeetingHistoryResponse } from "../types";
 
@@ -75,37 +77,32 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
             placeholder="ค้นหาชื่อห้องหรือผู้เข้าร่วม"
           />
         </label>
-        <label className="meeting-history__date">
-          <span>ตั้งแต่</span>
-          <input
-            type="date"
-            value={draftFilters.from}
-            max={draftFilters.to || undefined}
-            onChange={(event) => setDraftFilters((filters) => ({ ...filters, from: event.target.value }))}
-          />
-        </label>
-        <label className="meeting-history__date">
-          <span>ถึง</span>
-          <input
-            type="date"
-            value={draftFilters.to}
-            min={draftFilters.from || undefined}
-            onChange={(event) => setDraftFilters((filters) => ({ ...filters, to: event.target.value }))}
-          />
-        </label>
+        <HistoryDatePicker
+          label="ตั้งแต่"
+          value={draftFilters.from}
+          max={draftFilters.to || undefined}
+          onChange={(from) => setDraftFilters((filters) => ({ ...filters, from }))}
+        />
+        <HistoryDatePicker
+          align="end"
+          label="ถึง"
+          value={draftFilters.to}
+          min={draftFilters.from || undefined}
+          onChange={(to) => setDraftFilters((filters) => ({ ...filters, to }))}
+        />
         <button type="submit" className="meeting-history__submit action-fill focus-ring" disabled={isLoading}>ค้นหา</button>
       </form>
 
       <div className="meeting-history__results" aria-live="polite">
         {isLoading ? (
-          <div className="meeting-history__state"><Loader2 aria-hidden="true" className="icon-20 animate-spin" /><p>กำลังโหลดข้อมูลการประชุม...</p></div>
+          <div className="meeting-history__state"><TypewriterLoader label="กำลังโหลดข้อมูลการประชุม..." /></div>
         ) : error ? (
           <div className="meeting-history__state"><AlertCircle aria-hidden="true" className="icon-20" /><p>{error}</p></div>
         ) : filteredMeetings.length === 0 ? (
           <div className="meeting-history__state"><CalendarDays aria-hidden="true" className="icon-20" /><p>ไม่พบการประชุมที่ตรงกับเงื่อนไข</p></div>
         ) : (
           <div className="meeting-history__table-wrap">
-            <table className="meeting-history__table">
+            <table className="meeting-history__table meeting-history__table--overview">
               <thead>
                 <tr>
                   <th>ชื่อห้องประชุม</th>
@@ -134,7 +131,10 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
                         aria-label={`ดูรายละเอียดการประชุม ${meeting.roomName}`}
                         className="meeting-history__link focus-ring"
                       >
-                        <ChevronRight aria-hidden="true" className="icon-16" />
+                        <span aria-hidden="true" className="meeting-history__link-circle">
+                          <ArrowRight className="meeting-history__link-arrow" strokeWidth={1.8} />
+                        </span>
+                        <span className="meeting-history__link-text">ดูสรุปการประชุม</span>
                       </Link>
                     </td>
                   </tr>

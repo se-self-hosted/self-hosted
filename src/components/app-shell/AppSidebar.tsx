@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Clock3, LayoutGrid, LogOut, UserRound, Video } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 export type AppSidebarSection = "dashboard" | "history" | "profile";
 
@@ -39,11 +40,16 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               type="button"
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
-              className="sidebar__logout-mobile action-fill action-fill--night-danger focus-ring-night"
+              className="sidebar__logout-mobile focus-ring-night"
             >
               <LogOut aria-hidden="true" className="icon-18" />
+              <span className="sidebar__logout-label">Logout</span>
             </button>
           )}
+        </div>
+
+        <div className="sidebar__theme">
+          <ThemeSwitch />
         </div>
 
         <nav aria-label="เมนูหลัก" className="sidebar__nav">
@@ -104,9 +110,10 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
               title="ออกจากระบบ"
-              className="sidebar__logout-desktop action-fill action-fill--night-danger focus-ring-night"
+              className="sidebar__logout-desktop focus-ring-night"
             >
               <LogOut aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+              <span className="sidebar__logout-label">Logout</span>
             </button>
           </div>
         )}
