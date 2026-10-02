@@ -355,7 +355,10 @@ body {
     @apply bg-night-3;
   }
   .sidebar__avatar {
-    @apply flex size-9 shrink-0 items-center justify-center rounded-full bg-night-line text-night-text;
+    @apply flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-night-line text-night-text;
+  }
+  .sidebar__avatar-image {
+    @apply size-full object-cover;
   }
   .sidebar__user-info {
     @apply flex min-w-0 flex-1 flex-col gap-px;
@@ -1591,6 +1594,9 @@ body {
   .profile-section__body-security {
     @apply grid gap-5 px-5 pt-6 pb-7 sm:grid-cols-2 sm:px-7;
   }
+  .profile-field-full {
+    @apply sm:col-span-2;
+  }
   /* Photo-wide column; align-items centers the label, button and hint on the
      photo, letting the slightly wider upload button overflow both sides evenly. */
   .profile-photo-column {
@@ -1614,6 +1620,15 @@ body {
   .profile-photo-upload-btn {
     @apply mt-3 h-10 rounded-[9px] px-3 text-[13px];
   }
+  .profile-photo-error {
+    @apply flex items-start gap-2.5 rounded-[10px] border border-bad-line bg-bad-bg px-3.5 py-3 text-[13px] leading-snug text-bad-deep md:col-span-2;
+  }
+  .profile-photo-error__close {
+    @apply -my-1 -mr-1.5 flex size-7 shrink-0 items-center justify-center rounded-md text-bad-deep transition-colors hover:bg-bad-line/40;
+  }
+  .profile-save-error {
+    @apply text-sm text-bad;
+  }
   .profile-photo-hint {
     @apply mt-3 text-xs leading-snug whitespace-nowrap text-muted;
   }
@@ -1625,6 +1640,13 @@ body {
   }
   .profile-input--mismatch {
     @apply border-bad! ring-2 ring-bad/10;
+  }
+  /* Larger, evenly spaced dots while a password is masked; the placeholder and
+     revealed text keep the normal size. */
+  .profile-input[type="password"]:not(:placeholder-shown) {
+    font-family: Verdana, ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.12em;
   }
   .profile-input-wrap {
     @apply relative flex items-center;

@@ -211,3 +211,11 @@ export async function deleteRecordingObject(key: string): Promise<void> {
   const cleanKey = key.startsWith("/") ? key.slice(1) : key;
   await sendS3Request("DELETE", `/${BUCKET_NAME}/${cleanKey}`);
 }
+
+// The object helpers above only care about the key, so profile photos share
+// the bucket under avatars/ through these neutral names.
+export {
+  uploadRecording as uploadObject,
+  getRecordingObject as getObject,
+  deleteRecordingObject as deleteObject,
+};

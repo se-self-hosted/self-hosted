@@ -87,7 +87,12 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               className={`${active === "profile" ? "sidebar__user-link--active" : "sidebar__user-link"} focus-ring-night`}
             >
               <span className="sidebar__avatar">
-                <UserRound aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt="" className="sidebar__avatar-image" />
+                ) : (
+                  <UserRound aria-hidden="true" className="icon-18" strokeWidth={1.8} />
+                )}
               </span>
               <span className="sidebar__user-info">
                 <span className="sidebar__user-name">{user.fullname || "Host"}</span>
