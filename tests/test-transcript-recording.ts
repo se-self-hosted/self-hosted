@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { prisma } from "../src/lib/db";
 import { uploadRecording, getRecordingPresignedUrl, getRecordingObject, deleteRecordingObject, BUCKET_NAME } from "../src/lib/storage";
 import { randomUUID } from "crypto";

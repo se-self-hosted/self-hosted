@@ -1,8 +1,7 @@
+import "dotenv/config";
 import { prisma } from "../src/lib/db";
+import { signJwtToken } from "../src/lib/auth";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "supersecret123");
 
 async function runTests() {
   console.log("Starting Meeting History Tests...");
@@ -17,11 +16,8 @@ async function runTests() {
     },
   });
 
-  const token = await new SignJWT({ sub: host.id, email: host.email })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("1d")
-    .sign(JWT_SECRET);
+  // Sign with the app's own key so the test follows its JWT_SECRET fallback.
+  const token = await signJwtToken({ sub: host.id, email: host.email });
 
   const room = await prisma.meetingRoom.upsert({
     where: { roomHash: "testhistoryhash" },
