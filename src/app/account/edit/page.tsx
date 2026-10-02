@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import {
-  AtSign,
   Camera,
   Check,
   Eye,
   EyeOff,
-  Info,
   KeyRound,
   Mail,
   Upload,
@@ -32,7 +30,6 @@ export default function EditProfilePage() {
 
   const displayName = user?.fullname ?? "";
   const displayEmail = user?.email ?? "";
-  const displayUsername = displayEmail.split("@")[0] ?? "";
   const initials = (displayName || displayEmail || "Host")
     .split(/[\s@]+/)
     .filter(Boolean)
@@ -79,7 +76,7 @@ export default function EditProfilePage() {
               </div>
 
               <div className="profile-section__body">
-                <div>
+                <div className="profile-photo-column">
                   <p className="profile-photo-label">Profile photo</p>
                   <div className="profile-photo-frame group">
                     {avatar ? (
@@ -101,18 +98,9 @@ export default function EditProfilePage() {
                   <Field label="Full name" icon={<UserRound size={15} />}>
                     <input id="fullname" name="fullname" defaultValue={displayName} placeholder="Your full name" className="profile-input" />
                   </Field>
-                  <Field label="Username" icon={<AtSign size={15} />}>
-                    <input id="username" name="username" defaultValue={displayUsername} placeholder="Your username" autoComplete="username" className="profile-input" />
+                  <Field label="Email address" icon={<Mail size={15} />}>
+                    <input id="email" name="email" type="email" readOnly value={displayEmail} placeholder="name@company.com" className="profile-input" />
                   </Field>
-                  <div className="profile-field-full">
-                    <Field label="Email address" icon={<Mail size={15} />}>
-                    <input id="email" name="email" type="email" required defaultValue={displayEmail} placeholder="name@company.com" className="profile-input" />
-                    </Field>
-                  </div>
-                  <div className="profile-callout">
-                    <Info aria-hidden="true" size={16} className="shrink-0" />
-                    Email changes require verification before becoming active.
-                  </div>
                 </div>
               </div>
             </section>

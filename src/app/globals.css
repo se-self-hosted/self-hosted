@@ -256,7 +256,7 @@ body {
   .modal__input,
   .meeting-lobby__input,
   .profile-input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .display-title,
   .dashboard__title,
@@ -622,7 +622,7 @@ body {
     @apply text-sm font-semibold;
   }
   .modal__input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .modal__stepper {
     @apply flex items-center gap-2;
@@ -631,7 +631,7 @@ body {
     @apply flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-field bg-surface text-ink transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-45;
   }
   .modal__stepper-input {
-    @apply h-11 w-24 rounded-[10px] border border-field bg-surface px-2.5 text-center font-mono text-base text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-24 rounded-[10px] border border-field bg-surface px-2.5 text-center font-mono text-base text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .modal__stepper-unit {
     @apply text-sm text-muted;
@@ -1382,7 +1382,7 @@ body {
     @apply mb-2 block text-sm font-semibold text-ink;
   }
   .meeting-summary__textarea {
-    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .meeting-summary__notice {
     @apply mt-2 rounded-[10px] bg-warn-bg px-3.5 py-2.5 text-[13px] leading-5 text-warn;
@@ -1591,6 +1591,11 @@ body {
   .profile-section__body-security {
     @apply grid gap-5 px-5 pt-6 pb-7 sm:grid-cols-2 sm:px-7;
   }
+  /* Photo-wide column; align-items centers the label, button and hint on the
+     photo, letting the slightly wider upload button overflow both sides evenly. */
+  .profile-photo-column {
+    @apply flex w-32 flex-col items-center text-center;
+  }
   .profile-photo-label {
     @apply mb-3 text-[13px] font-semibold text-ink;
   }
@@ -1610,13 +1615,10 @@ body {
     @apply mt-3 h-10 rounded-[9px] px-3 text-[13px];
   }
   .profile-photo-hint {
-    @apply mt-3 text-xs leading-snug text-muted;
+    @apply mt-3 text-xs leading-snug whitespace-nowrap text-muted;
   }
   .profile-fields-grid {
-    @apply grid content-start gap-5 sm:grid-cols-2;
-  }
-  .profile-field-full {
-    @apply sm:col-span-2;
+    @apply grid content-start gap-5;
   }
   .profile-field-label {
     @apply mb-2 flex items-center gap-1.5 text-[13px] font-semibold text-ink;
@@ -1632,9 +1634,6 @@ body {
   }
   .profile-mismatch-text {
     @apply mt-2 text-xs text-bad;
-  }
-  .profile-callout {
-    @apply flex items-center gap-2.5 rounded-[10px] bg-info-bg px-3.5 py-3 text-[13px] text-info sm:col-span-2;
   }
   .profile-actions-row {
     @apply flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center;
