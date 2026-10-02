@@ -978,10 +978,8 @@ export default function DashboardPage() {
 
                       <div className="player__footer">
                         <a
-                          href={
-                            meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
-                          }
-                          download
+                          href={`${meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl}?download=1`}
+                          download={meetingDetails.recordings[selectedRecordingIndex]?.fileName}
                           className="player__download"
                         >
                           <Download aria-hidden="true" className="icon-16" strokeWidth={1.8} />

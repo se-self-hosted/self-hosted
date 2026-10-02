@@ -371,9 +371,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                       <p role="alert" className="text-sm text-red-600">{playbackErrors[rec.id]}</p>
                     )}
                     <a
-                      href={rec.playbackUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`${rec.playbackUrl}?download=1`}
+                      download={rec.fileName}
                       className="recordings-list__download action-fill"
                     >
                       <Download className="icon-16" /> ดาวน์โหลด
