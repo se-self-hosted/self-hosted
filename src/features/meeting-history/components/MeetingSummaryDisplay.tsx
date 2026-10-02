@@ -18,6 +18,7 @@ import {
 } from "../summary";
 import type { DisplayedMeetingSummary, SummaryInline, SummaryRegenerationStatus, SummaryReportExtension } from "../summary";
 import { createMeetingReportDocx, DOCX_MIME_TYPE } from "../report-docx";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { MeetingSummary } from "../types";
 
 type RegenerateSummary = (options: { discardEdits: boolean }) => Promise<void> | void;
@@ -198,6 +199,7 @@ function MeetingSummaryEditor({
   const [draftContent, setDraftContent] = useState(originalContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [isRevertDialogOpen, setIsRevertDialogOpen] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
   const [revertError, setRevertError] = useState("");
   const regeneration = useSummaryRegeneration(onRegenerate);
@@ -251,14 +253,25 @@ function MeetingSummaryEditor({
     }
   }
 
+  function openRevertDialog() {
+    if (!canRevert) return;
+    setRevertError("");
+    setIsRevertDialogOpen(true);
+  }
+
+  function closeRevertDialog() {
+    if (isReverting) return;
+    setIsRevertDialogOpen(false);
+  }
+
   async function revertToAi() {
     if (!onRevertToAi || !canRevert) return;
-    if (!window.confirm("ต้องการคืนค่าเป็นสรุปฉบับ AI หรือไม่? ฉบับแก้ไขจะถูกลบ")) return;
 
     setIsReverting(true);
     setRevertError("");
     try {
       await onRevertToAi();
+      setIsRevertDialogOpen(false);
     } catch (error) {
       setRevertError(messageFrom(error, DEFAULT_SAVE_ERROR));
     } finally {
@@ -450,7 +463,7 @@ function MeetingSummaryEditor({
                 <button
                   type="button"
                   className="meeting-summary__revert-btn action-fill focus-ring"
-                  onClick={() => void revertToAi()}
+                  onClick={openRevertDialog}
                   disabled={!canRevert}
                 >
                   {isReverting ? (
@@ -486,7 +499,18 @@ function MeetingSummaryEditor({
         <p className="meeting-summary__error" role="alert">{regeneration.errorMessage}</p>
       )}
       {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
-      {revertError && <p className="meeting-summary__error" role="alert">{revertError}</p>}
+      <ConfirmDialog
+        open={isRevertDialogOpen}
+        tone="danger"
+        icon={<RotateCcw aria-hidden="true" className="icon-18" />}
+        title="คืนค่าเป็นสรุปฉบับ AI?"
+        description="ฉบับที่คุณแก้ไขไว้จะถูกลบ และจะแสดงสรุปที่ AI สร้างแทน การดำเนินการนี้ย้อนกลับไม่ได้"
+        confirmLabel={isReverting ? "กำลังคืนค่า..." : "คืนค่า"}
+        busy={isReverting}
+        error={revertError}
+        onConfirm={() => void revertToAi()}
+        onCancel={closeRevertDialog}
+      />
 
       {isEditing ? (
         <form className="meeting-summary__form" onSubmit={submitEdit}>

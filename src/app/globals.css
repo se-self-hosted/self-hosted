@@ -114,6 +114,7 @@ body {
   .dashboard__create-btn,
   .history-card__open-btn,
   .modal__delete-btn,
+  .confirm-dialog__danger-btn,
   .modal__cancel-btn,
   .modal__submit-btn,
   .meeting-lobby__back,
@@ -655,6 +656,30 @@ body {
     @apply px-3.5 sm:mr-auto;
   }
   .modal__submit-btn {
+    @apply px-[22px];
+  }
+  .confirm-dialog {
+    @apply max-w-[440px];
+  }
+  .confirm-dialog__heading {
+    @apply flex min-w-0 items-start gap-3.5;
+  }
+  .confirm-dialog__icon {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-full bg-chip text-ink;
+  }
+  .confirm-dialog__icon--danger {
+    @apply bg-bad-bg text-bad;
+  }
+  .confirm-dialog__title {
+    @apply text-xl;
+  }
+  .confirm-dialog__description {
+    @apply leading-6;
+  }
+  .confirm-dialog__body {
+    @apply px-6 pt-2 pb-6 empty:pb-3;
+  }
+  .confirm-dialog__danger-btn {
     @apply px-[22px];
   }
 
@@ -1626,6 +1651,29 @@ body {
   }
   .action-fill:disabled::before {
     transform: translate(-50%, -50%) scale(0);
+  }
+
+  /* Same motion for destructive actions: solid red, deepening on hover. */
+  .action-fill.action-fill--danger:not(:disabled) {
+    border-color: var(--color-bad);
+    background-color: var(--color-bad);
+    color: #fff;
+  }
+  .action-fill.action-fill--danger::before {
+    background-color: var(--color-bad-deep);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger:not(:disabled):hover {
+      border-color: var(--color-bad-deep);
+      background-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger:not(:disabled):focus-visible {
+    border-color: var(--color-bad-deep);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
   }
   @media (prefers-reduced-motion: reduce) {
     .action-fill {
