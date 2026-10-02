@@ -23,9 +23,12 @@ export function SummaryExportMenu({ options }: { options: SummaryExportOption[] 
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function open(focusIndex = 0) {
-    // Open toward whichever side has room, so the menu never leaves the screen.
+    // Open toward whichever side has room, so the menu stays inside the summary
+    // card (where the buttons sit at its right edge) and on screen.
     const rect = triggerRef.current?.getBoundingClientRect();
-    setAlignRight(Boolean(rect && rect.left + MENU_WIDTH > window.innerWidth - 16));
+    const cardRight = wrapperRef.current?.closest(".meeting-summary")?.getBoundingClientRect().right;
+    const rightLimit = Math.min(cardRight ?? Infinity, window.innerWidth - 16);
+    setAlignRight(Boolean(rect && rect.left + MENU_WIDTH > rightLimit));
     setIsOpen(true);
     requestAnimationFrame(() => itemRefs.current[focusIndex]?.focus());
   }
