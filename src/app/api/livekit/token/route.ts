@@ -3,6 +3,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
+import { hostAvatarUrlFor } from "@/lib/avatar";
 import { activeSessionWhereClause } from "@/lib/presence";
 
 const tokenSchema = z.object({
@@ -52,6 +53,10 @@ export async function POST(req: Request) {
     }
     const isHost = Boolean(user && user.id === room.hostId && session.participant.userId === user.id);
     const displayName = session.participant.displayName;
+    // Everyone in the room reads the host's photo from this metadata.
+    const avatarUrl = isHost
+      ? hostAvatarUrlFor(roomHash, (await prisma.user.findUnique({ where: { id: room.hostId }, select: { avatarKey: true } }))?.avatarKey ?? null)
+      : null;
 
     const apiKey = process.env.LIVEKIT_API_KEY || "devkey";
     const apiSecret = process.env.LIVEKIT_API_SECRET || "secret";
@@ -59,7 +64,7 @@ export async function POST(req: Request) {
     const at = new AccessToken(apiKey, apiSecret, {
       identity,
       name: displayName,
-      metadata: JSON.stringify({ isHost, roomHash, displayName }),
+      metadata: JSON.stringify({ isHost, roomHash, displayName, avatarUrl }),
     });
 
     at.addGrant({

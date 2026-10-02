@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 import { accountUserSelect, toAccountUser } from "@/lib/account";
-import { AVATAR_MAX_BYTES, avatarFormatFromKey, avatarSizeError, checkAvatar } from "@/lib/avatar";
-import { deleteObject, getObject, uploadObject } from "@/lib/storage";
+import { AVATAR_MAX_BYTES, avatarSizeError, checkAvatar } from "@/lib/avatar";
+import { streamAvatar } from "@/lib/avatar-response";
+import { deleteObject, uploadObject } from "@/lib/storage";
 
 // Room for the multipart boundaries and headers around the file itself.
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
@@ -16,25 +17,7 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const row = await prisma.user.findUnique({ where: { id: user.id }, select: { avatarKey: true } });
-    const format = row?.avatarKey ? avatarFormatFromKey(row.avatarKey) : null;
-    if (!row?.avatarKey || !format) {
-      return NextResponse.json({ error: "No profile photo" }, { status: 404 });
-    }
-
-    const object = await getObject(row.avatarKey);
-    if (object.status !== 200 || !object.Body) {
-      void object.Body?.cancel().catch(() => {});
-      return NextResponse.json({ error: "Profile photo unavailable" }, { status: object.status === 404 ? 404 : 502 });
-    }
-
-    const headers = new Headers({
-      "Content-Type": format.mimeType,
-      "X-Content-Type-Options": "nosniff",
-      // The URL carries the object's id (?v=), so a new photo gets a new URL.
-      "Cache-Control": "private, max-age=31536000, immutable",
-    });
-    if (object.ContentLength !== undefined) headers.set("Content-Length", String(object.ContentLength));
-    return new NextResponse(object.Body, { status: 200, headers });
+    return await streamAvatar(row?.avatarKey);
   } catch (error) {
     console.error("Avatar Fetch Error:", error);
     return NextResponse.json({ error: "Unable to load profile photo" }, { status: 500 });

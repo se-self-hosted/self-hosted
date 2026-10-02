@@ -1417,7 +1417,10 @@ body {
     @apply flex size-[30px] items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-bad-line hover:bg-bad-bg hover:text-bad;
   }
   .meeting-participant__avatar {
-    @apply flex size-[72px] items-center justify-center rounded-full font-display text-[26px] font-bold text-ink;
+    @apply flex size-[72px] overflow-hidden items-center justify-center rounded-full font-display text-[26px] font-bold text-ink;
+  }
+  .participant-avatar__image {
+    @apply size-full object-cover;
   }
   .meeting-participant__identity {
     @apply flex max-w-full flex-col items-center gap-0.5 px-4 text-center;
@@ -1462,7 +1465,7 @@ body {
     @apply flex min-h-12 items-center gap-2.5 rounded-[10px] px-2 py-1.5;
   }
   .meeting-room__row-avatar {
-    @apply flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-ink;
+    @apply flex size-8 overflow-hidden shrink-0 items-center justify-center rounded-full text-xs font-bold text-ink;
   }
   .meeting-room__row-info {
     @apply flex min-w-0 flex-1 flex-col;
@@ -1549,7 +1552,7 @@ body {
     @apply flex max-w-[85%] items-end gap-2 self-start;
   }
   .bubble-row__avatar {
-    @apply flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-ink;
+    @apply flex size-7 overflow-hidden shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-ink;
   }
   .bubble-row__body {
     @apply flex min-w-0 flex-col gap-1;

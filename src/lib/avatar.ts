@@ -67,8 +67,20 @@ export function avatarFormatFromKey(key: string): AvatarFormat | null {
 /** Same-origin URL for a user's avatar; the key's file name busts the cache on change. */
 export function avatarUrlFor(avatarKey: string | null): string | null {
   if (!avatarKey) return null;
-  const version = avatarKey.split("/").pop()?.split(".")[0] ?? "";
-  return `/api/account/avatar?v=${encodeURIComponent(version)}`;
+  return `/api/account/avatar?v=${encodeURIComponent(avatarVersion(avatarKey))}`;
+}
+
+/**
+ * URL for a room host's avatar that anyone holding the room link can load, so
+ * members (who have no account) see the host's photo in the meeting.
+ */
+export function hostAvatarUrlFor(roomHash: string, avatarKey: string | null): string | null {
+  if (!avatarKey) return null;
+  return `/api/rooms/${encodeURIComponent(roomHash)}/host-avatar?v=${encodeURIComponent(avatarVersion(avatarKey))}`;
+}
+
+function avatarVersion(avatarKey: string): string {
+  return avatarKey.split("/").pop()?.split(".")[0] ?? "";
 }
 
 function startsWith(bytes: Uint8Array, signature: number[], offset = 0): boolean {
