@@ -1753,6 +1753,10 @@ body {
   .meeting-history__table tbody tr:last-child td {
     @apply border-b-0;
   }
+  /* Centre the stats between the room name and its participant line. */
+  .meeting-history__table--overview td {
+    @apply align-middle;
+  }
   .meeting-history__table strong {
     @apply block font-semibold text-ink;
   }
@@ -1905,8 +1909,9 @@ body {
   }
 
   /* ---------- meeting summary ---------- */
+  /* No overflow clipping: the export menu has to be able to spill past the card. */
   .meeting-summary {
-    @apply @container overflow-hidden text-ink;
+    @apply @container text-ink;
   }
   /* Side by side only when the card itself is wide (not in the dashboard modal). */
   .meeting-summary__header {
