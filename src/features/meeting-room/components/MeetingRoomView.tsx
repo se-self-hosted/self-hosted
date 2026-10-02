@@ -46,13 +46,32 @@ import { TypewriterLoader } from "@/components/TypewriterLoader";
 
 // Our token route writes this metadata and grants no canUpdateOwnMetadata,
 // so a participant can't claim to be the host by rewriting their own.
-function isHostParticipant(participant?: Participant) {
-  if (!participant?.metadata) return false;
+function participantMetadata(participant?: Participant): { isHost: boolean; avatarUrl: string | null } {
+  if (!participant?.metadata) return { isHost: false, avatarUrl: null };
   try {
-    return JSON.parse(participant.metadata).isHost === true;
+    const metadata = JSON.parse(participant.metadata);
+    return {
+      isHost: metadata.isHost === true,
+      // Only ever our own same-origin avatar route.
+      avatarUrl: typeof metadata.avatarUrl === "string" && metadata.avatarUrl.startsWith("/api/rooms/")
+        ? metadata.avatarUrl
+        : null,
+    };
   } catch {
-    return false;
+    return { isHost: false, avatarUrl: null };
   }
+}
+
+function isHostParticipant(participant?: Participant) {
+  return participantMetadata(participant).isHost;
+}
+
+/** Profile photo when the participant has one, initials otherwise (or if it fails to load). */
+function ParticipantAvatar({ avatarUrl, initials }: { avatarUrl: string | null; initials: string }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (!avatarUrl || failedUrl === avatarUrl) return <>{initials}</>;
+  // eslint-disable-next-line @next/next/no-img-element -- a small same-origin avatar; next/image adds nothing here
+  return <img src={avatarUrl} alt="" className="participant-avatar__image" onError={() => setFailedUrl(avatarUrl)} />;
 }
 
 type MeetingRoomProps = {
@@ -71,6 +90,7 @@ type UiParticipant = {
   id: string;
   name: string;
   initials: string;
+  avatarUrl: string | null;
   isHost: boolean;
   isLocal: boolean;
   isSpeaking: boolean;
@@ -122,7 +142,15 @@ export function MeetingRoomView({
   // 4. Active speakers & participants tracking
   const [activeSpeakerIdentities, setActiveSpeakerIdentities] = useState<Set<string>>(new Set());
   const [remoteParticipantsMap, setRemoteParticipantsMap] = useState<
-    Map<string, { identity: string; name: string; isMuted: boolean; isSpeaking: boolean; quality: string }>
+    Map<string, {
+      identity: string;
+      name: string;
+      isHost: boolean;
+      avatarUrl: string | null;
+      isMuted: boolean;
+      isSpeaking: boolean;
+      quality: string;
+    }>
   >(new Map());
 
   // Toast / notification message (e.g. Host muted your mic)
@@ -504,9 +532,12 @@ export function MeetingRoomView({
   function updateRemoteParticipant(participant: RemoteParticipant) {
     setRemoteParticipantsMap((prev) => {
       const next = new Map(prev);
+      const { isHost: participantIsHost, avatarUrl } = participantMetadata(participant);
       next.set(participant.identity, {
         identity: participant.identity,
         name: participant.name || participant.identity,
+        isHost: participantIsHost,
+        avatarUrl,
         isMuted: !participant.isMicrophoneEnabled,
         isSpeaking: participant.isSpeaking,
         quality: formatQuality(participant.connectionQuality),
@@ -1216,6 +1247,7 @@ export function MeetingRoomView({
     id: participantId || "local",
     name: displayName,
     initials: displayName.slice(0, 2).toUpperCase(),
+    avatarUrl: participantMetadata(livekitRoom?.localParticipant).avatarUrl,
     isHost,
     isLocal: true,
     isSpeaking: !isMicrophoneMuted && (activeSpeakerIdentities.has(participantId || "") || false),
@@ -1233,7 +1265,8 @@ export function MeetingRoomView({
       id: rp.identity,
       name: rp.name,
       initials: rp.name.slice(0, 2).toUpperCase(),
-      isHost: false,
+      avatarUrl: rp.avatarUrl,
+      isHost: rp.isHost,
       isLocal: false,
       isSpeaking: rp.isSpeaking || activeSpeakerIdentities.has(rp.identity),
       isMuted: rp.isMuted,
@@ -1249,6 +1282,7 @@ export function MeetingRoomView({
         id: dbp.id,
         name: dbp.displayName,
         initials: dbp.displayName.slice(0, 2).toUpperCase(),
+        avatarUrl: null,
         isHost: false,
         isLocal: false,
         isSpeaking: activeSpeakerIdentities.has(dbp.id),
@@ -1383,7 +1417,7 @@ export function MeetingRoomView({
                   </div>
 
                   <span className={`meeting-participant__avatar ${toneFor(index)}`}>
-                    {participant.initials}
+                    <ParticipantAvatar avatarUrl={participant.avatarUrl} initials={participant.initials} />
                   </span>
 
                   <div className="meeting-participant__identity">
@@ -1408,7 +1442,7 @@ export function MeetingRoomView({
                 className="meeting-room__participant-row"
               >
                 <span aria-hidden="true" className={`meeting-room__row-avatar ${toneFor(index)}`}>
-                  {participant.initials}
+                  <ParticipantAvatar avatarUrl={participant.avatarUrl} initials={participant.initials} />
                 </span>
                 <div className="meeting-room__row-info">
                   <span className="meeting-room__row-name">{participant.name}</span>
@@ -1488,7 +1522,10 @@ export function MeetingRoomView({
               ) : (
                 <div key={seg.id} className="bubble-row--theirs">
                   <span aria-hidden="true" className={`bubble-row__avatar ${segmentTone(seg)}`}>
-                    {seg.speakerName.slice(0, 2).toUpperCase()}
+                    <ParticipantAvatar
+                      avatarUrl={allUiParticipants.find((p) => p.id === seg.participantId)?.avatarUrl ?? null}
+                      initials={seg.speakerName.slice(0, 2).toUpperCase()}
+                    />
                   </span>
                   <div className="bubble-row__body">
                     <span className="bubble-row__who">{seg.speakerName}</span>
