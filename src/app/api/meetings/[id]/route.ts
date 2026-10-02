@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getRecordingPresignedUrl } from "@/lib/storage";
 import { resolveMeetingAccess } from "@/lib/meeting-access";
+import { groupRecordingTakes } from "@/lib/recording-takes";
 
 export async function GET(
   _req: Request,
@@ -82,6 +83,16 @@ export async function GET(
       }),
     );
 
+    // One entry per press of record, with every speaker mixed together.
+    const recordingTakes = groupRecordingTakes(meeting.recordings).map((take, index) => ({
+      key: take.key,
+      index: index + 1,
+      startOffsetSeconds: take.startOffsetSeconds,
+      durationSeconds: take.durationSeconds,
+      speakerCount: new Set(take.recordings.map((rec) => rec.participantId ?? rec.id)).size,
+      playbackUrl: `/api/meetings/${meeting.id}/takes/${take.key}/playback`,
+    }));
+
     const sortedSegments = meeting.transcript
       ? [...meeting.transcript.segments].sort((a, b) => {
           if (a.startTime !== b.startTime) return a.startTime - b.startTime;
@@ -111,6 +122,7 @@ export async function GET(
           })),
         })),
         recordings: recordingsWithUrls,
+        recordingTakes,
         transcript: meeting.transcript
           ? {
               id: meeting.transcript.id,

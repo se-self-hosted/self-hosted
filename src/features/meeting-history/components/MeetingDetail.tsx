@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Users, FileText, Video, AlertCircle, Download, Play, Pause } from "lucide-react";
+import { Users, FileText, Video, AlertCircle, Download, Play, Pause, Loader2 } from "lucide-react";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
 import { requestMeetingSummary, saveMeetingSummaryEdit } from "../summary";
@@ -42,6 +42,15 @@ type Recording = {
   playbackUrl: string;
 };
 
+/** One press of record, every speaker mixed together; the server mixes it on first play. */
+type RecordingTake = {
+  key: string;
+  index: number;
+  durationSeconds: number;
+  speakerCount: number;
+  playbackUrl: string;
+};
+
 type MeetingData = {
   isHost: boolean;
   roomName: string;
@@ -52,6 +61,7 @@ type MeetingData = {
   transcript: { segments: TranscriptSegment[] } | null;
   summary: MeetingSummary | null;
   recordings: Recording[];
+  recordingTakes: RecordingTake[];
 };
 
 type MeetingDetailProps = {
@@ -89,6 +99,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   const [error, setError] = useState("");
   const [playbackErrors, setPlaybackErrors] = useState<Record<string, string>>({});
   const mediaRefs = useRef<Record<string, HTMLMediaElement | null>>({});
+  // Takes whose mix the server is still making after a play press.
+  const [mixingTakes, setMixingTakes] = useState<Record<string, boolean>>({});
   const [nowPlaying, setNowPlaying] = useState<{
     recordingId: string;
     speakerName: string;
@@ -100,7 +112,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
 
   // Plays quietly — no player UI takes over the page,
   // just a small floating bar (below) that mirrors whatever is playing.
-  function trackNowPlaying(recording: Recording, media: HTMLMediaElement) {
+  function trackNowPlaying(recordingId: string, label: string, media: HTMLMediaElement) {
     if (trackedMediaRef.current && trackedMediaRef.current !== media) {
       trackedMediaRef.current.onplay = null;
       trackedMediaRef.current.onpause = null;
@@ -111,8 +123,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
 
     const sync = () => {
       setNowPlaying({
-        recordingId: recording.id,
-        speakerName: recording.speakerName ?? recording.fileName,
+        recordingId,
+        speakerName: label,
         currentTime: media.currentTime,
         duration: Number.isFinite(media.duration) ? media.duration : 0,
         paused: media.paused,
@@ -326,7 +338,75 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Video className="icon-20" /> วิดีโอ/เสียงที่บันทึก
           </h3>
-          <ul className="recordings-list">
+          {meeting.recordingTakes.length > 0 && (
+            <>
+              <h4 className="recordings-group__title">เสียงรวมทุกคน</h4>
+              <ul className="recordings-list">
+                {meeting.recordingTakes.map((take) => {
+                  const mediaId = `take-${take.key}`;
+                  const label = `การบันทึกครั้งที่ ${take.index}`;
+                  const isMixing = Boolean(mixingTakes[mediaId]);
+                  const setMixing = (value: boolean) =>
+                    setMixingTakes((previous) => ({ ...previous, [mediaId]: value }));
+                  return (
+                    <li key={take.key} className="recordings-list__item">
+                      <div>
+                        <p className="recordings-list__name">{label}</p>
+                        <p className="recordings-list__meta">
+                          {formatDuration(take.durationSeconds)} • {take.speakerCount} คน
+                        </p>
+                      </div>
+                      <div className="recordings-list__actions">
+                        <button
+                          type="button"
+                          className="recordings-list__play-btn"
+                          aria-label={`เล่นเสียง ${label}`}
+                          disabled={isMixing}
+                          onClick={() => {
+                            const media = mediaRefs.current[mediaId];
+                            if (!media) return;
+                            // Nothing is fetched until now (preload="none"), and the
+                            // first fetch waits for the server to mix the take.
+                            if (media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setMixing(true);
+                            trackNowPlaying(mediaId, label, media);
+                            void media.play().catch(() => setMixing(false));
+                          }}
+                        >
+                          {isMixing ? <Loader2 className="icon-16 animate-spin" /> : <Play className="icon-16" />}
+                        </button>
+                        <audio
+                          ref={(el) => { mediaRefs.current[mediaId] = el; }}
+                          preload="none" src={take.playbackUrl}
+                          aria-hidden="true"
+                          onPlaying={() => setMixing(false)}
+                          onError={(event) => {
+                            setMixing(false);
+                            handlePlaybackError(mediaId, event.currentTarget);
+                          }}
+                          onCanPlay={() => clearPlaybackError(mediaId)}
+                        />
+                        {isMixing && (
+                          <p role="status" className="recordings-list__status">กำลังรวมเสียงทุกคน...</p>
+                        )}
+                        {playbackErrors[mediaId] && (
+                          <p role="alert" className="text-sm text-red-600">{playbackErrors[mediaId]}</p>
+                        )}
+                        <a
+                          href={`${take.playbackUrl}?download=1`}
+                          download
+                          className="recordings-list__download action-fill"
+                        >
+                          <Download className="icon-16" /> ดาวน์โหลด
+                        </a>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <h4 className="recordings-group__title recordings-group__title--next">แยกรายคน</h4>
+            </>
+          )}
+          <ul className="recordings-list recordings-list--plain">
             {meeting.recordings.map((rec) => (
               <li key={rec.id} className="recordings-list__item">
                 <div>
@@ -353,7 +433,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                           onClick={() => {
                             const media = mediaRefs.current[rec.id];
                             if (!media) return;
-                            trackNowPlaying(rec, media);
+                            trackNowPlaying(rec.id, rec.speakerName ?? rec.fileName, media);
                             void media.play();
                           }}
                         >

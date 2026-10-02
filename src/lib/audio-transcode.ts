@@ -110,3 +110,56 @@ function encodeMp3(input: Buffer): Promise<Buffer> {
     ffmpeg.stdin.end(input);
   });
 }
+
+// A mix is only made when a host opens a take, but a stuck ffmpeg would hold
+// the shared queue and with it every upload behind it.
+const MIX_TIMEOUT_MS = 10 * 60 * 1000;
+
+/**
+ * Mixes audio files into one mp3, each shifted by its own delay so speakers
+ * line up on the shared timeline. Mono and 96 kbps: it's speech, and a smaller
+ * encode keeps the CPU free for live calls.
+ */
+export function mixToMp3(inputs: { path: string; delaySeconds: number }[]): Promise<Buffer> {
+  return enqueue(() => encodeMix(inputs));
+}
+
+function encodeMix(inputs: { path: string; delaySeconds: number }[]): Promise<Buffer> {
+  const delayed = inputs.map(
+    ({ delaySeconds }, index) => `[${index}:a]adelay=${Math.max(0, Math.round(delaySeconds * 1000))}:all=1[d${index}]`,
+  );
+  const labels = inputs.map((_, index) => `[d${index}]`).join("");
+  // Sum rather than average (normalize=0), so a lone speaker isn't turned down
+  // as more people join, and limit the sum so overlapping voices don't clip.
+  const filter = `${delayed.join(";")};${labels}amix=inputs=${inputs.length}:normalize=0:dropout_transition=0,alimiter=limit=0.95[out]`;
+
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawnLowPriority("ffmpeg", [
+      "-nostdin",
+      ...inputs.flatMap(({ path }) => ["-i", path]),
+      "-filter_complex", filter,
+      "-map", "[out]",
+      "-ac", "1",
+      "-ar", "44100",
+      "-acodec", "libmp3lame",
+      "-b:a", "96k",
+      "-f", "mp3",
+      "pipe:1",
+    ]);
+    const timeout = setTimeout(() => ffmpeg.kill("SIGKILL"), MIX_TIMEOUT_MS);
+
+    const outChunks: Buffer[] = [];
+    let stderr = "";
+    ffmpeg.stdout.on("data", (chunk) => outChunks.push(chunk));
+    ffmpeg.stderr.on("data", (chunk) => { stderr = (stderr + chunk.toString()).slice(-4000); });
+    ffmpeg.on("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    ffmpeg.on("close", (code, signal) => {
+      clearTimeout(timeout);
+      if (code === 0) resolve(Buffer.concat(outChunks));
+      else reject(new Error(`ffmpeg mix failed (${signal ?? `code ${code}`}): ${stderr.slice(-2000)}`));
+    });
+  });
+}
