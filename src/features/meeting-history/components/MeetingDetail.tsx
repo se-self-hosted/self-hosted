@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Users, FileText, Video, AlertCircle, Download, Play, Pause, Loader2 } from "lucide-react";
+import { Users, FileText, Video, AlertCircle, Download, Play, Pause, Loader2, Volume2 } from "lucide-react";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
 import { requestMeetingSummary, saveMeetingSummaryEdit } from "../summary";
@@ -93,6 +93,53 @@ function formatTimestamp(totalSeconds: number) {
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
 
+/**
+ * Play button that, while its clip plays, reads "กำลังเล่นอยู่" and turns into
+ * a "หยุด" button on hover or keyboard focus.
+ */
+function PlayToggleButton({
+  label,
+  playing,
+  loading = false,
+  onPlay,
+  onStop,
+}: {
+  label: string;
+  playing: boolean;
+  loading?: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+}) {
+  if (playing) {
+    return (
+      <button
+        type="button"
+        className="recordings-list__play-btn recordings-list__play-btn--active"
+        aria-label={`หยุด ${label}`}
+        onClick={onStop}
+      >
+        <span className="recordings-list__play-now">
+          <Volume2 aria-hidden="true" className="icon-16" /> กำลังเล่นอยู่
+        </span>
+        <span className="recordings-list__play-stop">
+          <Pause aria-hidden="true" className="icon-16" /> หยุด
+        </span>
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className="recordings-list__play-btn"
+      aria-label={`เล่นเสียง ${label}`}
+      disabled={loading}
+      onClick={onPlay}
+    >
+      {loading ? <Loader2 className="icon-16 animate-spin" /> : <Play className="icon-16" />}
+    </button>
+  );
+}
+
 export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   const [meeting, setMeeting] = useState<MeetingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,6 +190,22 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
     if (media.paused) void media.play();
     else media.pause();
   }
+
+  // One clip at a time: playing another clip stops the current one first.
+  function startPlayback(id: string, label: string) {
+    const media = mediaRefs.current[id];
+    if (!media) return;
+    const current = trackedMediaRef.current;
+    if (current && current !== media) current.pause();
+    trackNowPlaying(id, label, media);
+    return media.play();
+  }
+
+  function stopPlayback(id: string) {
+    mediaRefs.current[id]?.pause();
+  }
+
+  const isPlaying = (id: string) => nowPlaying?.recordingId === id && !nowPlaying.paused;
 
   function seekNowPlaying(time: number) {
     const media = trackedMediaRef.current;
@@ -357,28 +420,25 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                         </p>
                       </div>
                       <div className="recordings-list__actions">
-                        <button
-                          type="button"
-                          className="recordings-list__play-btn"
-                          aria-label={`เล่นเสียง ${label}`}
-                          disabled={isMixing}
-                          onClick={() => {
+                        <PlayToggleButton
+                          label={label}
+                          playing={isPlaying(mediaId)}
+                          loading={isMixing}
+                          onPlay={() => {
                             const media = mediaRefs.current[mediaId];
-                            if (!media) return;
                             // Nothing is fetched until now (preload="none"), and the
                             // first fetch waits for the server to mix the take.
-                            if (media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setMixing(true);
-                            trackNowPlaying(mediaId, label, media);
-                            void media.play().catch(() => setMixing(false));
+                            if (media && media.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) setMixing(true);
+                            startPlayback(mediaId, label)?.catch(() => setMixing(false));
                           }}
-                        >
-                          {isMixing ? <Loader2 className="icon-16 animate-spin" /> : <Play className="icon-16" />}
-                        </button>
+                          onStop={() => stopPlayback(mediaId)}
+                        />
                         <audio
                           ref={(el) => { mediaRefs.current[mediaId] = el; }}
                           preload="none" src={take.playbackUrl}
                           aria-hidden="true"
                           onPlaying={() => setMixing(false)}
+                          onPause={() => setMixing(false)}
                           onError={(event) => {
                             setMixing(false);
                             handlePlaybackError(mediaId, event.currentTarget);
@@ -426,19 +486,12 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                       />
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          className="recordings-list__play-btn"
-                          aria-label={`เล่นเสียง ${rec.speakerName ?? rec.fileName}`}
-                          onClick={() => {
-                            const media = mediaRefs.current[rec.id];
-                            if (!media) return;
-                            trackNowPlaying(rec.id, rec.speakerName ?? rec.fileName, media);
-                            void media.play();
-                          }}
-                        >
-                          <Play className="icon-16" />
-                        </button>
+                        <PlayToggleButton
+                          label={rec.speakerName ?? rec.fileName}
+                          playing={isPlaying(rec.id)}
+                          onPlay={() => { void startPlayback(rec.id, rec.speakerName ?? rec.fileName)?.catch(() => {}); }}
+                          onStop={() => stopPlayback(rec.id)}
+                        />
                         <audio
                           ref={(el) => { mediaRefs.current[rec.id] = el; }}
                           preload="metadata" src={rec.playbackUrl}
