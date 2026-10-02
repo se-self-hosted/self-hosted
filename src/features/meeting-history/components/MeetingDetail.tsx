@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
-import { requestMeetingSummary } from "../summary";
+import { requestMeetingSummary, saveMeetingSummaryEdit } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type Session = {
@@ -222,6 +222,13 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
     setMeeting((previous) => (previous ? { ...previous, summary } : previous));
   }
 
+  /** Saves the host's edit, or reverts to the AI version when `content` is null. */
+  async function saveSummaryEdit(content: string | null) {
+    if (!meeting?.summary) return;
+    const summary = await saveMeetingSummaryEdit(meetingId, meeting.summary, content);
+    setMeeting((previous) => (previous ? { ...previous, summary } : previous));
+  }
+
   if (isLoading) {
     return (
       <div className="meeting-detail__loading">
@@ -320,6 +327,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         participantNames={meeting.participants.map((p) => p.displayName)}
         showRegenerate={meeting.isHost}
         onRegenerate={meeting.isHost ? regenerateSummary : undefined}
+        onSave={meeting.isHost ? saveSummaryEdit : undefined}
+        onRevertToAi={meeting.isHost ? () => saveSummaryEdit(null) : undefined}
       />
 
       {/* 4. Transcript */}

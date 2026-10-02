@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
-import { Bot, Download, FileCode2, FileText, FileType2, Loader2, Pencil, RefreshCw, Sparkles } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { Bot, Download, FileCode2, FileText, FileType2, Loader2, Pencil, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
 import {
   buildMeetingReport,
   canStartSummaryRegeneration,
@@ -12,6 +12,7 @@ import {
   formatMeetingReportText,
   getSummaryDraftState,
   getSummaryRegenerationCompletionStatus,
+  MAX_EDITED_SUMMARY_CHARS,
   parseSummaryMarkdown,
   selectMeetingSummaryContent,
 } from "../summary";
@@ -29,6 +30,8 @@ type MeetingSummaryDisplayProps = {
   durationSeconds?: number | null;
   participantNames?: string[];
   onSave?: (content: string) => Promise<void> | void;
+  /** Drops the host's edits so the AI version is shown again. */
+  onRevertToAi?: () => Promise<void> | void;
   /** Generates the first summary, or regenerates an existing one. */
   onRegenerate?: RegenerateSummary;
   showRegenerate?: boolean;
@@ -41,6 +44,11 @@ const dateFormatter = new Intl.DateTimeFormat("th-TH", {
 });
 
 const DEFAULT_REGENERATION_ERROR = "ไม่สามารถสร้างสรุปใหม่ได้ กรุณาลองอีกครั้ง";
+const DEFAULT_SAVE_ERROR = "ไม่สามารถบันทึกสรุปการประชุมได้ กรุณาลองอีกครั้ง";
+
+function messageFrom(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 /** Shared by the empty state (first generation) and the summary card. */
 function useSummaryRegeneration(onRegenerate?: RegenerateSummary) {
@@ -59,7 +67,7 @@ function useSummaryRegeneration(onRegenerate?: RegenerateSummary) {
       await onRegenerate({ discardEdits });
       setStatus(getSummaryRegenerationCompletionStatus(true));
     } catch (error) {
-      setErrorMessage(error instanceof Error && error.message ? error.message : DEFAULT_REGENERATION_ERROR);
+      setErrorMessage(messageFrom(error, DEFAULT_REGENERATION_ERROR));
       setStatus(getSummaryRegenerationCompletionStatus(false));
     } finally {
       inFlight.current = false;
@@ -76,6 +84,7 @@ export function MeetingSummaryDisplay({
   durationSeconds,
   participantNames,
   onSave,
+  onRevertToAi,
   onRegenerate,
   showRegenerate,
 }: MeetingSummaryDisplayProps) {
@@ -93,7 +102,7 @@ export function MeetingSummaryDisplay({
 
   return (
     <MeetingSummaryEditor
-      key={`${summary.id}:${summary.generatedAt}:${displayedSummary.content}`}
+      key={`${summary.id}:${summary.generatedAt}:${summary.editedAt}:${displayedSummary.content}`}
       summary={summary}
       displayedSummary={displayedSummary}
       roomName={roomName}
@@ -101,6 +110,7 @@ export function MeetingSummaryDisplay({
       durationSeconds={durationSeconds}
       participantNames={participantNames}
       onSave={onSave}
+      onRevertToAi={onRevertToAi}
       onRegenerate={onRegenerate}
       showRegenerate={showRegenerate ?? Boolean(onRegenerate)}
     />
@@ -165,6 +175,7 @@ type MeetingSummaryEditorProps = {
   durationSeconds?: number | null;
   participantNames?: string[];
   onSave?: (content: string) => Promise<void> | void;
+  onRevertToAi?: () => Promise<void> | void;
   onRegenerate?: RegenerateSummary;
   showRegenerate: boolean;
 };
@@ -177,14 +188,18 @@ function MeetingSummaryEditor({
   durationSeconds,
   participantNames,
   onSave,
+  onRevertToAi,
   onRegenerate,
   showRegenerate,
 }: MeetingSummaryEditorProps) {
   const originalContent = displayedSummary.content;
   const [isEditing, setIsEditing] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [draftContent, setDraftContent] = useState(originalContent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [isReverting, setIsReverting] = useState(false);
+  const [revertError, setRevertError] = useState("");
   const regeneration = useSummaryRegeneration(onRegenerate);
   const regenerationStatus = regeneration.status;
   const [exportError, setExportError] = useState("");
@@ -192,15 +207,29 @@ function MeetingSummaryEditor({
   const draftState = getSummaryDraftState(originalContent, draftContent);
   const canSave = canSubmitSummaryDraft(originalContent, draftContent, Boolean(onSave)) && !isSaving;
   const regenerationAvailable = regeneration.available;
-  const canRegenerate = regeneration.canStart && !isEditing;
+  const canRegenerate = regeneration.canStart && !isEditing && !isReverting;
+  const canRevert =
+    Boolean(onRevertToAi) && displayedSummary.source === "edited" && !isReverting && regenerationStatus !== "regenerating";
+  const hasUnsavedChanges = isEditing && draftState.hasChanges;
+
+  // Leaving the page mid-edit would silently drop the draft.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsavedChanges]);
 
   function startEditing() {
     setDraftContent(originalContent);
     setSaveError("");
+    setRevertError("");
+    setIsPreviewing(false);
     setIsEditing(true);
   }
 
   function cancelEditing() {
+    if (draftState.hasChanges && !window.confirm("ยกเลิกการแก้ไข? ข้อความที่แก้ไว้จะหายไป")) return;
     setDraftContent(originalContent);
     setSaveError("");
     setIsEditing(false);
@@ -214,10 +243,26 @@ function MeetingSummaryEditor({
     setSaveError("");
     try {
       await onSave(draftContent);
-    } catch {
-      setSaveError("ไม่สามารถบันทึกสรุปการประชุมได้ กรุณาลองอีกครั้ง");
+      setIsEditing(false);
+    } catch (error) {
+      setSaveError(messageFrom(error, DEFAULT_SAVE_ERROR));
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function revertToAi() {
+    if (!onRevertToAi || !canRevert) return;
+    if (!window.confirm("ต้องการคืนค่าเป็นสรุปฉบับ AI หรือไม่? ฉบับแก้ไขจะถูกลบ")) return;
+
+    setIsReverting(true);
+    setRevertError("");
+    try {
+      await onRevertToAi();
+    } catch (error) {
+      setRevertError(messageFrom(error, DEFAULT_SAVE_ERROR));
+    } finally {
+      setIsReverting(false);
     }
   }
 
@@ -401,9 +446,24 @@ function MeetingSummaryEditor({
               >
                 <FileText aria-hidden="true" className="icon-14" /> ดาวน์โหลดข้อความ
               </button>
+              {onRevertToAi && displayedSummary.source === "edited" && (
+                <button
+                  type="button"
+                  className="meeting-summary__revert-btn action-fill focus-ring"
+                  onClick={() => void revertToAi()}
+                  disabled={!canRevert}
+                >
+                  {isReverting ? (
+                    <Loader2 aria-hidden="true" className="icon-14 animate-spin" />
+                  ) : (
+                    <RotateCcw aria-hidden="true" className="icon-14" />
+                  )}
+                  คืนค่าฉบับ AI
+                </button>
+              )}
               <button
                 type="button"
-                className="meeting-summary__edit-btn focus-ring"
+                className="meeting-summary__edit-btn action-fill focus-ring"
                 onClick={startEditing}
                 aria-label="แก้ไขสรุปการประชุม"
               >
@@ -426,23 +486,61 @@ function MeetingSummaryEditor({
         <p className="meeting-summary__error" role="alert">{regeneration.errorMessage}</p>
       )}
       {exportError && <p className="meeting-summary__export-error" role="alert">{exportError}</p>}
+      {revertError && <p className="meeting-summary__error" role="alert">{revertError}</p>}
 
       {isEditing ? (
         <form className="meeting-summary__form" onSubmit={submitEdit}>
-          <label htmlFor={`meeting-summary-${summary.id}`} className="meeting-summary__label">
-            เนื้อหาสรุปการประชุม
-          </label>
-          <textarea
-            id={`meeting-summary-${summary.id}`}
-            className="meeting-summary__textarea"
-            value={draftContent}
-            onChange={(event) => {
-              setDraftContent(event.target.value);
-              setSaveError("");
-            }}
-            rows={10}
-            autoFocus
-          />
+          <div className="meeting-summary__form-header">
+            <label htmlFor={`meeting-summary-${summary.id}`} className="meeting-summary__label">
+              เนื้อหาสรุปการประชุม
+            </label>
+            <div className="meeting-summary__mode" role="group" aria-label="โหมดการแก้ไข">
+              <button
+                type="button"
+                className="meeting-summary__mode-btn focus-ring"
+                aria-pressed={!isPreviewing}
+                onClick={() => setIsPreviewing(false)}
+              >
+                แก้ไข
+              </button>
+              <button
+                type="button"
+                className="meeting-summary__mode-btn focus-ring"
+                aria-pressed={isPreviewing}
+                onClick={() => setIsPreviewing(true)}
+              >
+                ตัวอย่าง
+              </button>
+            </div>
+          </div>
+          {isPreviewing ? (
+            <div className="meeting-summary__preview">
+              {draftState.hasContent ? (
+                <SummaryMarkdown content={draftContent} />
+              ) : (
+                <p className="meeting-summary__preview-empty">ไม่มีเนื้อหา</p>
+              )}
+            </div>
+          ) : (
+            <textarea
+              id={`meeting-summary-${summary.id}`}
+              className="meeting-summary__textarea"
+              value={draftContent}
+              onChange={(event) => {
+                setDraftContent(event.target.value);
+                setSaveError("");
+              }}
+              rows={14}
+              aria-describedby={`meeting-summary-${summary.id}-help`}
+              autoFocus
+            />
+          )}
+          <div id={`meeting-summary-${summary.id}-help`} className="meeting-summary__form-help">
+            <span>รองรับ Markdown: # หัวข้อ, - รายการ, 1. ลำดับ, **ตัวหนา**</span>
+            <span className={draftState.isTooLong ? "meeting-summary__count--over" : undefined}>
+              {draftContent.trim().length.toLocaleString("en-US")} / {MAX_EDITED_SUMMARY_CHARS.toLocaleString("en-US")}
+            </span>
+          </div>
           {!onSave && (
             <p className="meeting-summary__notice" role="status">
               ยังไม่สามารถบันทึกการแก้ไขได้ จนกว่าระบบบันทึกสรุปจะพร้อมใช้งาน
@@ -451,6 +549,11 @@ function MeetingSummaryEditor({
           {!draftState.hasContent && (
             <p className="meeting-summary__validation" role="alert">
               กรุณากรอกเนื้อหาสรุปการประชุม
+            </p>
+          )}
+          {draftState.isTooLong && (
+            <p className="meeting-summary__validation" role="alert">
+              สรุปการประชุมยาวเกิน {MAX_EDITED_SUMMARY_CHARS.toLocaleString("en-US")} ตัวอักษร
             </p>
           )}
           {saveError && <p className="meeting-summary__validation" role="alert">{saveError}</p>}

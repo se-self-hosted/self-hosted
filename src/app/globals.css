@@ -122,6 +122,7 @@ body {
   .meeting-history__submit,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__cancel-btn,
   .meeting-summary__save-btn,
   .meeting-summary__generate,
@@ -151,6 +152,7 @@ body {
   .meeting-lobby__back,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__cancel-btn,
   .meeting-summary__regenerate,
   .meeting-summary__export,
@@ -165,6 +167,7 @@ body {
   .btn--sm,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__regenerate,
   .meeting-summary__export {
     @apply h-9 rounded-lg px-3 text-[13px];
@@ -1300,6 +1303,39 @@ body {
   }
   .meeting-summary__validation {
     @apply mt-2 text-[13px] text-bad;
+  }
+  .meeting-summary__revert-btn {
+    @apply gap-1.5;
+  }
+  .meeting-summary__form-header {
+    @apply mb-2 flex flex-wrap items-center justify-between gap-2;
+  }
+  .meeting-summary__form-header .meeting-summary__label {
+    @apply mb-0;
+  }
+  .meeting-summary__mode {
+    @apply inline-flex rounded-lg border border-line-strong bg-surface-2 p-0.5;
+  }
+  .meeting-summary__mode-btn {
+    @apply rounded-md px-3 py-1 text-[13px] font-medium text-muted transition-colors hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:shadow-sm;
+  }
+  .meeting-summary__preview {
+    @apply min-h-56 rounded-[10px] border border-dashed border-line-strong bg-surface-2 px-4 py-3;
+  }
+  .meeting-summary__preview .meeting-summary__content {
+    @apply mt-0;
+  }
+  .meeting-summary__preview-empty {
+    @apply text-[13px] text-muted;
+  }
+  .meeting-summary__form-help {
+    @apply mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-muted;
+  }
+  .meeting-summary__form-help span:last-child {
+    @apply font-mono;
+  }
+  .meeting-summary__count--over {
+    @apply font-semibold text-bad;
   }
   .meeting-summary__form-actions {
     @apply mt-4 flex justify-end gap-2;

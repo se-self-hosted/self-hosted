@@ -30,7 +30,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { AppSidebar } from "@/components/app-shell/AppSidebar";
 import Link from "next/link";
 import { MeetingSummaryDisplay } from "@/features/meeting-history/components/MeetingSummaryDisplay";
-import { requestMeetingSummary } from "@/features/meeting-history/summary";
+import { requestMeetingSummary, saveMeetingSummaryEdit } from "@/features/meeting-history/summary";
 
 type Room = {
   id: string;
@@ -273,6 +273,14 @@ export default function DashboardPage() {
     setMeetings((previous) =>
       previous.map((meeting) => (meeting.id === meetingId ? { ...meeting, hasSummary: true } : meeting)),
     );
+  };
+
+  /** Saves the host's edit, or reverts to the AI version when `content` is null. */
+  const saveMeetingSummary = async (content: string | null) => {
+    if (!meetingDetails?.summary) return;
+    const meetingId = meetingDetails.id;
+    const summary = await saveMeetingSummaryEdit(meetingId, meetingDetails.summary, content);
+    setMeetingDetails((previous) => (previous?.id === meetingId ? { ...previous, summary } : previous));
   };
 
   const closeMeetingDetails = () => {
@@ -996,6 +1004,8 @@ export default function DashboardPage() {
                       participantNames={meetingDetails.participants.map((p) => p.displayName)}
                       showRegenerate={meetingDetails.isHost}
                       onRegenerate={meetingDetails.isHost ? regenerateMeetingSummary : undefined}
+                      onSave={meetingDetails.isHost ? saveMeetingSummary : undefined}
+                      onRevertToAi={meetingDetails.isHost ? () => saveMeetingSummary(null) : undefined}
                     />
                   )}
 
