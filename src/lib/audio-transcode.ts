@@ -1,8 +1,32 @@
 import { spawn } from "child_process";
 import { randomUUID } from "crypto";
-import { tmpdir } from "os";
+import { setPriority, tmpdir } from "os";
 import { join } from "path";
 import { writeFile, unlink } from "fs/promises";
+
+// Encoding runs on the same small host as the LiveKit SFU. Stopping a
+// recording makes every participant upload at once, and a burst of
+// full-speed encodes starves the SFU, dropping audio for the whole room.
+// So encode one file at a time, at the lowest CPU priority.
+let encodeQueue: Promise<unknown> = Promise.resolve();
+
+function enqueue<T>(job: () => Promise<T>): Promise<T> {
+  const run = encodeQueue.then(job, job);
+  encodeQueue = run.catch(() => {});
+  return run;
+}
+
+function spawnLowPriority(command: string, args: string[]) {
+  const child = spawn(command, args);
+  if (child.pid) {
+    try {
+      setPriority(child.pid, 19);
+    } catch {
+      // Still encode at normal priority rather than fail the upload.
+    }
+  }
+  return child;
+}
 
 /**
  * Real duration of the encoded mp3, read back from the file itself via ffprobe.
@@ -15,12 +39,16 @@ import { writeFile, unlink } from "fs/promises";
  * end of the file for a size-based estimate), so ffprobe needs a real seekable
  * file here — piping it the buffer over stdin silently yields "N/A".
  */
-export async function probeDurationSeconds(input: Buffer): Promise<number | null> {
+export function probeDurationSeconds(input: Buffer): Promise<number | null> {
+  return enqueue(() => probe(input));
+}
+
+async function probe(input: Buffer): Promise<number | null> {
   const tmpPath = join(tmpdir(), `probe-${randomUUID()}.mp3`);
   try {
     await writeFile(tmpPath, input);
     return await new Promise((resolve) => {
-      const ffprobe = spawn("ffprobe", [
+      const ffprobe = spawnLowPriority("ffprobe", [
         "-v", "error",
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
@@ -44,8 +72,13 @@ export async function probeDurationSeconds(input: Buffer): Promise<number | null
 
 /** Transcodes any browser-recorded audio (webm/opus, ogg, ...) to a standard mp3 buffer via ffmpeg. */
 export function transcodeToMp3(input: Buffer): Promise<Buffer> {
+  return enqueue(() => encodeMp3(input));
+}
+
+function encodeMp3(input: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const ffmpeg = spawn("ffmpeg", [
+    const ffmpeg = spawnLowPriority("ffmpeg", [
+      "-threads", "1",
       "-i", "pipe:0",
       "-vn",
       "-acodec", "libmp3lame",
