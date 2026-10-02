@@ -55,6 +55,9 @@ services:
 
   livekit:
     image: livekit/livekit-server:latest
+    # Live audio must win the CPU over uploads, encodes and dev rebuilds;
+    # on a small host, equal shares let a recording upload stall the room.
+    cpu_shares: 4096
     # Same-machine development default; set LIVEKIT_NODE_IP to a reachable server IP for remote clients.
     command: --dev --bind 0.0.0.0 --node-ip ${LIVEKIT_NODE_IP:-127.0.0.1}
     ports:

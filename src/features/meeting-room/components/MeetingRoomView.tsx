@@ -1608,8 +1608,12 @@ export function MeetingRoomView({
           <button
             type="button"
             onClick={async () => {
-              await stopRecording();
+              // Leave the call now instead of after the upload, which can take
+              // a while; the upload's access check still admits a session that
+              // just left. Navigating waits for it, so it isn't cut off.
+              const uploaded = stopRecording();
               await releaseSession().catch((error) => console.error("Leave room error:", error));
+              await uploaded;
               window.location.href = "/dashboard";
             }}
             aria-label="ออกจากห้อง"
