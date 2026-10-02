@@ -455,7 +455,7 @@ body {
     @apply absolute top-0 right-0 z-10 justify-start overflow-hidden px-[9px];
     width: 36px;
     gap: 6px;
-    transition-property: width, border-color, color, transform;
+    transition-property: width, background-color, border-color, color, transform;
     transition-duration: 220ms;
     transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   }
@@ -475,6 +475,9 @@ body {
   @media (hover: hover) and (pointer: fine) {
     .room-card__edit-btn:hover {
       width: 92px;
+      border-color: var(--color-ink);
+      background-color: var(--color-ink);
+      color: #fff;
     }
     .room-card__edit-btn:hover .room-card__edit-icon {
       transform: translateX(1px) rotate(-4deg);
@@ -1676,7 +1679,7 @@ body {
     width: 150%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background-color: var(--color-accent);
+    background-color: var(--color-ink);
     pointer-events: none;
     transform: translate(-50%, -50%) scale(0);
     transition: transform 600ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -1684,10 +1687,10 @@ body {
 
   @media (hover: hover) and (pointer: fine) {
     .action-fill:not(:disabled):hover {
-      border-color: var(--color-accent);
+      border-color: var(--color-ink);
       background-color: transparent;
-      color: var(--color-accent-ink);
-      box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
       transform: scale(1.05);
     }
     .action-fill:not(:disabled):hover::before {
@@ -1697,8 +1700,8 @@ body {
   .action-fill:not(:disabled):focus-visible {
     border-color: var(--color-ink);
     background-color: transparent;
-    color: var(--color-accent-ink);
-    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
   }
   .action-fill:not(:disabled):focus-visible::before {
     transform: translate(-50%, -50%) scale(1);
@@ -1709,6 +1712,23 @@ body {
   }
   .action-fill:disabled::before {
     transform: translate(-50%, -50%) scale(0);
+  }
+
+  /* Decision buttons (confirm, save, cancel in dialogs and editors) keep the
+     lime fill; everything else fills black. */
+  .action-fill.action-fill--accent::before {
+    background-color: var(--color-accent);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--accent:not(:disabled):hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--accent:not(:disabled):focus-visible {
+    color: var(--color-accent-ink);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
   }
 
   /* Same motion for destructive actions: solid red, deepening on hover. */

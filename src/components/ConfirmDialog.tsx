@@ -142,7 +142,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="modal__cancel-btn action-fill focus-ring"
+            className="modal__cancel-btn action-fill action-fill--accent focus-ring"
           >
             {cancelLabel}
           </button>
@@ -153,7 +153,7 @@ export function ConfirmDialog({
             className={
               tone === "danger"
                 ? "confirm-dialog__danger-btn action-fill action-fill--danger focus-ring-danger"
-                : "modal__submit-btn action-fill focus-ring"
+                : "modal__submit-btn action-fill action-fill--accent focus-ring"
             }
           >
             {busy && <Loader2 aria-hidden="true" className="icon-16 animate-spin" />}

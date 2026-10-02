@@ -670,7 +670,7 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => copyRoomLink(room.id, room.slug)}
-                          className="room-card__copy-btn action-fill focus-ring"
+                          className="room-card__copy-btn action-fill action-fill--accent focus-ring"
                         >
                           {wasCopied ? (
                             <Check aria-hidden="true" className="icon-16 room-card__copy-icon" />
@@ -1172,13 +1172,11 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className={`modal__cancel-btn action-fill ${
-                    modalMode === "create" ? "action-fill--danger-outline focus-ring-danger" : "focus-ring"
-                  }`}
+                  className="modal__cancel-btn action-fill action-fill--danger-outline focus-ring-danger"
                 >
                   ยกเลิก
                 </button>
-                <button type="submit" className="modal__submit-btn action-fill focus-ring">
+                <button type="submit" className="modal__submit-btn action-fill action-fill--accent focus-ring">
                   {modalMode === "create" && <Plus aria-hidden="true" className="icon-16" strokeWidth={1.8} />}
                   {modalMode === "create" ? "สร้างห้อง" : "บันทึก"}
                 </button>

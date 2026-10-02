@@ -146,8 +146,8 @@ export default function EditProfilePage() {
                 <Check aria-hidden="true" size={16} strokeWidth={2.2} /> Changes saved
               </p>
               <div className="flex gap-3">
-                <Link href="/dashboard" className="profile-cancel-btn action-fill">Cancel</Link>
-                <button type="submit" disabled={passwordMismatch} className="profile-submit-btn action-fill">Save changes</button>
+                <Link href="/dashboard" className="profile-cancel-btn action-fill action-fill--accent">Cancel</Link>
+                <button type="submit" disabled={passwordMismatch} className="profile-submit-btn action-fill action-fill--accent">Save changes</button>
               </div>
             </div>
           </form>

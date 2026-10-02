@@ -585,7 +585,7 @@ function MeetingSummaryEditor({
           <div className="meeting-summary__form-actions">
             <button
               type="button"
-              className="meeting-summary__cancel-btn action-fill focus-ring"
+              className="meeting-summary__cancel-btn action-fill action-fill--accent focus-ring"
               onClick={cancelEditing}
               disabled={isSaving}
             >
@@ -593,7 +593,7 @@ function MeetingSummaryEditor({
             </button>
             <button
               type="submit"
-              className="meeting-summary__save-btn action-fill focus-ring"
+              className="meeting-summary__save-btn action-fill action-fill--accent focus-ring"
               disabled={!canSave}
               aria-label="บันทึกสรุปการประชุม"
             >
