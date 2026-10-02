@@ -214,7 +214,7 @@ export default function EditProfilePage() {
                 </p>
               )}
               <div className="flex gap-3">
-                <Link href="/dashboard" className="profile-cancel-btn action-fill action-fill--accent">Cancel</Link>
+                <Link href="/dashboard" className="profile-cancel-btn action-fill action-fill--danger-hover focus-ring-danger">Cancel</Link>
                 <button type="submit" disabled={passwordMismatch || saving} className="profile-submit-btn action-fill action-fill--accent">{saving ? "Saving…" : "Save changes"}</button>
               </div>
             </div>

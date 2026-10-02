@@ -1797,6 +1797,23 @@ body {
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
   }
 
+  /* Neutral outline at rest, filling red on hover (e.g. Cancel on edit profile). */
+  .action-fill.action-fill--danger-hover::before {
+    background-color: var(--color-bad);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger-hover:not(:disabled):hover {
+      border-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger-hover:not(:disabled):focus-visible {
+    border-color: var(--color-bad);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
   /* Log out on the dark sidebar: light outline at rest, filling red on hover. */
   .action-fill.action-fill--night-danger:not(:disabled) {
     border-color: var(--color-night-line-2);
