@@ -1284,6 +1284,55 @@ body {
   .meeting-summary__error {
     @apply mt-3 text-[13px] text-bad;
   }
+  .export-menu {
+    @apply relative;
+  }
+  .export-menu__chevron {
+    @apply -mr-0.5 transition-transform duration-200;
+  }
+  .export-menu__chevron--open {
+    @apply rotate-180;
+  }
+  .export-menu__panel {
+    @apply absolute top-full left-0 z-30 mt-2 flex w-72 origin-top-left flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.14)];
+    animation: export-menu-in 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .export-menu__panel--right {
+    @apply right-0 left-auto origin-top-right;
+  }
+  .export-menu__heading {
+    @apply px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-muted uppercase;
+  }
+  .export-menu__item {
+    @apply flex w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-ink outline-none transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ink/15;
+  }
+  .export-menu__icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-chip text-ink-soft transition-colors;
+  }
+  .export-menu__item:hover .export-menu__icon,
+  .export-menu__item:focus-visible .export-menu__icon {
+    @apply bg-accent text-accent-ink;
+  }
+  .export-menu__text {
+    @apply flex min-w-0 flex-col;
+  }
+  .export-menu__label {
+    @apply text-sm font-semibold;
+  }
+  .export-menu__description {
+    @apply text-xs text-muted;
+  }
+  @keyframes export-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .export-menu__panel {
+      animation: none;
+    }
+  }
   .meeting-summary__export-error {
     @apply mt-4 text-sm text-bad;
   }

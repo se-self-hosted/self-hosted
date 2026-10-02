@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Bot, Download, FileCode2, FileText, FileType2, Loader2, Pencil, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
+import { Bot, FileCode2, FileText, FileType2, Loader2, Pencil, Printer, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
 import {
   buildMeetingReport,
   canStartSummaryRegeneration,
@@ -19,6 +19,7 @@ import {
 import type { DisplayedMeetingSummary, SummaryInline, SummaryRegenerationStatus, SummaryReportExtension } from "../summary";
 import { createMeetingReportDocx, DOCX_MIME_TYPE } from "../report-docx";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { SummaryExportMenu } from "./SummaryExportMenu";
 import type { MeetingSummary } from "../types";
 
 type RegenerateSummary = (options: { discardEdits: boolean }) => Promise<void> | void;
@@ -430,35 +431,38 @@ function MeetingSummaryEditor({
           )}
           {!isEditing && (
             <>
-              <button
-                type="button"
-                className="meeting-summary__export action-fill focus-ring"
-                onClick={exportPdf}
-                aria-describedby="meeting-summary-export-help"
-              >
-                <Download aria-hidden="true" className="icon-14" /> ส่งออก PDF
-              </button>
-              <button
-                type="button"
-                className="meeting-summary__export action-fill focus-ring"
-                onClick={exportDocx}
-              >
-                <FileType2 aria-hidden="true" className="icon-14" /> ส่งออก Word
-              </button>
-              <button
-                type="button"
-                className="meeting-summary__export action-fill focus-ring"
-                onClick={exportMarkdown}
-              >
-                <FileCode2 aria-hidden="true" className="icon-14" /> ส่งออก Markdown
-              </button>
-              <button
-                type="button"
-                className="meeting-summary__export action-fill focus-ring"
-                onClick={exportText}
-              >
-                <FileText aria-hidden="true" className="icon-14" /> ดาวน์โหลดข้อความ
-              </button>
+              <SummaryExportMenu
+                options={[
+                  {
+                    id: "pdf",
+                    label: "PDF",
+                    description: "เปิดหน้าต่างพิมพ์เพื่อบันทึกเป็น .pdf",
+                    icon: <Printer aria-hidden="true" className="icon-16" />,
+                    onSelect: exportPdf,
+                  },
+                  {
+                    id: "docx",
+                    label: "Word",
+                    description: "ไฟล์ .docx แก้ไขต่อใน Microsoft Word",
+                    icon: <FileType2 aria-hidden="true" className="icon-16" />,
+                    onSelect: exportDocx,
+                  },
+                  {
+                    id: "md",
+                    label: "Markdown",
+                    description: "ไฟล์ .md คงหัวข้อและรายการไว้",
+                    icon: <FileCode2 aria-hidden="true" className="icon-16" />,
+                    onSelect: exportMarkdown,
+                  },
+                  {
+                    id: "txt",
+                    label: "ข้อความธรรมดา",
+                    description: "ไฟล์ .txt ไม่มีการจัดรูปแบบ",
+                    icon: <FileText aria-hidden="true" className="icon-16" />,
+                    onSelect: exportText,
+                  },
+                ]}
+              />
               {onRevertToAi && displayedSummary.source === "edited" && (
                 <button
                   type="button"
@@ -487,9 +491,6 @@ function MeetingSummaryEditor({
         </div>
       </div>
 
-      <p id="meeting-summary-export-help" className="sr-only">
-        เปิดหน้าต่างพิมพ์เพื่อบันทึกรายงานสรุปการประชุมเป็นไฟล์ PDF
-      </p>
       {showRegenerate && !regenerationAvailable && (
         <p id="meeting-summary-regenerate-unavailable" className="meeting-summary__notice" role="status">
           ยังไม่เชื่อมต่อระบบสร้างสรุปใหม่
