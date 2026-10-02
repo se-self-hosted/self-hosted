@@ -1341,6 +1341,13 @@ body {
   .meeting-room {
     @apply relative flex h-screen flex-col overflow-hidden bg-paper text-ink;
   }
+  /* Every clickable control in the lobby and the room shows the hand cursor;
+     disabled ones keep their own not-allowed cursor. */
+  .meeting-lobby :is(button, [role="button"], summary):not(:disabled),
+  .meeting-room :is(button, [role="button"], summary):not(:disabled),
+  .meeting-unavailable :is(button, [role="button"]):not(:disabled) {
+    @apply cursor-pointer;
+  }
   .meeting-room__header {
     @apply grid min-h-[72px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-line bg-surface px-4 py-3 sm:px-7 lg:grid-cols-3;
   }
