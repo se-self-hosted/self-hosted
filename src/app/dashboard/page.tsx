@@ -1169,7 +1169,13 @@ export default function DashboardPage() {
                     ลบห้อง
                   </button>
                 )}
-                <button type="button" onClick={closeModal} className="modal__cancel-btn action-fill focus-ring">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className={`modal__cancel-btn action-fill ${
+                    modalMode === "create" ? "action-fill--danger-outline focus-ring-danger" : "focus-ring"
+                  }`}
+                >
                   ยกเลิก
                 </button>
                 <button type="submit" className="modal__submit-btn action-fill focus-ring">
