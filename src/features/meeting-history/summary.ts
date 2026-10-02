@@ -63,10 +63,12 @@ export function createSummaryPdfFilename(roomName: string, startedAt: string): s
   return createSummaryReportFilename(roomName, startedAt, "pdf");
 }
 
+export type SummaryReportExtension = "pdf" | "docx" | "md" | "txt";
+
 export function createSummaryReportFilename(
   roomName: string,
   startedAt: string,
-  extension: "pdf" | "txt",
+  extension: SummaryReportExtension,
 ): string {
   const date = /^\d{4}-\d{2}-\d{2}/.exec(startedAt)?.[0] ?? "undated";
   const safeRoomName = roomName
@@ -161,6 +163,26 @@ export function formatMeetingReportText(report: MeetingReport): string {
     ...report.details.map(({ label, value }) => `${label}: ${value}`),
     "",
     summaryMarkdownToText(report.content),
+    "",
+  ].join("\n");
+}
+
+// Meeting details are plain text, so Markdown markers in them are escaped;
+// the summary itself is already Markdown and is kept as written.
+const MARKDOWN_INLINE_MARKERS = /([\\`*_[\]<>#|~])/g;
+
+function escapeMarkdown(value: string): string {
+  return value.replace(/\s+/g, " ").replace(MARKDOWN_INLINE_MARKERS, "\\$1");
+}
+
+/** The .md export: a title, meeting details as a list, then the summary Markdown. */
+export function formatMeetingReportMarkdown(report: MeetingReport): string {
+  return [
+    `# ${escapeMarkdown(report.title)}`,
+    "",
+    ...report.details.map(({ label, value }) => `- **${escapeMarkdown(label)}:** ${escapeMarkdown(value)}`),
+    "",
+    report.content,
     "",
   ].join("\n");
 }
