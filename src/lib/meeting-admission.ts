@@ -63,6 +63,13 @@ export async function getActiveUserRoom(userId: string) {
   return findActiveRoom(sessions);
 }
 
+function alreadyInRoomError(room: { roomName: string }, sameRoom: boolean) {
+  return new AdmissionError(409, sameRoom ? "ALREADY_IN_ROOM" : "ALREADY_IN_ANOTHER_ROOM",
+    sameRoom
+      ? "คุณอยู่ในห้องประชุมนี้แล้ว กรุณากลับไปใช้แท็บหรืออุปกรณ์เดิม"
+      : `คุณกำลังอยู่ในห้อง “${room.roomName}” กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้`);
+}
+
 export async function joinMeeting(hash: string, name: string, user: JoiningUser | null) {
   // Resolve "already active elsewhere" and find genuinely-stale sessions BEFORE
   // taking any row locks. This can involve a live network call to the LiveKit
@@ -78,11 +85,7 @@ export async function joinMeeting(hash: string, name: string, user: JoiningUser 
     const previousRoom = await findActiveRoom(sessions);
     if (previousRoom) {
       const targetRoom = await prisma.meetingRoom.findUnique({ where: { roomHash: hash }, select: { id: true } });
-      const sameRoom = targetRoom?.id === previousRoom.id;
-      throw new AdmissionError(409, sameRoom ? "ALREADY_IN_ROOM" : "ALREADY_IN_ANOTHER_ROOM",
-        sameRoom
-          ? "คุณอยู่ในห้องประชุมนี้แล้ว กรุณากลับไปใช้แท็บหรืออุปกรณ์เดิม"
-          : `คุณกำลังอยู่ในห้อง “${previousRoom.roomName}” กรุณาออกจากห้องเดิมก่อนเข้าห้องนี้`);
+      throw alreadyInRoomError(previousRoom, targetRoom?.id === previousRoom.id);
     }
     // None of these were reachable (live or heartbeat) — safe to retire.
     staleSessions = sessions;
@@ -96,6 +99,24 @@ export async function joinMeeting(hash: string, name: string, user: JoiningUser 
     const room = await tx.meetingRoom.findUnique({ where: { roomHash: hash } });
     if (!room) throw new AdmissionError(404, "ROOM_NOT_FOUND", "ไม่พบห้องประชุม");
     if (room.status !== "active") throw new AdmissionError(400, "ROOM_INACTIVE", "ห้องประชุมปิดแล้ว");
+
+    // A concurrent join for this account may have committed between the
+    // unlocked pre-check and acquiring the User lock. Any open session not
+    // seen by the pre-check is that fresh admission, so reject this one.
+    if (user) {
+      const known = staleSessions.map((session) => session.id);
+      const fresh = await tx.participantSession.findFirst({
+        where: {
+          id: { notIn: known }, leftAt: null,
+          participant: { userId: user.id, meeting: { endedAt: null, room: { status: "active" } } },
+        },
+        include: { participant: { include: { meeting: { include: { room: true } } } } },
+      });
+      if (fresh) {
+        const freshRoom = fresh.participant.meeting.room;
+        throw alreadyInRoomError(freshRoom, freshRoom.id === room.id);
+      }
+    }
 
     // Retire stale sessions permanently so a delayed heartbeat cannot revive
     // them. Re-check leftAt under the lock: the pre-check above ran without

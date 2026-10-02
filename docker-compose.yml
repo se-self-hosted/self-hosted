@@ -12,6 +12,9 @@ services:
       - /app/.next
     environment:
       NODE_ENV: development
+      # Server-side LiveKit API calls stay on the compose network, so they keep
+      # working when NEXT_PUBLIC_LIVEKIT_URL points at a public tunnel.
+      LIVEKIT_URL: ${LIVEKIT_URL:-http://livekit:7880}
       # Uncomment the following line if hot-reloading doesn't work (e.g., on Windows/WSL)
       # WATCHPACK_POLLING: "true"
     depends_on:
