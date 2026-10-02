@@ -1,20 +1,22 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { Bot, Download, FileText, Loader2, Pencil, RefreshCw, Sparkles } from "lucide-react";
+import { Bot, Download, FileCode2, FileText, FileType2, Loader2, Pencil, RefreshCw, Sparkles } from "lucide-react";
 import {
   buildMeetingReport,
   canStartSummaryRegeneration,
   canSubmitSummaryDraft,
   createSummaryReportFilename,
   formatMeetingReportHtml,
+  formatMeetingReportMarkdown,
   formatMeetingReportText,
   getSummaryDraftState,
   getSummaryRegenerationCompletionStatus,
   parseSummaryMarkdown,
   selectMeetingSummaryContent,
 } from "../summary";
-import type { DisplayedMeetingSummary, SummaryInline, SummaryRegenerationStatus } from "../summary";
+import type { DisplayedMeetingSummary, SummaryInline, SummaryRegenerationStatus, SummaryReportExtension } from "../summary";
+import { createMeetingReportDocx, DOCX_MIME_TYPE } from "../report-docx";
 import type { MeetingSummary } from "../types";
 
 type RegenerateSummary = (options: { discardEdits: boolean }) => Promise<void> | void;
@@ -236,24 +238,55 @@ function MeetingSummaryEditor({
     return buildMeetingReport({ roomName, startedAt, durationSeconds, participantNames, summary });
   }
 
-  function exportText() {
+  /** Builds a file from the current report and downloads it; `failure` is shown if anything throws. */
+  function downloadReport(
+    extension: SummaryReportExtension,
+    build: (report: NonNullable<ReturnType<typeof currentReport>>) => Blob,
+    failure: string,
+  ) {
     const report = currentReport();
     if (!report) return;
 
     setExportError("");
     try {
-      const blob = new Blob([formatMeetingReportText(report)], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(build(report));
       const link = document.createElement("a");
       link.href = url;
-      link.download = createSummaryReportFilename(roomName, startedAt, "txt");
+      link.download = createSummaryReportFilename(roomName, startedAt, extension);
       document.body.appendChild(link);
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch {
-      setExportError("ไม่สามารถดาวน์โหลดไฟล์ข้อความได้ กรุณาลองอีกครั้ง");
+      setExportError(failure);
     }
+  }
+
+  function exportText() {
+    downloadReport(
+      "txt",
+      (report) => new Blob([formatMeetingReportText(report)], { type: "text/plain;charset=utf-8" }),
+      "ไม่สามารถดาวน์โหลดไฟล์ข้อความได้ กรุณาลองอีกครั้ง",
+    );
+  }
+
+  function exportMarkdown() {
+    downloadReport(
+      "md",
+      (report) => new Blob([formatMeetingReportMarkdown(report)], { type: "text/markdown;charset=utf-8" }),
+      "ไม่สามารถส่งออกไฟล์ Markdown ได้ กรุณาลองอีกครั้ง",
+    );
+  }
+
+  function exportDocx() {
+    downloadReport(
+      "docx",
+      (report) =>
+        new Blob([createMeetingReportDocx(report, parseSummaryMarkdown(report.content))], {
+          type: DOCX_MIME_TYPE,
+        }),
+      "ไม่สามารถส่งออกไฟล์ Word ได้ กรุณาลองอีกครั้ง",
+    );
   }
 
   // Prints the report from a hidden iframe so the PDF holds only the report,
@@ -346,6 +379,20 @@ function MeetingSummaryEditor({
                 aria-describedby="meeting-summary-export-help"
               >
                 <Download aria-hidden="true" className="icon-14" /> ส่งออก PDF
+              </button>
+              <button
+                type="button"
+                className="meeting-summary__export action-fill focus-ring"
+                onClick={exportDocx}
+              >
+                <FileType2 aria-hidden="true" className="icon-14" /> ส่งออก Word
+              </button>
+              <button
+                type="button"
+                className="meeting-summary__export action-fill focus-ring"
+                onClick={exportMarkdown}
+              >
+                <FileCode2 aria-hidden="true" className="icon-14" /> ส่งออก Markdown
               </button>
               <button
                 type="button"

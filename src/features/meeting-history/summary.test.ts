@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { buildMeetingReport, canStartSummaryRegeneration, createSummaryReportFilename, formatMeetingReportHtml, formatMeetingReportText, formatReportDuration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, parseSummaryMarkdown, requestMeetingSummary, summaryMarkdownToHtml, summaryMarkdownToText, selectMeetingSummaryContent } from "./summary.ts";
+import { buildMeetingReport, canStartSummaryRegeneration, createSummaryReportFilename, formatMeetingReportHtml, formatMeetingReportMarkdown, formatMeetingReportText, formatReportDuration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, parseSummaryMarkdown, requestMeetingSummary, summaryMarkdownToHtml, summaryMarkdownToText, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -176,8 +176,46 @@ test("formats report durations", () => {
   assert.equal(formatReportDuration(7200), "2 ชั่วโมง");
 });
 
-test("names the text report like the PDF", () => {
-  assert.equal(createSummaryReportFilename("Weekly Sync", "2026-09-27T02:00:00.000Z", "txt"), "Weekly Sync-2026-09-27-summary.txt");
+test("names every export format like the PDF", () => {
+  for (const extension of ["txt", "md", "docx"] as const) {
+    assert.equal(
+      createSummaryReportFilename("Weekly Sync", "2026-09-27T02:00:00.000Z", extension),
+      `Weekly Sync-2026-09-27-summary.${extension}`,
+    );
+  }
+});
+
+test("builds a Markdown report that keeps the summary Markdown as written", () => {
+  const report = buildMeetingReport({
+    roomName: "Weekly Sync",
+    startedAt: "2026-09-27T02:00:00.000Z",
+    durationSeconds: 3725,
+    participantNames: ["Alice", "Bob"],
+    summary: { ...baseSummary, aiSummary: "## ภาพรวม\n- **ตกลง** ปล่อย `v2`" },
+  });
+  assert.ok(report);
+  const markdown = formatMeetingReportMarkdown(report);
+
+  assert.match(markdown, /^# รายงานสรุปการประชุม\n\n/);
+  assert.match(markdown, /^- \*\*ห้องประชุม:\*\* Weekly Sync$/m);
+  assert.match(markdown, /^- \*\*ระยะเวลา:\*\* 1 ชั่วโมง 2 นาที$/m);
+  assert.match(markdown, /^- \*\*ผู้เข้าร่วม \(2 คน\):\*\* Alice, Bob$/m);
+  assert.ok(markdown.endsWith("\n\n## ภาพรวม\n- **ตกลง** ปล่อย `v2`\n"));
+});
+
+test("escapes Markdown markers in meeting details but not in the summary", () => {
+  const report = buildMeetingReport({
+    roomName: "Q3 *Plan* #1 <b>",
+    startedAt: "2026-09-27T02:00:00.000Z",
+    participantNames: ["a_b", "[c]"],
+    summary: { ...baseSummary, aiSummary: "**bold**" },
+  });
+  assert.ok(report);
+  const markdown = formatMeetingReportMarkdown(report);
+
+  assert.match(markdown, /ห้องประชุม:\*\* Q3 \\\*Plan\\\* \\#1 \\<b\\>$/m);
+  assert.match(markdown, /\(2 คน\):\*\* a\\_b, \\\[c\\\]$/m);
+  assert.ok(markdown.endsWith("\n**bold**\n"));
 });
 
 const sampleMarkdown = [
