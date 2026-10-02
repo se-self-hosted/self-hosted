@@ -114,14 +114,17 @@ body {
   .dashboard__create-btn,
   .history-card__open-btn,
   .modal__delete-btn,
+  .confirm-dialog__danger-btn,
   .modal__cancel-btn,
   .modal__submit-btn,
   .meeting-lobby__back,
   .meeting-lobby__join,
+  .meeting-lobby__mic-retry,
   .meeting-unavailable__link,
   .meeting-history__submit,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__cancel-btn,
   .meeting-summary__save-btn,
   .meeting-summary__generate,
@@ -149,8 +152,10 @@ body {
   .btn--secondary,
   .modal__cancel-btn,
   .meeting-lobby__back,
+  .meeting-lobby__mic-retry,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__cancel-btn,
   .meeting-summary__regenerate,
   .meeting-summary__export,
@@ -163,8 +168,10 @@ body {
     @apply border-bad-line bg-surface text-bad hover:bg-bad-bg;
   }
   .btn--sm,
+  .meeting-lobby__mic-retry,
   .recordings-list__download,
   .meeting-summary__edit-btn,
+  .meeting-summary__revert-btn,
   .meeting-summary__regenerate,
   .meeting-summary__export {
     @apply h-9 rounded-lg px-3 text-[13px];
@@ -249,7 +256,7 @@ body {
   .modal__input,
   .meeting-lobby__input,
   .profile-input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .display-title,
   .dashboard__title,
@@ -348,7 +355,10 @@ body {
     @apply bg-night-3;
   }
   .sidebar__avatar {
-    @apply flex size-9 shrink-0 items-center justify-center rounded-full bg-night-line text-night-text;
+    @apply flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-night-line text-night-text;
+  }
+  .sidebar__avatar-image {
+    @apply size-full object-cover;
   }
   .sidebar__user-info {
     @apply flex min-w-0 flex-1 flex-col gap-px;
@@ -399,32 +409,19 @@ body {
   .dashboard__clock {
     @apply hidden border-l border-[#dad5ca] pl-5 font-mono text-[28px] font-medium tracking-[-0.02em] sm:block;
   }
-  .dashboard__create-btn {
-    transition-property: background-color, border-color, transform;
-    transition-duration: 180ms;
-    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
-  }
   .dashboard__create-btn svg {
     transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
   }
   @media (hover: hover) and (pointer: fine) {
-    .dashboard__create-btn:hover {
-      transform: translateY(-1px);
-    }
     .dashboard__create-btn:hover svg {
-      transform: translateY(-1px) rotate(10deg);
+      transform: rotate(10deg);
     }
-  }
-  .dashboard__create-btn:active {
-    transform: translateY(1px);
-    transition-duration: 120ms;
   }
   .dashboard__create-btn:active svg {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
     transition-duration: 120ms;
   }
   @media (prefers-reduced-motion: reduce) {
-    .dashboard__create-btn,
     .dashboard__create-btn svg {
       transform: none;
       transition-duration: 0ms;
@@ -461,7 +458,7 @@ body {
     @apply absolute top-0 right-0 z-10 justify-start overflow-hidden px-[9px];
     width: 36px;
     gap: 6px;
-    transition-property: width, border-color, color, transform;
+    transition-property: width, background-color, border-color, color, transform;
     transition-duration: 220ms;
     transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   }
@@ -481,6 +478,9 @@ body {
   @media (hover: hover) and (pointer: fine) {
     .room-card__edit-btn:hover {
       width: 92px;
+      border-color: var(--color-ink);
+      background-color: var(--color-ink);
+      color: #fff;
     }
     .room-card__edit-btn:hover .room-card__edit-icon {
       transform: translateX(1px) rotate(-4deg);
@@ -625,7 +625,7 @@ body {
     @apply text-sm font-semibold;
   }
   .modal__input {
-    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-full rounded-[10px] border border-field bg-surface px-3.5 text-[15px] text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .modal__stepper {
     @apply flex items-center gap-2;
@@ -634,7 +634,7 @@ body {
     @apply flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-field bg-surface text-ink transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-45;
   }
   .modal__stepper-input {
-    @apply h-11 w-24 rounded-[10px] border border-field bg-surface px-2.5 text-center font-mono text-base text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply h-11 w-24 rounded-[10px] border border-field bg-surface px-2.5 text-center font-mono text-base text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .modal__stepper-unit {
     @apply text-sm text-muted;
@@ -652,6 +652,30 @@ body {
     @apply px-3.5 sm:mr-auto;
   }
   .modal__submit-btn {
+    @apply px-[22px];
+  }
+  .confirm-dialog {
+    @apply max-w-[440px];
+  }
+  .confirm-dialog__heading {
+    @apply flex min-w-0 items-start gap-3.5;
+  }
+  .confirm-dialog__icon {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-full bg-chip text-ink;
+  }
+  .confirm-dialog__icon--danger {
+    @apply bg-bad-bg text-bad;
+  }
+  .confirm-dialog__title {
+    @apply text-xl;
+  }
+  .confirm-dialog__description {
+    @apply leading-6;
+  }
+  .confirm-dialog__body {
+    @apply px-6 pt-2 pb-6 empty:pb-3;
+  }
+  .confirm-dialog__danger-btn {
     @apply px-[22px];
   }
 
@@ -815,7 +839,7 @@ body {
     @apply pt-1 pr-2 pb-1.5 text-[13px] text-bad-deep;
   }
   .meeting-lobby__mic-retry {
-    @apply mt-1.5 block font-semibold text-ink underline underline-offset-2 hover:text-black;
+    @apply mt-2.5;
   }
   .meeting-lobby__field {
     @apply flex w-full flex-col gap-2;
@@ -1166,14 +1190,33 @@ body {
   .meeting-detail__content .text-gray-400 {
     @apply text-muted;
   }
+  .transcript-card__header {
+    @apply mb-4 flex flex-wrap items-center justify-between gap-2;
+  }
+  .transcript-card__count {
+    @apply rounded-full bg-chip px-2.5 py-1 font-mono text-xs text-ink-soft;
+  }
+  /* A long transcript scrolls inside the card instead of stretching the page. */
   .transcript-segments {
-    @apply flex flex-col gap-2;
+    @apply -mr-2 flex max-h-[min(32rem,65vh)] flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl pr-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  .transcript-segments::-webkit-scrollbar {
+    width: 8px;
+  }
+  .transcript-segments::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .transcript-segments::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: var(--color-line-strong);
+  }
+  .transcript-segments::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-field);
   }
   .transcript-segment {
-    @apply grid grid-cols-[56px_1fr] gap-3 rounded-xl border border-line-soft bg-[#fbfaf7] px-3.5 py-3;
-  }
-  .transcript-segment--playable {
-    @apply cursor-pointer transition-colors hover:border-line-strong hover:bg-surface-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
+    @apply grid shrink-0 grid-cols-[56px_1fr] gap-3 rounded-xl border border-line-soft bg-[#fbfaf7] px-3.5 py-3;
   }
   .transcript-segment__time {
     @apply h-[22px] w-fit;
@@ -1256,6 +1299,55 @@ body {
   .meeting-summary__error {
     @apply mt-3 text-[13px] text-bad;
   }
+  .export-menu {
+    @apply relative;
+  }
+  .export-menu__chevron {
+    @apply -mr-0.5 transition-transform duration-200;
+  }
+  .export-menu__chevron--open {
+    @apply rotate-180;
+  }
+  .export-menu__panel {
+    @apply absolute top-full left-0 z-30 mt-2 flex w-72 origin-top-left flex-col gap-0.5 rounded-[14px] border border-line bg-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.14)];
+    animation: export-menu-in 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .export-menu__panel--right {
+    @apply right-0 left-auto origin-top-right;
+  }
+  .export-menu__heading {
+    @apply px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-muted uppercase;
+  }
+  .export-menu__item {
+    @apply flex w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-ink outline-none transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ink/15;
+  }
+  .export-menu__icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-chip text-ink-soft transition-colors;
+  }
+  .export-menu__item:hover .export-menu__icon,
+  .export-menu__item:focus-visible .export-menu__icon {
+    @apply bg-accent text-accent-ink;
+  }
+  .export-menu__text {
+    @apply flex min-w-0 flex-col;
+  }
+  .export-menu__label {
+    @apply text-sm font-semibold;
+  }
+  .export-menu__description {
+    @apply text-xs text-muted;
+  }
+  @keyframes export-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .export-menu__panel {
+      animation: none;
+    }
+  }
   .meeting-summary__export-error {
     @apply mt-4 text-sm text-bad;
   }
@@ -1293,13 +1385,46 @@ body {
     @apply mb-2 block text-sm font-semibold text-ink;
   }
   .meeting-summary__textarea {
-    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply min-h-56 w-full resize-y rounded-[10px] border border-field bg-surface px-4 py-3 text-[15px] leading-7 text-ink outline-none transition placeholder:text-[#8e918f] focus:border-ink focus:ring-2 focus:ring-ink/10 read-only:cursor-default read-only:bg-surface-2 read-only:text-ink-soft read-only:focus:border-field read-only:focus:ring-0;
   }
   .meeting-summary__notice {
     @apply mt-2 rounded-[10px] bg-warn-bg px-3.5 py-2.5 text-[13px] leading-5 text-warn;
   }
   .meeting-summary__validation {
     @apply mt-2 text-[13px] text-bad;
+  }
+  .meeting-summary__revert-btn {
+    @apply gap-1.5;
+  }
+  .meeting-summary__form-header {
+    @apply mb-2 flex flex-wrap items-center justify-between gap-2;
+  }
+  .meeting-summary__form-header .meeting-summary__label {
+    @apply mb-0;
+  }
+  .meeting-summary__mode {
+    @apply inline-flex rounded-lg border border-line-strong bg-surface-2 p-0.5;
+  }
+  .meeting-summary__mode-btn {
+    @apply rounded-md px-3 py-1 text-[13px] font-medium text-muted transition-colors hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:shadow-sm;
+  }
+  .meeting-summary__preview {
+    @apply min-h-56 rounded-[10px] border border-dashed border-line-strong bg-surface-2 px-4 py-3;
+  }
+  .meeting-summary__preview .meeting-summary__content {
+    @apply mt-0;
+  }
+  .meeting-summary__preview-empty {
+    @apply text-[13px] text-muted;
+  }
+  .meeting-summary__form-help {
+    @apply mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-muted;
+  }
+  .meeting-summary__form-help span:last-child {
+    @apply font-mono;
+  }
+  .meeting-summary__count--over {
+    @apply font-semibold text-bad;
   }
   .meeting-summary__form-actions {
     @apply mt-4 flex justify-end gap-2;
@@ -1469,6 +1594,14 @@ body {
   .profile-section__body-security {
     @apply grid gap-5 px-5 pt-6 pb-7 sm:grid-cols-2 sm:px-7;
   }
+  .profile-field-full {
+    @apply sm:col-span-2;
+  }
+  /* Photo-wide column; align-items centers the label, button and hint on the
+     photo, letting the slightly wider upload button overflow both sides evenly. */
+  .profile-photo-column {
+    @apply flex w-32 flex-col items-center text-center;
+  }
   .profile-photo-label {
     @apply mb-3 text-[13px] font-semibold text-ink;
   }
@@ -1487,20 +1620,33 @@ body {
   .profile-photo-upload-btn {
     @apply mt-3 h-10 rounded-[9px] px-3 text-[13px];
   }
+  .profile-photo-error {
+    @apply flex items-start gap-2.5 rounded-[10px] border border-bad-line bg-bad-bg px-3.5 py-3 text-[13px] leading-snug text-bad-deep md:col-span-2;
+  }
+  .profile-photo-error__close {
+    @apply -my-1 -mr-1.5 flex size-7 shrink-0 items-center justify-center rounded-md text-bad-deep transition-colors hover:bg-bad-line/40;
+  }
+  .profile-save-error {
+    @apply text-sm text-bad;
+  }
   .profile-photo-hint {
-    @apply mt-3 text-xs leading-snug text-muted;
+    @apply mt-3 text-xs leading-snug whitespace-nowrap text-muted;
   }
   .profile-fields-grid {
-    @apply grid content-start gap-5 sm:grid-cols-2;
-  }
-  .profile-field-full {
-    @apply sm:col-span-2;
+    @apply grid content-start gap-5;
   }
   .profile-field-label {
     @apply mb-2 flex items-center gap-1.5 text-[13px] font-semibold text-ink;
   }
   .profile-input--mismatch {
     @apply border-bad! ring-2 ring-bad/10;
+  }
+  /* Larger, evenly spaced dots while a password is masked; the placeholder and
+     revealed text keep the normal size. */
+  .profile-input[type="password"]:not(:placeholder-shown) {
+    font-family: Verdana, ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.12em;
   }
   .profile-input-wrap {
     @apply relative flex items-center;
@@ -1510,9 +1656,6 @@ body {
   }
   .profile-mismatch-text {
     @apply mt-2 text-xs text-bad;
-  }
-  .profile-callout {
-    @apply flex items-center gap-2.5 rounded-[10px] bg-info-bg px-3.5 py-3 text-[13px] text-info sm:col-span-2;
   }
   .profile-actions-row {
     @apply flex flex-col-reverse items-stretch justify-between gap-3 sm:flex-row sm:items-center;
@@ -1557,7 +1700,7 @@ body {
     width: 150%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background-color: var(--color-accent);
+    background-color: var(--color-ink);
     pointer-events: none;
     transform: translate(-50%, -50%) scale(0);
     transition: transform 600ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -1565,10 +1708,10 @@ body {
 
   @media (hover: hover) and (pointer: fine) {
     .action-fill:not(:disabled):hover {
-      border-color: var(--color-accent);
+      border-color: var(--color-ink);
       background-color: transparent;
-      color: var(--color-accent-ink);
-      box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
       transform: scale(1.05);
     }
     .action-fill:not(:disabled):hover::before {
@@ -1578,8 +1721,8 @@ body {
   .action-fill:not(:disabled):focus-visible {
     border-color: var(--color-ink);
     background-color: transparent;
-    color: var(--color-accent-ink);
-    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-ink) 25%, transparent);
   }
   .action-fill:not(:disabled):focus-visible::before {
     transform: translate(-50%, -50%) scale(1);
@@ -1591,6 +1734,107 @@ body {
   .action-fill:disabled::before {
     transform: translate(-50%, -50%) scale(0);
   }
+
+  /* Decision buttons (confirm, save, cancel in dialogs and editors) keep the
+     lime fill; everything else fills black. */
+  .action-fill.action-fill--accent::before {
+    background-color: var(--color-accent);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--accent:not(:disabled):hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-ink);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--accent:not(:disabled):focus-visible {
+    color: var(--color-accent-ink);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  }
+
+  /* Same motion for destructive actions: solid red, deepening on hover. */
+  .action-fill.action-fill--danger:not(:disabled) {
+    border-color: var(--color-bad);
+    background-color: var(--color-bad);
+    color: #fff;
+  }
+  .action-fill.action-fill--danger::before {
+    background-color: var(--color-bad-deep);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger:not(:disabled):hover {
+      border-color: var(--color-bad-deep);
+      background-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger:not(:disabled):focus-visible {
+    border-color: var(--color-bad-deep);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
+  /* Outlined destructive actions (delete room, end meeting): red outline at
+     rest, filling red on hover. */
+  .action-fill.action-fill--danger-outline:not(:disabled) {
+    border-color: var(--color-bad);
+    color: var(--color-bad);
+  }
+  .action-fill.action-fill--danger-outline::before {
+    background-color: var(--color-bad);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger-outline:not(:disabled):hover {
+      border-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger-outline:not(:disabled):focus-visible {
+    border-color: var(--color-bad);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
+  /* Neutral outline at rest, filling red on hover (e.g. Cancel on edit profile). */
+  .action-fill.action-fill--danger-hover::before {
+    background-color: var(--color-bad);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger-hover:not(:disabled):hover {
+      border-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger-hover:not(:disabled):focus-visible {
+    border-color: var(--color-bad);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
+  /* Log out on the dark sidebar: light outline at rest, filling red on hover. */
+  .action-fill.action-fill--night-danger:not(:disabled) {
+    border-color: var(--color-night-line-2);
+    color: #e9ece8;
+  }
+  .action-fill.action-fill--night-danger::before {
+    background-color: var(--color-bad-solid);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--night-danger:not(:disabled):hover {
+      border-color: var(--color-bad-solid);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--night-danger:not(:disabled):focus-visible {
+    border-color: var(--color-bad-solid);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .action-fill {
       transform: none;

@@ -27,3 +27,19 @@ export function normalizeGeneratedSummary(raw: unknown, maxChars = MAX_SUMMARY_C
   }
   return { ok: true, text };
 }
+
+export type NormalizedEditedSummary =
+  | { ok: true; text: string }
+  | { ok: false; reason: "EMPTY" | "TOO_LONG"; message: string };
+
+/** Validates a host-edited summary; the same length limit as generated output applies. */
+export function normalizeEditedSummary(raw: string, maxChars = MAX_SUMMARY_CHARS): NormalizedEditedSummary {
+  const text = raw.replace(/\r\n?/g, "\n").trim();
+  if (text.length === 0) {
+    return { ok: false, reason: "EMPTY", message: "The edited summary is empty." };
+  }
+  if (text.length > maxChars) {
+    return { ok: false, reason: "TOO_LONG", message: "The edited summary exceeds the maximum length." };
+  }
+  return { ok: true, text };
+}

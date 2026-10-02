@@ -13,6 +13,7 @@ model User {
   email     String   @unique
   password  String
   fullname  String   @default("")
+  avatarKey String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

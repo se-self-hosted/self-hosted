@@ -56,9 +56,21 @@ export async function GET(
       headers.set("Content-Length", String(object.ContentLength));
     }
     if (object.ContentRange) headers.set("Content-Range", object.ContentRange);
+    // ?download=1 saves the file instead of opening it in the browser.
+    if (new URL(req.url).searchParams.get("download") === "1") {
+      headers.set("Content-Disposition", contentDisposition(recording.fileName));
+    }
     return new NextResponse(object.Body, { status: object.status, headers });
   } catch (error) {
     console.error("Recording Playback Error:", error);
     return NextResponse.json({ error: "Unable to play recording" }, { status: 500 });
   }
+}
+
+/** Attachment header with an ASCII fallback name plus the UTF-8 original (RFC 6266). */
+function contentDisposition(fileName: string): string {
+  const name = fileName.trim() || "recording";
+  const fallback = name.replace(/[^\x20-\x7e]|["\\]/g, "_");
+  const encoded = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }

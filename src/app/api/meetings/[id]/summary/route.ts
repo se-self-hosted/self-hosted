@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveMeetingAccess } from "@/lib/meeting-access";
-import { summarizeMeeting } from "@/lib/meeting-summary";
+import { saveEditedSummary, summarizeMeeting } from "@/lib/meeting-summary";
 import {
   createOpenAISummaryGenerator,
   DEFAULT_SUMMARY_MODEL,
   httpStatusForSummaryAIError,
 } from "@/features/ai-summary/lib/openai-summary";
+import { normalizeEditedSummary } from "@/features/ai-summary/lib/summary-output";
 
 // Long transcripts are summarized in several sequential model calls.
 export const maxDuration = 300;
@@ -15,6 +16,45 @@ const generateSummarySchema = z.object({
   /** Regenerating keeps the host's edited version unless this is set. */
   discardEdits: z.boolean().optional().default(false),
 });
+
+const editSummarySchema = z.object({
+  /** The edited Markdown, or null to go back to the AI version. */
+  editedSummary: z.string().nullable(),
+  /** The version the edit was based on, for conflict detection. */
+  baseGeneratedAt: z.iso.datetime(),
+  baseEditedAt: z.iso.datetime().nullable(),
+});
+
+type StoredSummary = {
+  id: string;
+  aiSummary: string;
+  editedSummary: string | null;
+  llmModel: string;
+  generatedAt: Date;
+  editedAt: Date | null;
+};
+
+function serializeSummary(summary: StoredSummary) {
+  return {
+    id: summary.id,
+    aiSummary: summary.aiSummary,
+    editedSummary: summary.editedSummary,
+    llmModel: summary.llmModel,
+    generatedAt: summary.generatedAt,
+    editedAt: summary.editedAt,
+  };
+}
+
+/** An empty body reads as {}; anything else must be JSON. */
+async function readJsonBody(req: Request): Promise<{ ok: true; json: unknown } | { ok: false }> {
+  const rawBody = await req.text();
+  if (!rawBody.trim()) return { ok: true, json: {} };
+  try {
+    return { ok: true, json: JSON.parse(rawBody) };
+  } catch {
+    return { ok: false };
+  }
+}
 
 // One generation per meeting at a time in this process, so a double click or
 // a second tab doesn't pay for the same summary twice, and a pause between
@@ -46,16 +86,11 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const rawBody = await req.text();
-    let json: unknown = {};
-    if (rawBody.trim()) {
-      try {
-        json = JSON.parse(rawBody);
-      } catch {
-        return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-      }
+    const parsed = await readJsonBody(req);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
-    const body = generateSummarySchema.safeParse(json);
+    const body = generateSummarySchema.safeParse(parsed.json);
     if (!body.success) {
       return NextResponse.json({ error: body.error.issues[0].message }, { status: 400 });
     }
@@ -89,19 +124,8 @@ export async function POST(
       }
 
       switch (result.status) {
-        case "saved": {
-          const { summary } = result;
-          return NextResponse.json({
-            summary: {
-              id: summary.id,
-              aiSummary: summary.aiSummary,
-              editedSummary: summary.editedSummary,
-              llmModel: summary.llmModel,
-              generatedAt: summary.generatedAt,
-              editedAt: summary.editedAt,
-            },
-          });
-        }
+        case "saved":
+          return NextResponse.json({ summary: serializeSummary(result.summary) });
         case "not_found":
           return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
         case "rejected":
@@ -124,6 +148,62 @@ export async function POST(
     }
   } catch (error) {
     console.error("Meeting Summary POST Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/** FR-15: the host saves an edited summary, or reverts to the AI version. */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: meetingId } = await params;
+
+  try {
+    const access = await resolveMeetingAccess(meetingId);
+    if (!access.meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+    if (!access.isHost) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const parsed = await readJsonBody(req);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const body = editSummarySchema.safeParse(parsed.json);
+    if (!body.success) {
+      return NextResponse.json({ error: body.error.issues[0].message }, { status: 400 });
+    }
+
+    let content: string | null = null;
+    if (body.data.editedSummary !== null) {
+      const normalized = normalizeEditedSummary(body.data.editedSummary);
+      if (!normalized.ok) {
+        return NextResponse.json({ error: normalized.message, code: `SUMMARY_${normalized.reason}` }, { status: 422 });
+      }
+      content = normalized.text;
+    }
+
+    const result = await saveEditedSummary(meetingId, content, {
+      generatedAt: new Date(body.data.baseGeneratedAt),
+      editedAt: body.data.baseEditedAt === null ? null : new Date(body.data.baseEditedAt),
+    });
+
+    switch (result.status) {
+      case "saved":
+        return NextResponse.json({ summary: serializeSummary(result.summary) });
+      case "not_found":
+        return NextResponse.json({ error: "This meeting has no summary yet", code: "SUMMARY_NOT_FOUND" }, { status: 404 });
+      case "conflict":
+        return NextResponse.json(
+          { error: "The summary changed since editing started", code: "SUMMARY_CONFLICT" },
+          { status: 409 },
+        );
+    }
+  } catch (error) {
+    console.error("Meeting Summary PATCH Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

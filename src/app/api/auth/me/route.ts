@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyJwtToken } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { accountUserSelect, toAccountUser } from "@/lib/account";
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value;
@@ -18,21 +19,14 @@ export async function GET(req: NextRequest) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: payload.sub as string },
-      select: { id: true, email: true, fullname: true, createdAt: true },
+      select: accountUserSelect,
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        fullname: user.fullname,
-        createdAt: user.createdAt,
-      },
-    }, { status: 200 });
+    return NextResponse.json({ user: toAccountUser(user) }, { status: 200 });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -30,7 +30,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { AppSidebar } from "@/components/app-shell/AppSidebar";
 import Link from "next/link";
 import { MeetingSummaryDisplay } from "@/features/meeting-history/components/MeetingSummaryDisplay";
-import { requestMeetingSummary } from "@/features/meeting-history/summary";
+import { requestMeetingSummary, saveMeetingSummaryEdit } from "@/features/meeting-history/summary";
 
 type Room = {
   id: string;
@@ -273,6 +273,14 @@ export default function DashboardPage() {
     setMeetings((previous) =>
       previous.map((meeting) => (meeting.id === meetingId ? { ...meeting, hasSummary: true } : meeting)),
     );
+  };
+
+  /** Saves the host's edit, or reverts to the AI version when `content` is null. */
+  const saveMeetingSummary = async (content: string | null) => {
+    if (!meetingDetails?.summary) return;
+    const meetingId = meetingDetails.id;
+    const summary = await saveMeetingSummaryEdit(meetingId, meetingDetails.summary, content);
+    setMeetingDetails((previous) => (previous?.id === meetingId ? { ...previous, summary } : previous));
   };
 
   const closeMeetingDetails = () => {
@@ -617,7 +625,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <LiveClock />
-                  <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
+                  <button type="button" onClick={openCreateModal} className="dashboard__create-btn action-fill focus-ring">
                     <Plus aria-hidden="true" className="icon-18" strokeWidth={2} />
                     สร้างห้องประชุม
                   </button>
@@ -662,7 +670,7 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => copyRoomLink(room.id, room.slug)}
-                          className="room-card__copy-btn action-fill focus-ring"
+                          className="room-card__copy-btn action-fill action-fill--accent focus-ring"
                         >
                           {wasCopied ? (
                             <Check aria-hidden="true" className="icon-16 room-card__copy-icon" />
@@ -704,7 +712,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={loadMeetingsHistory}
                   disabled={loadingMeetings}
-                  className="btn btn--secondary text-sm focus-ring"
+                  className="btn btn--secondary text-sm action-fill focus-ring"
                 >
                   <RotateCcw aria-hidden="true" className={`icon-16 ${loadingMeetings ? "animate-spin" : ""}`} />
                   รีเฟรช
@@ -837,7 +845,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => selectedMeetingId && void openMeetingDetails(selectedMeetingId)}
-                    className="btn btn--primary btn--sm focus-ring"
+                    className="btn btn--primary btn--sm action-fill focus-ring"
                   >
                     ลองอีกครั้ง
                   </button>
@@ -970,10 +978,8 @@ export default function DashboardPage() {
 
                       <div className="player__footer">
                         <a
-                          href={
-                            meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl
-                          }
-                          download
+                          href={`${meetingDetails.recordings[selectedRecordingIndex]?.playbackUrl}?download=1`}
+                          download={meetingDetails.recordings[selectedRecordingIndex]?.fileName}
                           className="player__download"
                         >
                           <Download aria-hidden="true" className="icon-16" strokeWidth={1.8} />
@@ -996,6 +1002,8 @@ export default function DashboardPage() {
                       participantNames={meetingDetails.participants.map((p) => p.displayName)}
                       showRegenerate={meetingDetails.isHost}
                       onRegenerate={meetingDetails.isHost ? regenerateMeetingSummary : undefined}
+                      onSave={meetingDetails.isHost ? saveMeetingSummary : undefined}
+                      onRevertToAi={meetingDetails.isHost ? () => saveMeetingSummary(null) : undefined}
                     />
                   )}
 
@@ -1153,16 +1161,20 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={deleteSelectedRoom}
-                    className="modal__delete-btn focus-ring-danger"
+                    className="modal__delete-btn action-fill action-fill--danger-outline focus-ring-danger"
                   >
                     <Trash2 aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                     ลบห้อง
                   </button>
                 )}
-                <button type="button" onClick={closeModal} className="modal__cancel-btn action-fill focus-ring">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="modal__cancel-btn action-fill action-fill--danger-outline focus-ring-danger"
+                >
                   ยกเลิก
                 </button>
-                <button type="submit" className="modal__submit-btn action-fill focus-ring">
+                <button type="submit" className="modal__submit-btn action-fill action-fill--accent focus-ring">
                   {modalMode === "create" && <Plus aria-hidden="true" className="icon-16" strokeWidth={1.8} />}
                   {modalMode === "create" ? "สร้างห้อง" : "บันทึก"}
                 </button>

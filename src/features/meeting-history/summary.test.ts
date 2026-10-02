@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 // @ts-expect-error Node's type-stripper requires an explicit TypeScript extension.
-import { buildMeetingReport, canStartSummaryRegeneration, createSummaryReportFilename, formatMeetingReportHtml, formatMeetingReportMarkdown, formatMeetingReportText, formatReportDuration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, parseSummaryMarkdown, requestMeetingSummary, summaryMarkdownToHtml, summaryMarkdownToText, selectMeetingSummaryContent } from "./summary.ts";
+import { buildMeetingReport, canStartSummaryRegeneration, createSummaryReportFilename, formatMeetingReportHtml, formatMeetingReportMarkdown, formatMeetingReportText, formatReportDuration, canSubmitSummaryDraft, createSummaryPdfFilename, getSummaryDraftState, getSummaryErrorMessage, getSummaryRegenerationCompletionStatus, getSummarySaveErrorMessage, MAX_EDITED_SUMMARY_CHARS, parseSummaryMarkdown, requestMeetingSummary, saveMeetingSummaryEdit, summaryMarkdownToHtml, summaryMarkdownToText, selectMeetingSummaryContent } from "./summary.ts";
 
 const baseSummary = {
   id: "summary-1",
@@ -46,6 +46,7 @@ test("marks an unchanged draft as not changed", () => {
   assert.deepEqual(getSummaryDraftState("Original summary", "Original summary"), {
     hasChanges: false,
     hasContent: true,
+    isTooLong: false,
   });
   assert.equal(canSubmitSummaryDraft("Original summary", "Original summary", true), false);
 });
@@ -54,6 +55,7 @@ test("rejects a whitespace-only draft", () => {
   assert.deepEqual(getSummaryDraftState("Original summary", "  \n\t"), {
     hasChanges: true,
     hasContent: false,
+    isTooLong: false,
   });
   assert.equal(canSubmitSummaryDraft("Original summary", "  \n\t", true), false);
 });
@@ -64,8 +66,19 @@ test("accepts changed multiline Thai and English content", () => {
   assert.deepEqual(getSummaryDraftState("Original summary", draft), {
     hasChanges: true,
     hasContent: true,
+    isTooLong: false,
   });
   assert.equal(canSubmitSummaryDraft("Original summary", draft, true), true);
+});
+
+test("rejects a draft over the length limit, ignoring surrounding whitespace", () => {
+  const atLimit = `  ${"ก".repeat(MAX_EDITED_SUMMARY_CHARS)}\n`;
+  const overLimit = "ก".repeat(MAX_EDITED_SUMMARY_CHARS + 1);
+
+  assert.equal(getSummaryDraftState("Original summary", atLimit).isTooLong, false);
+  assert.equal(canSubmitSummaryDraft("Original summary", atLimit, true), true);
+  assert.equal(getSummaryDraftState("Original summary", overLimit).isTooLong, true);
+  assert.equal(canSubmitSummaryDraft("Original summary", overLimit, true), false);
 });
 
 test("does not submit a valid change while persistence is unavailable", () => {
@@ -277,4 +290,52 @@ test("renders summary Markdown to escaped HTML", () => {
     html,
     "<h2>&lt;img src=x onerror=alert(1)&gt;</h2>\n<ul><li><strong>&lt;b&gt;bold&lt;/b&gt;</strong></li></ul>\n<p>text <code>&lt;i&gt;</code></p>",
   );
+});
+
+test("saves an edit with the version it was based on", async () => {
+  let request: { url: string; method?: string; body: unknown } | undefined;
+  const saved = { ...baseSummary, editedSummary: "Edited", editedAt: "2026-09-26T10:00:00.000Z" };
+  const fetchStub = (async (url: string, init: RequestInit) => {
+    request = { url, method: init.method, body: JSON.parse(String(init.body)) };
+    return new Response(JSON.stringify({ summary: saved }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  assert.deepEqual(await saveMeetingSummaryEdit("m 1", baseSummary, "Edited", fetchStub), saved);
+  assert.deepEqual(request, {
+    url: "/api/meetings/m%201/summary",
+    method: "PATCH",
+    body: { editedSummary: "Edited", baseGeneratedAt: baseSummary.generatedAt, baseEditedAt: null },
+  });
+});
+
+test("reverts to the AI version by sending a null edit", async () => {
+  let body: unknown;
+  const edited = { ...baseSummary, editedSummary: "Edited", editedAt: "2026-09-26T10:00:00.000Z" };
+  const fetchStub = (async (_url: string, init: RequestInit) => {
+    body = JSON.parse(String(init.body));
+    return new Response(JSON.stringify({ summary: baseSummary }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+  assert.deepEqual(await saveMeetingSummaryEdit("m1", edited, null, fetchStub), baseSummary);
+  assert.deepEqual(body, {
+    editedSummary: null,
+    baseGeneratedAt: edited.generatedAt,
+    baseEditedAt: edited.editedAt,
+  });
+});
+
+test("turns a failed save into a user-facing message", async () => {
+  const conflict = (async () =>
+    new Response(JSON.stringify({ error: "x", code: "SUMMARY_CONFLICT" }), { status: 409 })) as unknown as typeof fetch;
+  await assert.rejects(saveMeetingSummaryEdit("m1", baseSummary, "Edited", conflict), {
+    message: getSummarySaveErrorMessage("SUMMARY_CONFLICT"),
+  });
+
+  const offline = (async () => {
+    throw new TypeError("fetch failed");
+  }) as unknown as typeof fetch;
+  await assert.rejects(saveMeetingSummaryEdit("m1", baseSummary, "Edited", offline), /เชื่อมต่อเซิร์ฟเวอร์/);
+
+  assert.match(getSummarySaveErrorMessage("SUMMARY_CONFLICT"), /โหลดหน้าใหม่/);
+  assert.equal(getSummarySaveErrorMessage("SOMETHING_NEW"), getSummarySaveErrorMessage(undefined));
 });

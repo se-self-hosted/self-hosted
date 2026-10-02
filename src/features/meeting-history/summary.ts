@@ -8,7 +8,11 @@ export type DisplayedMeetingSummary = {
 export type SummaryDraftState = {
   hasChanges: boolean;
   hasContent: boolean;
+  isTooLong: boolean;
 };
+
+/** Mirrors MAX_SUMMARY_CHARS on the server, which enforces it. */
+export const MAX_EDITED_SUMMARY_CHARS = 20_000;
 
 export type SummaryRegenerationStatus = "idle" | "regenerating" | "error";
 
@@ -31,9 +35,11 @@ export function getSummaryDraftState(
   originalContent: string,
   draftContent: string,
 ): SummaryDraftState {
+  const trimmed = draftContent.trim();
   return {
     hasChanges: draftContent !== originalContent,
-    hasContent: draftContent.trim().length > 0,
+    hasContent: trimmed.length > 0,
+    isTooLong: trimmed.length > MAX_EDITED_SUMMARY_CHARS,
   };
 }
 
@@ -43,7 +49,7 @@ export function canSubmitSummaryDraft(
   persistenceAvailable: boolean,
 ): boolean {
   const state = getSummaryDraftState(originalContent, draftContent);
-  return persistenceAvailable && state.hasChanges && state.hasContent;
+  return persistenceAvailable && state.hasChanges && state.hasContent && !state.isTooLong;
 }
 
 export function canStartSummaryRegeneration(
@@ -238,6 +244,21 @@ const SUMMARY_ERROR_MESSAGES: Record<string, string> = {
   SUMMARY_COOLDOWN: "เพิ่งสร้างสรุปไป กรุณารอสักครู่แล้วลองอีกครั้ง",
 };
 
+const SUMMARY_SAVE_ERROR_MESSAGES: Record<string, string> = {
+  SUMMARY_EMPTY: "กรุณากรอกเนื้อหาสรุปการประชุม",
+  SUMMARY_TOO_LONG: `สรุปการประชุมยาวเกิน ${MAX_EDITED_SUMMARY_CHARS.toLocaleString("en-US")} ตัวอักษร`,
+  SUMMARY_NOT_FOUND: "ไม่พบสรุปการประชุมนี้ กรุณาโหลดหน้าใหม่",
+  SUMMARY_CONFLICT:
+    "สรุปนี้ถูกแก้ไขหรือสร้างใหม่จากที่อื่นระหว่างที่คุณแก้ไข กรุณาคัดลอกข้อความที่แก้ไว้ แล้วโหลดหน้าใหม่เพื่อดูฉบับล่าสุด",
+};
+
+const DEFAULT_SUMMARY_SAVE_ERROR_MESSAGE = "ไม่สามารถบันทึกสรุปการประชุมได้ กรุณาลองอีกครั้ง";
+
+/** Thai message for an error code from PATCH /api/meetings/[id]/summary. */
+export function getSummarySaveErrorMessage(code: unknown): string {
+  return (typeof code === "string" && SUMMARY_SAVE_ERROR_MESSAGES[code]) || DEFAULT_SUMMARY_SAVE_ERROR_MESSAGE;
+}
+
 const DEFAULT_SUMMARY_ERROR_MESSAGE = "ไม่สามารถสร้างสรุปการประชุมได้ กรุณาลองอีกครั้ง";
 
 /** Thai message for an error code from POST /api/meetings/[id]/summary. */
@@ -268,6 +289,40 @@ export async function requestMeetingSummary(
   const data = (await response.json().catch(() => null)) as { summary?: MeetingSummary; code?: unknown } | null;
   if (!response.ok || !data?.summary) {
     throw new Error(getSummaryErrorMessage(data?.code));
+  }
+  return data.summary;
+}
+
+/**
+ * Saves the host's edited summary, or reverts to the AI version when
+ * `editedSummary` is null. `base` is the summary the edit started from, so the
+ * server can refuse the save if it changed in the meantime. Resolves with the
+ * stored summary; rejects with a user-facing Thai message.
+ */
+export async function saveMeetingSummaryEdit(
+  meetingId: string,
+  base: Pick<MeetingSummary, "generatedAt" | "editedAt">,
+  editedSummary: string | null,
+  fetchImpl: typeof fetch = fetch,
+): Promise<MeetingSummary> {
+  let response: Response;
+  try {
+    response = await fetchImpl(`/api/meetings/${encodeURIComponent(meetingId)}/summary`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        editedSummary,
+        baseGeneratedAt: base.generatedAt,
+        baseEditedAt: base.editedAt,
+      }),
+    });
+  } catch {
+    throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง");
+  }
+
+  const data = (await response.json().catch(() => null)) as { summary?: MeetingSummary; code?: unknown } | null;
+  if (!response.ok || !data?.summary) {
+    throw new Error(getSummarySaveErrorMessage(data?.code));
   }
   return data.summary;
 }

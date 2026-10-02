@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { comparePassword, signJwtToken } from "@/lib/auth";
+import { toAccountUser } from "@/lib/account";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     const token = await signJwtToken({ sub: user.id, email: user.email });
 
     const response = NextResponse.json(
-      { user: { id: user.id, email: user.email, fullname: user.fullname } },
+      { user: toAccountUser(user) },
       { status: 200 }
     );
 

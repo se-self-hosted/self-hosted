@@ -82,6 +82,45 @@ export async function saveGeneratedSummary(
   });
 }
 
+export type SummaryVersion = { generatedAt: Date; editedAt: Date | null };
+
+export type SaveEditedSummaryResult =
+  | { status: "saved"; summary: NonNullable<Awaited<ReturnType<typeof prisma.meetingSummary.findUnique>>> }
+  | { status: "not_found" }
+  | { status: "conflict" };
+
+/**
+ * Stores the host's edited summary, or clears it (`content` null) to fall back
+ * to the AI version. Text identical to the AI version also clears the edit, so
+ * the summary isn't marked as edited when nothing differs.
+ *
+ * `expected` is the version the host started editing from. If the summary was
+ * regenerated or edited elsewhere since, nothing is written and the result is
+ * a conflict, so a stale tab can't silently overwrite newer content.
+ */
+export async function saveEditedSummary(
+  meetingId: string,
+  content: string | null,
+  expected: SummaryVersion,
+): Promise<SaveEditedSummaryResult> {
+  const current = await prisma.meetingSummary.findUnique({
+    where: { meetingId },
+    select: { aiSummary: true },
+  });
+  if (!current) return { status: "not_found" };
+
+  const editedSummary = content === null || content === current.aiSummary ? null : content;
+  const { count } = await prisma.meetingSummary.updateMany({
+    where: { meetingId, generatedAt: expected.generatedAt, editedAt: expected.editedAt },
+    data: { editedSummary, editedAt: editedSummary === null ? null : new Date() },
+  });
+
+  const summary = await prisma.meetingSummary.findUnique({ where: { meetingId } });
+  if (!summary) return { status: "not_found" };
+  if (count === 0) return { status: "conflict" };
+  return { status: "saved", summary };
+}
+
 /**
  * Loads, validates and prepares the transcript, and only calls the generator
  * when there is real content. Nothing is written for a rejected transcript,

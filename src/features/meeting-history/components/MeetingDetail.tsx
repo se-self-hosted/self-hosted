@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Users, FileText, Video, AlertCircle, Loader2, Download, Play, Pause } from "lucide-react";
 import { MeetingSummaryDisplay } from "./MeetingSummaryDisplay";
-import { requestMeetingSummary } from "../summary";
+import { requestMeetingSummary, saveMeetingSummaryEdit } from "../summary";
 import type { MeetingSummary } from "../types";
 
 type Session = {
@@ -97,32 +97,7 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
   } | null>(null);
   const trackedMediaRef = useRef<HTMLMediaElement | null>(null);
 
-  function findRecordingForSegment(seg: TranscriptSegment): Recording | null {
-    if (!meeting) return null;
-
-    // Each participant records only their own mic, so a segment can only ever
-    // live in that same participant's recording(s) — never fall back to
-    // another speaker's file just because its time window happens to
-    // overlap; that plays the wrong person's voice.
-    const ownTracks = meeting.recordings.filter(
-      (r) => r.participantId === seg.participantId && r.startOffsetSeconds !== null,
-    );
-    if (ownTracks.length === 0) return null;
-
-    const containing = ownTracks.find(
-      (r) =>
-        seg.startTime >= r.startOffsetSeconds! &&
-        (r.durationSeconds == null || seg.startTime <= r.startOffsetSeconds! + r.durationSeconds),
-    );
-    if (containing) return containing;
-
-    const before = ownTracks
-      .filter((r) => r.startOffsetSeconds! <= seg.startTime)
-      .sort((a, b) => b.startOffsetSeconds! - a.startOffsetSeconds!)[0];
-    return before || ownTracks[0];
-  }
-
-  // Plays quietly behind the transcript — no player UI takes over the page,
+  // Plays quietly — no player UI takes over the page,
   // just a small floating bar (below) that mirrors whatever is playing.
   function trackNowPlaying(recording: Recording, media: HTMLMediaElement) {
     if (trackedMediaRef.current && trackedMediaRef.current !== media) {
@@ -147,23 +122,6 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
     media.ontimeupdate = sync;
     media.onended = sync;
     sync();
-  }
-
-  function playSegment(seg: TranscriptSegment) {
-    const recording = findRecordingForSegment(seg);
-    if (!recording) return;
-    const media = mediaRefs.current[recording.id];
-    if (!media) return;
-    const target = Math.max(0, seg.startTime - (recording.startOffsetSeconds ?? 0));
-    // A stale/underestimated durationSeconds can let a segment match a
-    // recording it doesn't actually fall inside of; without this clamp the
-    // browser silently snaps an out-of-range currentTime to the file's very
-    // end instead of erroring, which looks like "it plays right at the end".
-    media.currentTime = Number.isFinite(media.duration) && media.duration > 0
-      ? Math.min(target, Math.max(0, media.duration - 0.05))
-      : target;
-    trackNowPlaying(recording, media);
-    void media.play();
   }
 
   function toggleNowPlayingPause() {
@@ -219,6 +177,13 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
 
   async function regenerateSummary({ discardEdits }: { discardEdits: boolean }) {
     const summary = await requestMeetingSummary(meetingId, { discardEdits });
+    setMeeting((previous) => (previous ? { ...previous, summary } : previous));
+  }
+
+  /** Saves the host's edit, or reverts to the AI version when `content` is null. */
+  async function saveSummaryEdit(content: string | null) {
+    if (!meeting?.summary) return;
+    const summary = await saveMeetingSummaryEdit(meetingId, meeting.summary, content);
     setMeeting((previous) => (previous ? { ...previous, summary } : previous));
   }
 
@@ -320,46 +285,36 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
         participantNames={meeting.participants.map((p) => p.displayName)}
         showRegenerate={meeting.isHost}
         onRegenerate={meeting.isHost ? regenerateSummary : undefined}
+        onSave={meeting.isHost ? saveSummaryEdit : undefined}
+        onRevertToAi={meeting.isHost ? () => saveSummaryEdit(null) : undefined}
       />
 
       {/* 4. Transcript */}
       {meeting.transcript && (
         <section className="card p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FileText className="icon-20" /> Transcript
-          </h3>
-          <div className="transcript-segments">
-            {meeting.transcript.segments.map((seg) => {
-              const playable = findRecordingForSegment(seg) !== null;
-              return (
-                <div
-                  key={seg.id}
-                  className={`transcript-segment${playable ? " transcript-segment--playable" : ""}`}
-                  role={playable ? "button" : undefined}
-                  tabIndex={playable ? 0 : undefined}
-                  title={playable ? "คลิกเพื่อฟังเสียงที่บันทึกไว้ ณ จุดนี้" : undefined}
-                  onClick={playable ? () => playSegment(seg) : undefined}
-                  onKeyDown={
-                    playable
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            playSegment(seg);
-                          }
-                        }
-                      : undefined
-                  }
-                >
-                  <div className="transcript-segment__time">
-                    {formatTimestamp(seg.startTime)}
-                  </div>
-                  <div>
-                    <strong className="transcript-segment__speaker">{seg.speakerName}</strong>
-                    <p className="transcript-segment__text">{seg.text}</p>
-                  </div>
+          <div className="transcript-card__header">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="icon-20" /> Transcript
+            </h3>
+            <span className="transcript-card__count">
+              {meeting.transcript.segments.length.toLocaleString("en-US")} ข้อความ
+            </span>
+          </div>
+          <div
+            className="transcript-segments"
+            role="region"
+            aria-label="บทสนทนาการประชุม"
+            tabIndex={0}
+          >
+            {meeting.transcript.segments.map((seg) => (
+              <div key={seg.id} className="transcript-segment">
+                <div className="transcript-segment__time">{formatTimestamp(seg.startTime)}</div>
+                <div>
+                  <strong className="transcript-segment__speaker">{seg.speakerName}</strong>
+                  <p className="transcript-segment__text">{seg.text}</p>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -416,9 +371,8 @@ export function MeetingDetail({ meetingId }: MeetingDetailProps) {
                       <p role="alert" className="text-sm text-red-600">{playbackErrors[rec.id]}</p>
                     )}
                     <a
-                      href={rec.playbackUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`${rec.playbackUrl}?download=1`}
+                      download={rec.fileName}
                       className="recordings-list__download action-fill"
                     >
                       <Download className="icon-16" /> ดาวน์โหลด
