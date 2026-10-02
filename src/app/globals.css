@@ -1528,8 +1528,12 @@ body {
   }
 
   /* ---------- shared center-out action fill ---------- */
-  .action-fill {
+  /* Zero specificity so a component's own positioning (e.g. the absolute
+     lobby back button) wins; any non-static position contains ::before. */
+  :where(.action-fill) {
     position: relative;
+  }
+  .action-fill {
     z-index: 0;
     isolation: isolate;
     overflow: hidden;
