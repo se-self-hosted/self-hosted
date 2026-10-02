@@ -1870,6 +1870,10 @@ body {
   .recordings-list {
     @apply flex flex-col divide-y divide-line-soft;
   }
+  /* Per-speaker files: no dividers, so they read as one group under the mixed takes. */
+  .recordings-list--plain {
+    @apply divide-y-0;
+  }
   .recordings-list__item {
     @apply flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between;
   }
@@ -1886,13 +1890,41 @@ body {
     @apply max-h-40 rounded-lg;
   }
   .recordings-list__play-btn {
-    @apply inline-flex size-10 items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-95;
+    @apply inline-flex size-10 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-95;
+  }
+  .recordings-list__play-btn--active {
+    @apply w-36 gap-1.5 px-4 text-sm font-semibold;
+  }
+  .recordings-list__play-now,
+  .recordings-list__play-stop {
+    @apply inline-flex items-center gap-1.5;
+  }
+  .recordings-list__play-stop,
+  .recordings-list__play-btn--active:hover .recordings-list__play-now,
+  .recordings-list__play-btn--active:focus-visible .recordings-list__play-now {
+    @apply hidden;
+  }
+  .recordings-list__play-btn--active:hover .recordings-list__play-stop,
+  .recordings-list__play-btn--active:focus-visible .recordings-list__play-stop {
+    @apply inline-flex;
+  }
+  .recordings-list__play-btn:disabled {
+    @apply cursor-wait opacity-70 hover:brightness-100;
+  }
+  .recordings-list__status {
+    @apply text-xs text-muted;
+  }
+  .recordings-group__title {
+    @apply mb-2 text-sm font-semibold text-muted;
+  }
+  .recordings-group__title--next {
+    @apply mt-6;
   }
   .now-playing-bar {
     @apply fixed bottom-4 left-1/2 z-40 flex w-[min(92vw,28rem)] -translate-x-1/2 items-center gap-3 rounded-full bg-night px-4 py-2 text-sm text-night-strong shadow-[0_12px_32px_rgba(27,29,28,0.3)];
   }
   .now-playing-bar__toggle {
-    @apply inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-95;
+    @apply inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-95;
   }
   .now-playing-bar__speaker {
     @apply shrink-0 truncate font-medium;
