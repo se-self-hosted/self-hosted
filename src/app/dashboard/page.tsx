@@ -625,7 +625,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <LiveClock />
-                  <button type="button" onClick={openCreateModal} className="dashboard__create-btn focus-ring">
+                  <button type="button" onClick={openCreateModal} className="dashboard__create-btn action-fill focus-ring">
                     <Plus aria-hidden="true" className="icon-18" strokeWidth={2} />
                     สร้างห้องประชุม
                   </button>
@@ -712,7 +712,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={loadMeetingsHistory}
                   disabled={loadingMeetings}
-                  className="btn btn--secondary text-sm focus-ring"
+                  className="btn btn--secondary text-sm action-fill focus-ring"
                 >
                   <RotateCcw aria-hidden="true" className={`icon-16 ${loadingMeetings ? "animate-spin" : ""}`} />
                   รีเฟรช
@@ -845,7 +845,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => selectedMeetingId && void openMeetingDetails(selectedMeetingId)}
-                    className="btn btn--primary btn--sm focus-ring"
+                    className="btn btn--primary btn--sm action-fill focus-ring"
                   >
                     ลองอีกครั้ง
                   </button>
@@ -1163,7 +1163,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={deleteSelectedRoom}
-                    className="modal__delete-btn focus-ring-danger"
+                    className="modal__delete-btn action-fill action-fill--danger-outline focus-ring-danger"
                   >
                     <Trash2 aria-hidden="true" className="icon-16" strokeWidth={1.8} />
                     ลบห้อง

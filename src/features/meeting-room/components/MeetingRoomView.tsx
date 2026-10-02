@@ -1123,7 +1123,7 @@ export function MeetingRoomView({
                   type="button"
                   onClick={requestMicrophonePermission}
                   disabled={isJoining}
-                  className="btn btn--secondary btn--sm focus-ring shrink-0"
+                  className="btn btn--secondary btn--sm action-fill focus-ring shrink-0"
                 >
                   ตรวจสอบ
                 </button>
@@ -1137,7 +1137,7 @@ export function MeetingRoomView({
                   type="button"
                   onClick={requestMicrophonePermission}
                   disabled={isJoining}
-                  className="meeting-lobby__mic-retry"
+                  className="meeting-lobby__mic-retry action-fill focus-ring"
                 >
                   ขอสิทธิ์ไมโครโฟนอีกครั้ง
                 </button>
@@ -1514,7 +1514,7 @@ export function MeetingRoomView({
               <>
                 <span aria-hidden="true" className="live-transcript__dot bg-bad" />
                 <span className="flex-1 text-muted">ไมค์ของคุณปิดอยู่ จึงไม่ถูกถอดเสียง</span>
-                <button type="button" onClick={toggleMicrophone} className="btn btn--secondary btn--sm focus-ring">
+                <button type="button" onClick={toggleMicrophone} className="btn btn--secondary btn--sm action-fill focus-ring">
                   เปิดไมค์
                 </button>
               </>
@@ -1597,7 +1597,7 @@ export function MeetingRoomView({
               type="button"
               onClick={handleHostEndRoom}
               title="ปิดการประชุมสำหรับทุกคน"
-              className="meeting-control__end focus-ring-danger"
+              className="meeting-control__end action-fill action-fill--danger-outline focus-ring-danger"
             >
               <CircleStop aria-hidden="true" className="icon-18" strokeWidth={1.8} />
               <span className="max-sm:sr-only">ปิดการประชุม</span>

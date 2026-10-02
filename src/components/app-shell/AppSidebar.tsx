@@ -39,7 +39,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               type="button"
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
-              className="sidebar__logout-mobile focus-ring-night"
+              className="sidebar__logout-mobile action-fill action-fill--night-danger focus-ring-night"
             >
               <LogOut aria-hidden="true" className="icon-18" />
             </button>
@@ -99,7 +99,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
               title="ออกจากระบบ"
-              className="sidebar__logout-desktop focus-ring-night"
+              className="sidebar__logout-desktop action-fill action-fill--night-danger focus-ring-night"
             >
               <LogOut aria-hidden="true" className="icon-18" strokeWidth={1.8} />
             </button>

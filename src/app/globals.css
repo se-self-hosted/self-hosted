@@ -119,6 +119,7 @@ body {
   .modal__submit-btn,
   .meeting-lobby__back,
   .meeting-lobby__join,
+  .meeting-lobby__mic-retry,
   .meeting-unavailable__link,
   .meeting-history__submit,
   .recordings-list__download,
@@ -151,6 +152,7 @@ body {
   .btn--secondary,
   .modal__cancel-btn,
   .meeting-lobby__back,
+  .meeting-lobby__mic-retry,
   .recordings-list__download,
   .meeting-summary__edit-btn,
   .meeting-summary__revert-btn,
@@ -166,6 +168,7 @@ body {
     @apply border-bad-line bg-surface text-bad hover:bg-bad-bg;
   }
   .btn--sm,
+  .meeting-lobby__mic-retry,
   .recordings-list__download,
   .meeting-summary__edit-btn,
   .meeting-summary__revert-btn,
@@ -403,32 +406,19 @@ body {
   .dashboard__clock {
     @apply hidden border-l border-[#dad5ca] pl-5 font-mono text-[28px] font-medium tracking-[-0.02em] sm:block;
   }
-  .dashboard__create-btn {
-    transition-property: background-color, border-color, transform;
-    transition-duration: 180ms;
-    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
-  }
   .dashboard__create-btn svg {
     transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
   }
   @media (hover: hover) and (pointer: fine) {
-    .dashboard__create-btn:hover {
-      transform: translateY(-1px);
-    }
     .dashboard__create-btn:hover svg {
-      transform: translateY(-1px) rotate(10deg);
+      transform: rotate(10deg);
     }
-  }
-  .dashboard__create-btn:active {
-    transform: translateY(1px);
-    transition-duration: 120ms;
   }
   .dashboard__create-btn:active svg {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
     transition-duration: 120ms;
   }
   @media (prefers-reduced-motion: reduce) {
-    .dashboard__create-btn,
     .dashboard__create-btn svg {
       transform: none;
       transition-duration: 0ms;
@@ -843,7 +833,7 @@ body {
     @apply pt-1 pr-2 pb-1.5 text-[13px] text-bad-deep;
   }
   .meeting-lobby__mic-retry {
-    @apply mt-1.5 block font-semibold text-ink underline underline-offset-2 hover:text-black;
+    @apply mt-2.5;
   }
   .meeting-lobby__field {
     @apply flex w-full flex-col gap-2;
@@ -1743,6 +1733,50 @@ body {
     color: #fff;
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
   }
+
+  /* Outlined destructive actions (delete room, end meeting): red outline at
+     rest, filling red on hover. */
+  .action-fill.action-fill--danger-outline:not(:disabled) {
+    border-color: var(--color-bad);
+    color: var(--color-bad);
+  }
+  .action-fill.action-fill--danger-outline::before {
+    background-color: var(--color-bad);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--danger-outline:not(:disabled):hover {
+      border-color: var(--color-bad);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--danger-outline:not(:disabled):focus-visible {
+    border-color: var(--color-bad);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
+  /* Log out on the dark sidebar: light outline at rest, filling red on hover. */
+  .action-fill.action-fill--night-danger:not(:disabled) {
+    border-color: var(--color-night-line-2);
+    color: #e9ece8;
+  }
+  .action-fill.action-fill--night-danger::before {
+    background-color: var(--color-bad-solid);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .action-fill.action-fill--night-danger:not(:disabled):hover {
+      border-color: var(--color-bad-solid);
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+    }
+  }
+  .action-fill.action-fill--night-danger:not(:disabled):focus-visible {
+    border-color: var(--color-bad-solid);
+    color: #fff;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-bad-solid) 40%, transparent);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .action-fill {
       transform: none;

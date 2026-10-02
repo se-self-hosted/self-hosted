@@ -149,7 +149,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn--primary focus-ring mt-2 h-[52px] w-full rounded-xl text-base"
+              className="btn btn--primary action-fill focus-ring mt-2 h-[52px] w-full text-base"
             >
               {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </button>
