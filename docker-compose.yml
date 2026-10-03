@@ -42,7 +42,8 @@ services:
       - redis_data:/data
 
   minio:
-    image: quay.io/minio/minio
+    # MinIO stopped publishing free images on quay.io/Docker Hub; Chainguard ships a drop-in build.
+    image: cgr.dev/chainguard/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: admin
