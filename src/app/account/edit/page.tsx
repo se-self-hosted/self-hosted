@@ -118,16 +118,16 @@ export default function EditProfilePage() {
       <main className="dashboard__main">
         <div className="profile-content">
           <div className="profile-page-header">
-            <p className="eyebrow">Account settings</p>
-            <h1 className="profile-title">Edit profile</h1>
-            <p className="profile-description">Manage personal information and sign-in credentials for your host account.</p>
+            <p className="eyebrow">การตั้งค่าบัญชี</p>
+            <h1 className="profile-title">แก้ไขโปรไฟล์</h1>
+            <p className="profile-description">จัดการข้อมูลส่วนตัวและข้อมูลการเข้าสู่ระบบของบัญชีของคุณ</p>
           </div>
 
           <form onSubmit={handleSubmit} className="profile-form">
             <section className="profile-section">
               <div className="profile-section__header">
-                <h2 className="profile-section__title">Profile details</h2>
-                <p className="profile-section__subtitle">Information visible across your meeting rooms.</p>
+                <h2 className="profile-section__title">ข้อมูลโปรไฟล์</h2>
+                <p className="profile-section__subtitle">ข้อมูลที่แสดงในห้องประชุมของคุณ</p>
               </div>
 
               <div className="profile-section__body">
@@ -141,28 +141,28 @@ export default function EditProfilePage() {
                   </div>
                 )}
                 <div className="profile-photo-column">
-                  <p className="profile-photo-label">Profile photo</p>
+                  <p className="profile-photo-label">รูปโปรไฟล์</p>
                   <div className="profile-photo-frame group">
                     {user?.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={user.avatarUrl} alt="Profile photo" className="profile-photo-image" />
+                      <img src={user.avatarUrl} alt="รูปโปรไฟล์" className="profile-photo-image" />
                     ) : (
                       <div className="profile-photo-placeholder">{initials || "H"}</div>
                     )}
                     <button type="button" onClick={() => fileInput.current?.click()} disabled={avatarUploading} className="profile-photo-change-btn">
-                      <Camera size={15} /> Change
+                      <Camera size={15} /> เปลี่ยนรูป
                     </button>
                   </div>
                   <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatar} className="sr-only" />
-                  <button type="button" onClick={() => fileInput.current?.click()} disabled={avatarUploading} className="profile-photo-upload-btn action-fill focus-ring"><Upload size={16} strokeWidth={1.8} />{avatarUploading ? "Uploading…" : "Upload new photo"}</button>
-                  <p className="profile-photo-hint">JPG, PNG or WebP. Max 5MB.<br />Up to {AVATAR_MAX_DIMENSION}×{AVATAR_MAX_DIMENSION}px.</p>
+                  <button type="button" onClick={() => fileInput.current?.click()} disabled={avatarUploading} className="profile-photo-upload-btn action-fill focus-ring"><Upload size={16} strokeWidth={1.8} />{avatarUploading ? "กำลังอัปโหลด…" : "อัปโหลดรูปใหม่"}</button>
+                  <p className="profile-photo-hint">รองรับ JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB<br />ความละเอียดสูงสุด {AVATAR_MAX_DIMENSION}×{AVATAR_MAX_DIMENSION} พิกเซล</p>
                 </div>
 
                 <div className="profile-fields-grid">
-                  <Field label="Full name" icon={<UserRound size={15} />}>
-                    <input key={user?.id ?? "signed-out"} id="fullname" name="fullname" required maxLength={100} defaultValue={displayName} placeholder="Your full name" className="profile-input" />
+                  <Field label="ชื่อ-นามสกุล" icon={<UserRound size={15} />}>
+                    <input key={user?.id ?? "signed-out"} id="fullname" name="fullname" required maxLength={100} defaultValue={displayName} placeholder="ชื่อ-นามสกุลของคุณ" className="profile-input" />
                   </Field>
-                  <Field label="Email address" icon={<Mail size={15} />}>
+                  <Field label="อีเมล" icon={<Mail size={15} />}>
                     <input id="email" name="email" type="email" readOnly value={displayEmail} placeholder="name@company.com" className="profile-input" />
                   </Field>
                 </div>
@@ -173,13 +173,13 @@ export default function EditProfilePage() {
               <div className="profile-section__header--with-icon">
                 <span className="profile-section__icon"><KeyRound size={20} strokeWidth={1.8} /></span>
                 <div>
-                  <h2 className="profile-section__title">Password & security</h2>
-                  <p className="profile-section__subtitle">Leave the new password blank to keep your current one.</p>
+                  <h2 className="profile-section__title">รหัสผ่านและความปลอดภัย</h2>
+                  <p className="profile-section__subtitle">หากไม่ต้องการเปลี่ยนรหัสผ่าน ให้เว้นช่องรหัสผ่านใหม่ไว้</p>
                 </div>
               </div>
               <div className="profile-section__body-security">
                 <div className="profile-field-full">
-                  <Field label="Current password">
+                  <Field label="รหัสผ่านปัจจุบัน">
                     <PasswordInput
                       name="current-password"
                       autoComplete="current-password"
@@ -189,18 +189,18 @@ export default function EditProfilePage() {
                         setCurrentPasswordError(null);
                       }}
                       required={Boolean(password)}
-                      placeholder="Required to set a new password"
+                      placeholder="กรุณากรอกรหัสผ่านปัจจุบันเพื่อเปลี่ยนรหัสผ่าน"
                       invalid={Boolean(currentPasswordError)}
                     />
                     {currentPasswordError && <p className="profile-mismatch-text">{currentPasswordError}</p>}
                   </Field>
                 </div>
-                <Field label="New password">
-                  <PasswordInput name="new-password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" minLength={8} />
+                <Field label="รหัสผ่านใหม่">
+                  <PasswordInput name="new-password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" minLength={8} />
                 </Field>
-                <Field label="Confirm password">
-                  <PasswordInput name="confirm-password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required={Boolean(password)} placeholder="Repeat new password" invalid={passwordMismatch} />
-                  {passwordMismatch && <p className="profile-mismatch-text">Passwords do not match.</p>}
+                <Field label="ยืนยันรหัสผ่านใหม่">
+                  <PasswordInput name="confirm-password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required={Boolean(password)} placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" invalid={passwordMismatch} />
+                  {passwordMismatch && <p className="profile-mismatch-text">รหัสผ่านใหม่ไม่ตรงกัน</p>}
                 </Field>
               </div>
             </section>
@@ -210,12 +210,12 @@ export default function EditProfilePage() {
                 <p role="alert" className="profile-save-error">{saveError}</p>
               ) : (
                 <p className={`profile-saved-msg ${saved ? "opacity-100" : "opacity-0"}`} aria-live="polite">
-                  <Check aria-hidden="true" size={16} strokeWidth={2.2} /> Changes saved
+                  <Check aria-hidden="true" size={16} strokeWidth={2.2} /> บันทึกการเปลี่ยนแปลงแล้ว
                 </p>
               )}
               <div className="flex gap-3">
-                <Link href="/dashboard" className="profile-cancel-btn action-fill action-fill--danger-hover focus-ring-danger">Cancel</Link>
-                <button type="submit" disabled={passwordMismatch || saving} className="profile-submit-btn action-fill action-fill--accent">{saving ? "Saving…" : "Save changes"}</button>
+                <Link href="/dashboard" className="profile-cancel-btn action-fill action-fill--danger-hover focus-ring-danger">ยกเลิก</Link>
+                <button type="submit" disabled={passwordMismatch || saving} className="profile-submit-btn action-fill action-fill--accent">{saving ? "กำลังบันทึก…" : "บันทึกการเปลี่ยนแปลง"}</button>
               </div>
             </div>
           </form>
@@ -236,7 +236,7 @@ function PasswordInput({ invalid, ...props }: Omit<InputHTMLAttributes<HTMLInput
         aria-invalid={invalid || undefined}
         className={`profile-input pr-12 ${invalid ? "profile-input--mismatch" : ""}`}
       />
-      <button type="button" onClick={() => setVisible((shown) => !shown)} className="profile-input-eye-btn" aria-label={visible ? "Hide password" : "Show password"}>
+      <button type="button" onClick={() => setVisible((shown) => !shown)} className="profile-input-eye-btn" aria-label={visible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}>
         {visible ? <Eye size={17} /> : <EyeOff size={17} />}
       </button>
     </div>
