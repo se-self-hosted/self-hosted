@@ -27,7 +27,7 @@ function subscribeToTheme(onStoreChange: () => void) {
   };
 }
 
-export function ThemeSwitch() {
+export function ThemeSwitch({ iconOnly = false }: { iconOnly?: boolean }) {
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => "light");
 
   const handleThemeChange = (nextTheme: Theme) => {
@@ -41,6 +41,22 @@ export function ThemeSwitch() {
   };
 
   const isNight = theme === "dark";
+
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        className="theme-switch-icon"
+        onClick={() => handleThemeChange(isNight ? "light" : "dark")}
+        aria-label={isNight ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
+        title={isNight ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
+      >
+        {isNight
+          ? <Moon className="icon-16" strokeWidth={2} aria-hidden="true" />
+          : <Sun className="icon-16" strokeWidth={2} aria-hidden="true" />}
+      </button>
+    );
+  }
 
   return (
     <div className="theme-switch">
