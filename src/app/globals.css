@@ -556,6 +556,9 @@ body {
   .sidebar__brand-icon {
     @apply flex size-11 items-center justify-center rounded-xl bg-night-3 text-accent;
   }
+  .sidebar__brand-logo {
+    @apply h-auto w-9 object-contain;
+  }
   .sidebar__brand-text {
     @apply flex flex-col gap-0.5;
   }
