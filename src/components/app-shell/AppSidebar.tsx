@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, LayoutGrid, LogOut, UserRound, Video } from "lucide-react";
+import Image from "next/image";
+import { Clock3, LayoutGrid, LogOut, UserRound } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { ThemeSwitch } from "./ThemeSwitch";
 
@@ -28,7 +29,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
         <div className="sidebar__header">
           <Link href="/dashboard" className="sidebar__brand focus-ring-night">
             <span className="sidebar__brand-icon">
-              <Video aria-hidden="true" className="icon-20" strokeWidth={1.8} />
+              <Image className="sidebar__brand-logo" src="/brand/EDIT1.webp" alt="" width={750} height={719} priority />
             </span>
             <span className="sidebar__brand-text">
               <span className="sidebar__brand-name">MeetSync</span>

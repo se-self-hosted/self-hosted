@@ -43,6 +43,7 @@ import {
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
+import { ThemeSwitch } from "@/components/app-shell/ThemeSwitch";
 
 // Our token route writes this metadata and grants no canUpdateOwnMetadata,
 // so a participant can't claim to be the host by rewriting their own.
@@ -1374,6 +1375,7 @@ export function MeetingRoomView({
         </div>
 
         <div className="meeting-room__header-end">
+          <ThemeSwitch iconOnly />
           {showTranscriptPanel && (
             <span className="pill meeting-room__transcript-status h-[30px]">
               <FileText aria-hidden="true" className="icon-16" strokeWidth={1.8} />

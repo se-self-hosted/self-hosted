@@ -1,0 +1,22 @@
+.background {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-paper);
+  isolation: isolate;
+}
+
+.backgroundDark {
+  background: #141614;
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+}

@@ -556,6 +556,9 @@ body {
   .sidebar__brand-icon {
     @apply flex size-11 items-center justify-center rounded-xl bg-night-3 text-accent;
   }
+  .sidebar__brand-logo {
+    @apply h-auto w-9 object-contain;
+  }
   .sidebar__brand-text {
     @apply flex flex-col gap-0.5;
   }
@@ -686,6 +689,13 @@ body {
   .theme-switch__input:focus-visible + .theme-switch__track {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+  .theme-switch-icon {
+    @apply grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border border-night-line-2 bg-night-2 text-accent transition-colors hover:bg-night-3;
+  }
+  .theme-switch-icon:focus-visible {
+    outline: 2px solid #d4f36b;
+    outline-offset: 2px;
   }
   .sidebar__footer {
     @apply mt-auto hidden items-center gap-2.5 border-t border-night-line pt-4 lg:flex;
@@ -1382,7 +1392,7 @@ body {
     @apply font-mono;
   }
   .meeting-room__header-end {
-    @apply hidden justify-end lg:flex;
+    @apply col-span-2 flex items-center justify-end gap-2 lg:col-span-1;
   }
   .meeting-room__transcript-status {
     @apply border border-accent bg-accent text-accent-ink;
@@ -2317,7 +2327,7 @@ body {
     @apply text-sm text-bad;
   }
   .profile-photo-hint {
-    @apply mt-3 text-xs leading-snug whitespace-nowrap text-muted;
+    @apply mt-3 w-full max-w-full break-words whitespace-normal text-xs leading-snug text-muted;
   }
   .profile-fields-grid {
     @apply grid content-start gap-5;
