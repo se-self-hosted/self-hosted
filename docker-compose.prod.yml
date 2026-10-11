@@ -1,0 +1,57 @@
+# Production overrides, layered on top of docker-compose.yml:
+#   docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# scripts/deploy-prod.sh wraps this. Volumes are shared with the dev stack,
+# so the same database, recordings and accounts carry over.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: meetsync-app:prod
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+    # Drop the dev source mount and the Prisma Studio port.
+    volumes: !reset []
+    ports: !override
+      - "127.0.0.1:3000:3000"
+
+  postgres:
+    restart: unless-stopped
+    # The app reaches it over the compose network; publishing 5432 also
+    # collides with a Postgres installed on the Windows host.
+    ports: !reset []
+
+  redis:
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:6379:6379"
+
+  minio:
+    # quay.io/minio/minio now answers 401 without a login, and Docker Hub's
+    # minio/minio stopped getting public updates, so reuse the local copy the
+    # running stack was created from instead of pulling.
+    image: minio/minio:latest
+    pull_policy: never
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
+  livekit:
+    restart: unless-stopped
+    # No --dev: keys come from .env.production instead of devkey/secret, and
+    # the config pins the same RTC ports dev mode uses.
+    command: --bind 0.0.0.0 --node-ip ${LIVEKIT_NODE_IP:-127.0.0.1}
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY in .env.production}: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env.production}"
+      LIVEKIT_CONFIG: |
+        port: 7880
+        rtc:
+          tcp_port: 7881
+          udp_port: 7882
+    ports: !override
+      - "127.0.0.1:7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
