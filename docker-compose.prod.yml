@@ -16,12 +16,32 @@ services:
     volumes: !reset []
     ports: !override
       - "127.0.0.1:3000:3000"
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      livekit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/auth/me').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   postgres:
     restart: unless-stopped
     # The app reaches it over the compose network; publishing 5432 also
     # collides with a Postgres installed on the Windows host.
     ports: !reset []
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d meeting_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   redis:
     restart: unless-stopped

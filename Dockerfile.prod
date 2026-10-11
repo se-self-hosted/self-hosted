@@ -19,7 +19,9 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build
+# The build cache is only useful for rebuilding in place; dropping it keeps
+# hundreds of MB out of the image.
+RUN npm run build && rm -rf .next/cache
 
 ENV NODE_ENV=production
 ENV PORT=3000
