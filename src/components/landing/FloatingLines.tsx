@@ -242,8 +242,14 @@ export function FloatingLines({
     lineGradientCount: { value: number };
   } | null>(null);
   const renderOnceRef = useRef<() => void>(() => undefined);
-  const initialThemeRef = useRef({ backgroundColor, lightMode });
-  const initialGradientRef = useRef(linesGradient);
+  const latestThemeRef = useRef({ backgroundColor, lightMode });
+  const latestGradientRef = useRef(linesGradient);
+
+  // Runs before the scene effect below, so a rebuilt scene starts from the current theme, not the first one.
+  useEffect(() => {
+    latestThemeRef.current = { backgroundColor, lightMode };
+    latestGradientRef.current = linesGradient;
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -305,12 +311,12 @@ export function FloatingLines({
       parallaxOffset: { value: new Vector2(0, 0) },
       lineGradient: { value: Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)) },
       lineGradientCount: { value: 0 },
-      backgroundColor: { value: hexToVector(initialThemeRef.current.backgroundColor) },
-      lightMode: { value: initialThemeRef.current.lightMode },
+      backgroundColor: { value: hexToVector(latestThemeRef.current.backgroundColor) },
+      lightMode: { value: latestThemeRef.current.lightMode },
     };
 
-    if (initialGradientRef.current?.length) {
-      const stops = initialGradientRef.current.slice(0, MAX_GRADIENT_STOPS);
+    if (latestGradientRef.current?.length) {
+      const stops = latestGradientRef.current.slice(0, MAX_GRADIENT_STOPS);
       uniforms.lineGradientCount.value = stops.length;
       stops.forEach((hex, index) => uniforms.lineGradient.value[index].copy(hexToVector(hex)));
     }
