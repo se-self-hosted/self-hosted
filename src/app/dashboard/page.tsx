@@ -229,13 +229,6 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => {
-    if (currentTab === "history" && user) {
-      void loadMeetingsHistory();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTab, user]);
-
   // Open Meeting Details / Playback
   const openMeetingDetails = async (meetingId: string) => {
     const request = ++detailsRequestRef.current;

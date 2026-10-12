@@ -1,6 +1,6 @@
 // Exposes Prisma Studio (bound to localhost:5555 inside the container) on 0.0.0.0:5556
 // so docker-compose can publish it to the host as 5555:5556.
-const net = require("net");
+import net from "node:net";
 
 const LISTEN_PORT = Number(process.env.DB_PROXY_PORT || 5556);
 const TARGET_HOST = process.env.DB_PROXY_TARGET_HOST || "localhost";
