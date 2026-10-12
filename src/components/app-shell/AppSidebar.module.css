@@ -1,0 +1,29 @@
+.collapseToggle {
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-night-muted);
+  padding: 0;
+}
+
+.collapseToggle:hover {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-night-strong);
+}
+
+.collapseToggleIcon {
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+  filter: invert(1);
+  opacity: 0.66;
+  transition: opacity 150ms ease;
+}
+
+.collapseToggle:hover .collapseToggleIcon {
+  opacity: 0.9;
+}
