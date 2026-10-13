@@ -2,19 +2,25 @@ import { spawn } from "child_process";
 import { randomUUID } from "crypto";
 import { setPriority, tmpdir } from "os";
 import { join } from "path";
-import { writeFile, unlink } from "fs/promises";
+import { readFile, unlink } from "fs/promises";
 
 // Encoding runs on the same small host as the LiveKit SFU. Stopping a
 // recording makes every participant upload at once, and a burst of
 // full-speed encodes starves the SFU, dropping audio for the whole room.
 // So encode one file at a time, at the lowest CPU priority.
-let encodeQueue: Promise<unknown> = Promise.resolve();
-
-function enqueue<T>(job: () => Promise<T>): Promise<T> {
-  const run = encodeQueue.then(job, job);
-  encodeQueue = run.catch(() => {});
-  return run;
+function createQueue() {
+  let tail: Promise<unknown> = Promise.resolve();
+  return function enqueue<T>(job: () => Promise<T>): Promise<T> {
+    const run = tail.then(job, job);
+    tail = run.catch(() => {});
+    return run;
+  };
 }
+
+// Uploads and take mixes queue separately: a long mix (up to MIX_TIMEOUT_MS)
+// must not hold back every recording upload behind it.
+const enqueueUpload = createQueue();
+const enqueueMix = createQueue();
 
 function spawnLowPriority(command: string, args: string[]) {
   const child = spawn(command, args);
@@ -29,6 +35,26 @@ function spawnLowPriority(command: string, args: string[]) {
 }
 
 /**
+ * Transcodes any browser-recorded audio (webm/opus, ogg, ...) to a standard
+ * mp3 via ffmpeg, and reads back the encoded file's real duration.
+ *
+ * ffmpeg writes straight to a temp file that ffprobe then reads, so the mp3
+ * isn't held in memory twice nor written to disk a second time for probing.
+ */
+export function transcodeToMp3(input: Buffer): Promise<{ buffer: Buffer; durationSeconds: number | null }> {
+  return enqueueUpload(async () => {
+    const tmpPath = join(tmpdir(), `transcode-${randomUUID()}.mp3`);
+    try {
+      await encodeMp3(input, tmpPath);
+      const durationSeconds = await probe(tmpPath);
+      return { buffer: await readFile(tmpPath), durationSeconds };
+    } finally {
+      await unlink(tmpPath).catch(() => {});
+    }
+  });
+}
+
+/**
  * Real duration of the encoded mp3, read back from the file itself via ffprobe.
  * The client's own estimate (elapsed-clock math, background-tab timer drift) is
  * only a guess — trusting it for playback-window matching lets a segment seek
@@ -39,45 +65,29 @@ function spawnLowPriority(command: string, args: string[]) {
  * end of the file for a size-based estimate), so ffprobe needs a real seekable
  * file here — piping it the buffer over stdin silently yields "N/A".
  */
-export function probeDurationSeconds(input: Buffer): Promise<number | null> {
-  return enqueue(() => probe(input));
-}
+function probe(path: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    const ffprobe = spawnLowPriority("ffprobe", [
+      "-v", "error",
+      "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1",
+      path,
+    ]);
 
-async function probe(input: Buffer): Promise<number | null> {
-  const tmpPath = join(tmpdir(), `probe-${randomUUID()}.mp3`);
-  try {
-    await writeFile(tmpPath, input);
-    return await new Promise((resolve) => {
-      const ffprobe = spawnLowPriority("ffprobe", [
-        "-v", "error",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
-        tmpPath,
-      ]);
-
-      let stdout = "";
-      ffprobe.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-      ffprobe.on("error", () => resolve(null));
-      ffprobe.on("close", (code) => {
-        const seconds = parseFloat(stdout.trim());
-        resolve(code === 0 && Number.isFinite(seconds) ? seconds : null);
-      });
+    let stdout = "";
+    ffprobe.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+    ffprobe.on("error", () => resolve(null));
+    ffprobe.on("close", (code) => {
+      const seconds = parseFloat(stdout.trim());
+      resolve(code === 0 && Number.isFinite(seconds) ? seconds : null);
     });
-  } catch {
-    return null;
-  } finally {
-    await unlink(tmpPath).catch(() => {});
-  }
+  });
 }
 
-/** Transcodes any browser-recorded audio (webm/opus, ogg, ...) to a standard mp3 buffer via ffmpeg. */
-export function transcodeToMp3(input: Buffer): Promise<Buffer> {
-  return enqueue(() => encodeMp3(input));
-}
-
-function encodeMp3(input: Buffer): Promise<Buffer> {
+function encodeMp3(input: Buffer, outputPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const ffmpeg = spawnLowPriority("ffmpeg", [
+      "-y",
       "-threads", "1",
       "-i", "pipe:0",
       "-vn",
@@ -85,19 +95,16 @@ function encodeMp3(input: Buffer): Promise<Buffer> {
       "-ar", "44100",
       "-b:a", "128k",
       "-f", "mp3",
-      "pipe:1",
+      outputPath,
     ]);
 
-    const outChunks: Buffer[] = [];
     let stderr = "";
-
-    ffmpeg.stdout.on("data", (chunk) => outChunks.push(chunk));
-    ffmpeg.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+    ffmpeg.stderr.on("data", (chunk) => { stderr = (stderr + chunk.toString()).slice(-4000); });
 
     ffmpeg.on("error", reject);
     ffmpeg.on("close", (code) => {
       if (code === 0) {
-        resolve(Buffer.concat(outChunks));
+        resolve();
       } else {
         reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-2000)}`));
       }
@@ -112,7 +119,7 @@ function encodeMp3(input: Buffer): Promise<Buffer> {
 }
 
 // A mix is only made when a host opens a take, but a stuck ffmpeg would hold
-// the shared queue and with it every upload behind it.
+// the mix queue and with it every other take waiting to be mixed.
 const MIX_TIMEOUT_MS = 10 * 60 * 1000;
 
 /**
@@ -121,7 +128,7 @@ const MIX_TIMEOUT_MS = 10 * 60 * 1000;
  * encode keeps the CPU free for live calls.
  */
 export function mixToMp3(inputs: { path: string; delaySeconds: number }[]): Promise<Buffer> {
-  return enqueue(() => encodeMix(inputs));
+  return enqueueMix(() => encodeMix(inputs));
 }
 
 function encodeMix(inputs: { path: string; delaySeconds: number }[]): Promise<Buffer> {

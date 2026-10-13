@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getRecordingPresignedUrl } from "@/lib/storage";
 import { resolveMeetingAccess } from "@/lib/meeting-access";
 import { groupRecordingTakes } from "@/lib/recording-takes";
+import { buildFullTranscript } from "@/lib/transcript-text";
 
 export async function GET(
   _req: Request,
@@ -21,24 +21,43 @@ export async function GET(
 
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
-      include: {
-        room: true,
+      select: {
+        id: true,
+        roomId: true,
+        startedAt: true,
+        endedAt: true,
+        durationSeconds: true,
+        room: { select: { roomName: true, roomHash: true } },
         participants: {
-          include: {
+          select: {
+            id: true,
+            displayName: true,
+            createdAt: true,
             sessions: {
               orderBy: { joinedAt: "asc" },
+              select: { id: true, joinedAt: true, leftAt: true, durationSeconds: true },
             },
           },
         },
         transcript: {
-          include: {
+          select: {
+            id: true,
+            language: true,
+            createdAt: true,
             segments: {
               orderBy: [
                 { startTime: "asc" },
                 { spokenAt: "asc" },
               ],
-              include: {
-                participant: true,
+              select: {
+                id: true,
+                participantId: true,
+                startTime: true,
+                endTime: true,
+                spokenAt: true,
+                text: true,
+                confidence: true,
+                participant: { select: { displayName: true } },
               },
             },
           },
@@ -46,7 +65,17 @@ export async function GET(
         summary: true,
         recordings: {
           orderBy: { createdAt: "desc" },
-          include: { participant: { select: { displayName: true } } },
+          select: {
+            id: true,
+            participantId: true,
+            fileName: true,
+            startOffsetSeconds: true,
+            durationSeconds: true,
+            fileSize: true,
+            mimeType: true,
+            createdAt: true,
+            participant: { select: { displayName: true } },
+          },
         },
       },
     });
@@ -57,31 +86,20 @@ export async function GET(
 
     const isHost = access.isHost;
 
-    const recordingsWithUrls = await Promise.all(
-      meeting.recordings.map(async (rec) => {
-        let presignedUrl = "";
-        try {
-          presignedUrl = await getRecordingPresignedUrl(rec.objectKey);
-        } catch {
-          // Ignore presigned error
-        }
-
-        return {
-          id: rec.id,
-          participantId: rec.participantId,
-          speakerName: rec.participant?.displayName ?? null,
-          fileName: rec.fileName,
-          objectKey: rec.objectKey,
-          startOffsetSeconds: rec.startOffsetSeconds,
-          durationSeconds: rec.durationSeconds,
-          fileSize: rec.fileSize.toString(),
-          mimeType: rec.mimeType,
-          createdAt: rec.createdAt,
-          playbackUrl: `/api/recordings/${rec.id}/playback`,
-          presignedUrl,
-        };
-      }),
-    );
+    // Played back through the authenticated playback route; a presigned URL
+    // would point at the internal MinIO host, so none is signed here.
+    const recordingsWithUrls = meeting.recordings.map((rec) => ({
+      id: rec.id,
+      participantId: rec.participantId,
+      speakerName: rec.participant?.displayName ?? null,
+      fileName: rec.fileName,
+      startOffsetSeconds: rec.startOffsetSeconds,
+      durationSeconds: rec.durationSeconds,
+      fileSize: rec.fileSize.toString(),
+      mimeType: rec.mimeType,
+      createdAt: rec.createdAt,
+      playbackUrl: `/api/recordings/${rec.id}/playback`,
+    }));
 
     // One entry per press of record, with every speaker mixed together.
     const recordingTakes = groupRecordingTakes(meeting.recordings).map((take, index) => ({
@@ -92,13 +110,6 @@ export async function GET(
       speakerCount: new Set(take.recordings.map((rec) => rec.participantId ?? rec.id)).size,
       playbackUrl: `/api/meetings/${meeting.id}/takes/${take.key}/playback`,
     }));
-
-    const sortedSegments = meeting.transcript
-      ? [...meeting.transcript.segments].sort((a, b) => {
-          if (a.startTime !== b.startTime) return a.startTime - b.startTime;
-          return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
-        })
-      : [];
 
     return NextResponse.json({
       meeting: {
@@ -126,10 +137,10 @@ export async function GET(
         transcript: meeting.transcript
           ? {
               id: meeting.transcript.id,
-              fullTranscript: meeting.transcript.fullTranscript,
+              fullTranscript: buildFullTranscript(meeting.transcript.segments),
               language: meeting.transcript.language,
               createdAt: meeting.transcript.createdAt,
-              segments: sortedSegments.map((s) => ({
+              segments: meeting.transcript.segments.map((s) => ({
                 id: s.id,
                 participantId: s.participantId,
                 speakerName: s.participant.displayName,

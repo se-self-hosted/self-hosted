@@ -1,4 +1,8 @@
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { createWriteStream } from "fs";
+import { mkdtemp, rm } from "fs/promises";
+import { Readable } from "stream";
+import { pipeline } from "stream/promises";
+import type { ReadableStream as NodeReadableStream } from "stream/web";
 import { tmpdir } from "os";
 import { extname, join } from "path";
 import { mixToMp3 } from "./audio-transcode";
@@ -49,7 +53,8 @@ async function mixIfMissing(objectKey: string, take: RecordingTake<MixSource>): 
           throw new Error(`Recording ${recording.id} is unavailable (${object.status})`);
         }
         const path = join(dir, `${recording.id}${extname(recording.objectKey) || ".mp3"}`);
-        await writeFile(path, Buffer.from(await new Response(object.Body).arrayBuffer()));
+        // Stream to disk: a take can hold dozens of long files.
+        await pipeline(Readable.fromWeb(object.Body as NodeReadableStream), createWriteStream(path));
         return { path, delaySeconds: recording.startOffsetSeconds! - take.startOffsetSeconds };
       }),
     );

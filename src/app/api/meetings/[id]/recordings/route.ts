@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { uploadRecording, getRecordingPresignedUrl } from "@/lib/storage";
-import { transcodeToMp3, probeDurationSeconds } from "@/lib/audio-transcode";
+import { transcodeToMp3 } from "@/lib/audio-transcode";
 import { randomUUID } from "crypto";
 import { LEAVE_GRACE_MS, resolveMeetingAccess } from "@/lib/meeting-access";
 
@@ -64,6 +64,15 @@ export async function GET(
   }
 }
 
+// Every participant uploads at once when the host stops recording, and each
+// upload is held in memory while it waits to be encoded, so cap its size.
+// About 4 hours of browser-recorded opus at 128 kbps.
+const MAX_RECORDING_BYTES = Number(process.env.RECORDING_MAX_BYTES) || 250 * 1024 * 1024;
+
+function tooLarge() {
+  return NextResponse.json({ error: "Recording is too large" }, { status: 413 });
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -83,6 +92,11 @@ export async function POST(
     }
     if (!access.allowed && headerParticipantId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const declaredLength = Number(req.headers.get("content-length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_RECORDING_BYTES) {
+      return tooLarge();
     }
 
     const contentType = req.headers.get("content-type") || "";
@@ -105,10 +119,13 @@ export async function POST(
         return NextResponse.json({ error: "Audio file is required in 'file' field" }, { status: 400 });
       }
 
+      if (file.size > MAX_RECORDING_BYTES) {
+        return tooLarge();
+      }
+
       fileName = file.name || fileName;
       mimeType = file.type || mimeType;
-      const arrayBuffer = await file.arrayBuffer();
-      audioBuffer = Buffer.from(arrayBuffer);
+      audioBuffer = Buffer.from(await file.arrayBuffer());
 
       if (durationParam) {
         durationSeconds = parseInt(String(durationParam), 10) || null;
@@ -119,8 +136,10 @@ export async function POST(
       }
     } else {
       // Raw binary body upload
-      const arrayBuffer = await req.arrayBuffer();
-      audioBuffer = Buffer.from(arrayBuffer);
+      audioBuffer = Buffer.from(await req.arrayBuffer());
+      if (audioBuffer.length > MAX_RECORDING_BYTES) {
+        return tooLarge();
+      }
       mimeType = contentType || "audio/webm";
       const customFileName = req.headers.get("x-file-name");
       if (customFileName) fileName = customFileName;
@@ -149,11 +168,12 @@ export async function POST(
     // captured (webm/opus, ogg, ...), so stored files are consistent.
     let ext = "mp3";
     try {
-      audioBuffer = await transcodeToMp3(audioBuffer);
+      const transcoded = await transcodeToMp3(audioBuffer);
+      audioBuffer = transcoded.buffer;
       mimeType = "audio/mpeg";
       // Trust the encoded file's own duration over the client's elapsed-clock
       // estimate — it's what playback-window matching actually seeks against.
-      const probedDuration = await probeDurationSeconds(audioBuffer);
+      const probedDuration = transcoded.durationSeconds;
       if (probedDuration !== null) {
         durationSeconds = Math.round(probedDuration);
       }

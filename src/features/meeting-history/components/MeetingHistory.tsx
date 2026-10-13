@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState, useEffect } from "react";
+import { FormEvent, useMemo, useRef, useState, useEffect } from "react";
 import { AlertCircle, ArrowRight, CalendarDays, Search } from "lucide-react";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
 import { HistoryDatePicker } from "./HistoryDatePicker";
@@ -27,35 +27,76 @@ function formatDuration(totalSeconds: number | null) {
   return parts.length > 0 ? parts.join(" ") : "0s";
 }
 
+async function fetchMeetingPage(filters: MeetingHistoryFilters, cursor: string | null, signal: AbortSignal) {
+  const params = new URLSearchParams();
+  if (filters.query.trim()) params.set("query", filters.query.trim());
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  if (cursor) params.set("cursor", cursor);
+  const res = await fetch(`/api/meetings?${params}`, { signal });
+  if (!res.ok) throw new Error("โหลดประวัติการประชุมไม่สำเร็จ");
+  return res.json() as Promise<MeetingHistoryResponse>;
+}
+
 export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProps) {
   const [meetings, setMeetings] = useState<MeetingHistoryItem[]>(initialMeetings || []);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!initialMeetings);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [draftFilters, setDraftFilters] = useState<MeetingHistoryFilters>(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState<MeetingHistoryFilters>(emptyFilters);
+  // Only the newest request may write results, so a slow earlier search
+  // can't overwrite a later one.
+  const requestRef = useRef<AbortController | null>(null);
 
+  // Without preloaded meetings, the server searches and pages the history.
   useEffect(() => {
-    if (!initialMeetings) {
-      setIsLoading(true);
-      setError("");
-      fetch('/api/meetings')
-        .then((res) => {
-          if (!res.ok) throw new Error("โหลดประวัติการประชุมไม่สำเร็จ");
-          return res.json() as Promise<MeetingHistoryResponse>;
-        })
-        .then((data) => setMeetings(data.meetings))
-        .catch((err: Error) => setError(err.message))
-        .finally(() => setIsLoading(false));
-    }
-  }, [initialMeetings]);
+    if (initialMeetings) return;
+    requestRef.current?.abort();
+    const request = new AbortController();
+    requestRef.current = request;
+    fetchMeetingPage(appliedFilters, null, request.signal)
+      .then((data) => {
+        setMeetings(data.meetings);
+        setNextCursor(data.nextCursor ?? null);
+      })
+      .catch((err: Error) => {
+        if (!request.signal.aborted) setError(err.message);
+      })
+      .finally(() => {
+        if (requestRef.current === request) setIsLoading(false);
+      });
+    return () => request.abort();
+  }, [initialMeetings, appliedFilters]);
+
+  function loadMore() {
+    if (!nextCursor || isLoadingMore) return;
+    const request = new AbortController();
+    requestRef.current = request;
+    setIsLoadingMore(true);
+    fetchMeetingPage(appliedFilters, nextCursor, request.signal)
+      .then((data) => {
+        setMeetings((current) => [...current, ...data.meetings]);
+        setNextCursor(data.nextCursor ?? null);
+      })
+      .catch((err: Error) => {
+        if (!request.signal.aborted) setError(err.message);
+      })
+      .finally(() => setIsLoadingMore(false));
+  }
 
   const filteredMeetings = useMemo(
-    () => filterMeetingHistory(meetings, appliedFilters),
-    [meetings, appliedFilters],
+    () => (initialMeetings ? filterMeetingHistory(meetings, appliedFilters) : meetings),
+    [initialMeetings, meetings, appliedFilters],
   );
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!initialMeetings) {
+      setIsLoading(true);
+      setError("");
+    }
     setAppliedFilters(draftFilters);
   }
 
@@ -63,7 +104,7 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
     <section id="history" aria-labelledby="meeting-history-title" className="meeting-history">
       <header className="meeting-history__header">
         <h2 id="meeting-history-title" className="dashboard__title">ประวัติการประชุม</h2>
-        <p className="dashboard__subtitle">{isLoading ? 'กำลังโหลด...' : `${filteredMeetings.length} การประชุม`}</p>
+        <p className="dashboard__subtitle">{isLoading ? 'กำลังโหลด...' : `${filteredMeetings.length}${nextCursor ? "+" : ""} การประชุม`}</p>
       </header>
 
       <form className="meeting-history__filters" role="search" onSubmit={submitSearch}>
@@ -101,6 +142,7 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
         ) : filteredMeetings.length === 0 ? (
           <div className="meeting-history__state"><CalendarDays aria-hidden="true" className="icon-20" /><p>ไม่พบการประชุมที่ตรงกับเงื่อนไข</p></div>
         ) : (
+          <>
           <div className="meeting-history__table-wrap">
             <table className="meeting-history__table meeting-history__table--overview">
               <thead>
@@ -142,6 +184,17 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
               </tbody>
             </table>
           </div>
+          {nextCursor && (
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="btn btn--secondary btn--sm focus-ring meeting-history__more"
+            >
+              {isLoadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
+            </button>
+          )}
+          </>
         )}
       </div>
     </section>

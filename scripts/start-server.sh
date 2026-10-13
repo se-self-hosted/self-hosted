@@ -1,10 +1,7 @@
 #!/bin/bash
 
-echo "🚀 Starting Docker containers..."
-docker compose up -d
-
-echo "⏳ Waiting for PostgreSQL and App containers to be ready..."
-sleep 5
+echo "🚀 Starting Docker containers (waits until PostgreSQL and MinIO report healthy)..."
+docker compose up -d --wait
 
 echo "🛠️ Pushing database schema..."
 docker compose exec -T app npx -y prisma db push

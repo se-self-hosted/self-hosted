@@ -3,9 +3,11 @@ services:
     build:
       context: .
     image: nextjs-dev
+    restart: unless-stopped
     ports:
       - "3000:3000"
-      - "5555:5556"
+      # Prisma Studio: local machine only, it edits the database unauthenticated.
+      - "127.0.0.1:5555:5556"
     volumes:
       - .:/app
       - /app/node_modules
@@ -18,38 +20,55 @@ services:
       # Uncomment the following line if hot-reloading doesn't work (e.g., on Windows/WSL)
       # WATCHPACK_POLLING: "true"
     depends_on:
-      - postgres
-      - redis
-      - minio
-      - livekit
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      livekit:
+        condition: service_started
 
   postgres:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: meeting_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d meeting_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # The app reaches services over the compose network; host ports are only
+    # for local tools, so they don't listen on the LAN with default passwords.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
 
   minio:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"
+    restart: unless-stopped
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
 
@@ -58,6 +77,13 @@ services:
     # Live audio must win the CPU over uploads, encodes and dev rebuilds;
     # on a small host, equal shares let a recording upload stall the room.
     cpu_shares: 4096
+    restart: unless-stopped
+    # The same key pair the app signs tokens with. Without it, --dev falls back
+    # to the public devkey/secret pair, so anyone who can reach LiveKit through
+    # the tunnel could mint their own room tokens. Set a long random
+    # LIVEKIT_API_SECRET in .env.
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-secret}"
     # Same-machine development default; set LIVEKIT_NODE_IP to a reachable server IP for remote clients.
     command: --dev --bind 0.0.0.0 --node-ip ${LIVEKIT_NODE_IP:-127.0.0.1}
     ports:

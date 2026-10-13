@@ -10,6 +10,7 @@ export type MeetingHistoryItem = {
 
 export type MeetingHistoryResponse = {
   meetings: MeetingHistoryItem[];
+  nextCursor?: string | null;
 };
 
 export type MeetingHistoryFilters = {

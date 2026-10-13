@@ -1,32 +1,55 @@
 import { Track, AudioProcessorOptions, TrackProcessor } from "livekit-client";
 
-const FRAME_SIZE = 480; // 10ms at 48000Hz for RNNoise
-const BUFFER_SIZE = 1024; // Web Audio script processor buffer size (~21.3ms latency)
+// Both files are cached as immutable (see next.config.ts headers), so a new
+// build of either must ship under a new name.
+const WASM_URL = "/rnnoise-c5576250.wasm";
+const WORKLET_URL = "/rnnoise-worklet-1.js";
+const SAMPLE_RATE = 48000; // RNNoise only works on 48 kHz audio
 
-interface RNNoiseWasmModule {
-  _rnnoise_create: (mode: number) => number;
-  _rnnoise_destroy: (state: number) => void;
-  _rnnoise_process_frame: (state: number, outPtr: number, inPtr: number) => number;
-  _malloc: (bytes: number) => number;
-  _free: (ptr: number) => void;
-  setValue: (ptr: number, val: number, type: string) => void;
-  getValue: (ptr: number, type: string) => number;
+// Fetched once per page load and reused by every processor, including the
+// ones LiveKit creates on mute/unmute and track restarts.
+let wasmBytes: Promise<ArrayBuffer> | null = null;
+
+function loadWasmBytes(): Promise<ArrayBuffer> {
+  if (!wasmBytes) {
+    const loading = fetch(WASM_URL).then((response) => {
+      if (!response.ok) throw new Error(`RNNoise model download failed (${response.status})`);
+      return response.arrayBuffer();
+    });
+    loading.catch(() => {
+      if (wasmBytes === loading) wasmBytes = null;
+    });
+    wasmBytes = loading;
+  }
+  return wasmBytes;
 }
 
+const workletModules = new WeakMap<BaseAudioContext, Promise<void>>();
+
+function loadWorklet(context: BaseAudioContext): Promise<void> {
+  let loading = workletModules.get(context);
+  if (!loading) {
+    loading = context.audioWorklet.addModule(WORKLET_URL);
+    loading.catch(() => workletModules.delete(context));
+    workletModules.set(context, loading);
+  }
+  return loading;
+}
+
+/**
+ * Noise suppression for the local mic. The model runs in an AudioWorklet on
+ * the audio rendering thread, so a busy main thread (React renders, network
+ * work) can't make the outgoing audio stutter.
+ */
 export class RNNoiseProcessor implements TrackProcessor<Track.Kind.Audio, AudioProcessorOptions> {
   name = "rnnoise";
   processedTrack?: MediaStreamTrack;
 
   private audioContext?: AudioContext;
+  private ownsAudioContext = false;
   private sourceNode?: MediaStreamAudioSourceNode;
-  private processorNode?: ScriptProcessorNode;
+  private workletNode?: AudioWorkletNode;
   private destinationNode?: MediaStreamAudioDestinationNode;
-  private wasmModule?: RNNoiseWasmModule;
-  private rnnoiseState?: number;
-  private inPtr?: number;
-  private outPtr?: number;
-  private inBuffer: Float32Array = new Float32Array(FRAME_SIZE);
-  private outBuffer: Float32Array = new Float32Array(0);
   private isDestroyed = false;
 
   async init(opts: AudioProcessorOptions): Promise<void> {
@@ -37,11 +60,16 @@ export class RNNoiseProcessor implements TrackProcessor<Track.Kind.Audio, AudioP
         return;
       }
 
-      // 1. AudioContext setup & resume
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.audioContext = opts.audioContext || (AudioCtx ? new AudioCtx({ sampleRate: 48000 }) : undefined);
-
-      if (this.audioContext && this.audioContext.state === "suspended") {
+      this.ownsAudioContext = !opts.audioContext;
+      this.audioContext = opts.audioContext || (AudioCtx ? new AudioCtx({ sampleRate: SAMPLE_RATE }) : undefined);
+      if (!this.audioContext) {
+        throw new Error("Web Audio API AudioContext not supported");
+      }
+      if (this.audioContext.sampleRate !== SAMPLE_RATE) {
+        throw new Error(`RNNoise needs ${SAMPLE_RATE} Hz audio, got ${this.audioContext.sampleRate} Hz`);
+      }
+      if (this.audioContext.state === "suspended") {
         try {
           await this.audioContext.resume();
         } catch (e) {
@@ -49,103 +77,33 @@ export class RNNoiseProcessor implements TrackProcessor<Track.Kind.Audio, AudioP
         }
       }
 
-      if (!this.audioContext) {
-        throw new Error("Web Audio API AudioContext not supported");
-      }
+      const [wasm] = await Promise.all([loadWasmBytes(), loadWorklet(this.audioContext)]);
+      if (this.isDestroyed) return;
 
-      // 2. Load RNNoise WASM module
-      const { default: loadRNNoise } = await import("@/vendor/purify-voice/wasm/rnnoise.js");
-      const loadedModule = await loadRNNoise({
-        locateFile: (file: string) => {
-          if (file.endsWith(".wasm")) {
-            return "/rnnoise.wasm";
-          }
-          return file;
-        },
+      this.sourceNode = this.audioContext.createMediaStreamSource(new MediaStream([opts.track]));
+      this.workletNode = new AudioWorkletNode(this.audioContext, "rnnoise", {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+        channelCount: 1,
+        channelCountMode: "explicit",
       });
-      this.wasmModule = loadedModule as unknown as RNNoiseWasmModule;
-
-      if (this.isDestroyed) {
-        await this.destroy();
-        return;
-      }
-
-      this.rnnoiseState = this.wasmModule._rnnoise_create(0);
-      if (!this.rnnoiseState) {
-        throw new Error("Failed to initialize RNNoise state");
-      }
-
-      this.inPtr = this.wasmModule._malloc(FRAME_SIZE * 4);
-      this.outPtr = this.wasmModule._malloc(FRAME_SIZE * 4);
-
-      // 3. Setup Web Audio Graph
-      const inputStream = new MediaStream([opts.track]);
-      this.sourceNode = this.audioContext.createMediaStreamSource(inputStream);
-      this.processorNode = this.audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
+      this.workletNode.port.onmessage = (event: MessageEvent<{ type: string; message?: string }>) => {
+        // The worklet passes the raw mic through when the model can't load.
+        if (event.data?.type === "error") console.warn("RNNoise worklet failed to load:", event.data.message);
+      };
+      // Copied, not transferred: the cached bytes serve later processors too.
+      this.workletNode.port.postMessage({ type: "init", wasm });
       this.destinationNode = this.audioContext.createMediaStreamDestination();
 
-      const mod = this.wasmModule;
-      const state = this.rnnoiseState;
-      const inPtr = this.inPtr;
-      const outPtr = this.outPtr;
-
-      this.processorNode.onaudioprocess = (event: AudioProcessingEvent) => {
-        if (this.isDestroyed || !state) return;
-
-        const inputChannel = event.inputBuffer.getChannelData(0);
-        const outputChannel = event.outputBuffer.getChannelData(0);
-
-        // Append incoming samples to inBuffer
-        const newIn = new Float32Array(this.inBuffer.length + inputChannel.length);
-        newIn.set(this.inBuffer);
-        newIn.set(inputChannel, this.inBuffer.length);
-        this.inBuffer = newIn;
-
-        // Process all complete 480-sample frames
-        const outFrames: Float32Array[] = [];
-        while (this.inBuffer.length >= FRAME_SIZE) {
-          const frame = this.inBuffer.subarray(0, FRAME_SIZE);
-          for (let i = 0; i < FRAME_SIZE; i++) {
-            mod.setValue(inPtr + i * 4, frame[i] * 32768, "float");
-          }
-          mod._rnnoise_process_frame(state, outPtr, inPtr);
-          const outFrame = new Float32Array(FRAME_SIZE);
-          for (let i = 0; i < FRAME_SIZE; i++) {
-            outFrame[i] = mod.getValue(outPtr + i * 4, "float") / 32768;
-          }
-          outFrames.push(outFrame);
-          this.inBuffer = this.inBuffer.slice(FRAME_SIZE);
-        }
-
-        // Append processed frames to outBuffer
-        const totalOutLen = outFrames.reduce((acc, f) => acc + f.length, 0);
-        if (totalOutLen > 0) {
-          const newOut = new Float32Array(this.outBuffer.length + totalOutLen);
-          newOut.set(this.outBuffer);
-          let offset = this.outBuffer.length;
-          for (const f of outFrames) {
-            newOut.set(f, offset);
-            offset += f.length;
-          }
-          this.outBuffer = newOut;
-        }
-
-        // Fill destination output channel
-        if (this.outBuffer.length >= BUFFER_SIZE) {
-          outputChannel.set(this.outBuffer.subarray(0, BUFFER_SIZE));
-          this.outBuffer = this.outBuffer.slice(BUFFER_SIZE);
-        } else {
-          outputChannel.set(this.outBuffer);
-          this.outBuffer = new Float32Array(0);
-        }
-      };
-
-      this.sourceNode.connect(this.processorNode);
-      this.processorNode.connect(this.destinationNode);
+      this.sourceNode.connect(this.workletNode);
+      this.workletNode.connect(this.destinationNode);
 
       this.processedTrack = this.destinationNode.stream.getAudioTracks()[0];
     } catch (err) {
       console.warn("RNNoiseProcessor initialization failed, falling back to unprocessed track:", err);
+      await this.destroy();
+      this.isDestroyed = false;
       this.processedTrack = opts.track;
     }
   }
@@ -162,29 +120,28 @@ export class RNNoiseProcessor implements TrackProcessor<Track.Kind.Audio, AudioP
       try { this.sourceNode.disconnect(); } catch {}
       this.sourceNode = undefined;
     }
-    if (this.processorNode) {
+    if (this.workletNode) {
       try {
-        this.processorNode.onaudioprocess = null;
-        this.processorNode.disconnect();
+        this.workletNode.port.postMessage({ type: "destroy" });
+        this.workletNode.port.onmessage = null;
+        this.workletNode.port.close();
+        this.workletNode.disconnect();
       } catch {}
-      this.processorNode = undefined;
+      this.workletNode = undefined;
     }
     if (this.destinationNode) {
+      // Our own output track; the original mic track belongs to LiveKit.
+      this.destinationNode.stream.getTracks().forEach((track) => track.stop());
       try { this.destinationNode.disconnect(); } catch {}
       this.destinationNode = undefined;
     }
+    this.processedTrack = undefined;
 
-    if (this.wasmModule && this.inPtr) {
-      try { this.wasmModule._free(this.inPtr); } catch {}
-      this.inPtr = undefined;
+    const context = this.audioContext;
+    this.audioContext = undefined;
+    if (context && this.ownsAudioContext && context.state !== "closed") {
+      await context.close().catch(() => {});
     }
-    if (this.wasmModule && this.outPtr) {
-      try { this.wasmModule._free(this.outPtr); } catch {}
-      this.outPtr = undefined;
-    }
-    if (this.wasmModule && this.rnnoiseState) {
-      try { this.wasmModule._rnnoise_destroy(this.rnnoiseState); } catch {}
-      this.rnnoiseState = undefined;
-    }
+    this.ownsAudioContext = false;
   }
 }
