@@ -10,6 +10,9 @@
 **/.classpath
 **/.dockerignore
 **/.env
+# .env.production, .env.local, ... hold secrets too; containers get them from
+# env_file at runtime, and `next build` would otherwise copy them into the image.
+**/.env*
 **/.git
 **/.gitignore
 **/.project

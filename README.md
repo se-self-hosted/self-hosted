@@ -72,7 +72,7 @@ Two stacks share `docker-compose.yml`:
 
 In both stacks, a one-shot `migrate` service pushes the Prisma schema and seeds the default host account (`z@mail.com` / `z11111`) before the app starts. **Change that password after the first login.** The app reads `.env` when the container starts; nothing from `.env` is baked into an image.
 
-Postgres, Redis, MinIO and Prisma Studio listen on `127.0.0.1` only. The app reaches them over the compose network.
+Postgres, Redis, MinIO and Prisma Studio listen on `127.0.0.1` only. The app reaches them over the compose network. If something else on the host already uses port 5432, set `POSTGRES_HOST_PORT` (e.g. `5433`) in `.env`.
 
 ### Public deployment
 
