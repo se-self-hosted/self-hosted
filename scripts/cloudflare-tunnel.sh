@@ -68,8 +68,10 @@ Tunnels up:
   App:      $APP_URL
   LiveKit:  $LIVEKIT_WS_URL   (written to $ENV_FILE as NEXT_PUBLIC_LIVEKIT_URL)
 
-Restart the app container to pick up the new env var:
-  docker compose restart app
+Restart the app to pick up the new env var (no rebuild needed; the server
+reads it at runtime):
+  docker compose restart app                          # development
+  docker compose -f docker-compose.yml up -d app      # production (re-reads .env)
 
 Press Ctrl+C to stop both tunnels.
 EOF

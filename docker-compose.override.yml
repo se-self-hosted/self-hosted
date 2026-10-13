@@ -1,0 +1,33 @@
+# Development: merged automatically by a plain `docker compose up`
+# (scripts/start-server.sh). Runs `next dev` with the source bind-mounted,
+# plus Prisma Studio. Production skips this file: see docker-compose.yml.
+
+services:
+  migrate:
+    build:
+      context: .
+      target: dev
+    image: nextjs-dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  app:
+    build:
+      context: .
+      target: dev
+    image: nextjs-dev
+    ports:
+      # Prisma Studio: local machine only, it edits the database unauthenticated.
+      - "127.0.0.1:5555:5556"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: development
+      # Uncomment the following line if hot-reloading doesn't work (e.g., on Windows/WSL)
+      # WATCHPACK_POLLING: "true"
+    healthcheck:
+      # The first request compiles the route, which can take a while.
+      start_period: 180s

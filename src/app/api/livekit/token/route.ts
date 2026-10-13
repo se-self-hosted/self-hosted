@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicLivekitUrl } from "@/lib/livekit-url";
 import { AccessToken } from "livekit-server-sdk";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
     });
 
     const token = await at.toJwt();
-    const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880";
+    const wsUrl = publicLivekitUrl();
 
     return NextResponse.json({ token, wsUrl });
   } catch (error) {

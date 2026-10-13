@@ -61,6 +61,38 @@ The platform supports real-time voice communication, meeting history management,
 5. **Open the App:**
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Running with Docker
+
+Two stacks share `docker-compose.yml`:
+
+| | Command | App container |
+|---|---|---|
+| Development | `scripts/start-server.sh` (`docker compose up`) | `next dev` with the source bind-mounted and hot reload, plus Prisma Studio on `127.0.0.1:5555`. `docker-compose.override.yml` is merged automatically. |
+| Production | `scripts/start-production.sh` (`docker compose -f docker-compose.yml up -d --build --wait`) | The optimized build (`output: "standalone"`), started with `node server.js` as a non-root user. |
+
+In both stacks, a one-shot `migrate` service pushes the Prisma schema and seeds the default host account (`z@mail.com` / `z11111`) before the app starts. **Change that password after the first login.** The app reads `.env` when the container starts; nothing from `.env` is baked into an image.
+
+Postgres, Redis, MinIO and Prisma Studio listen on `127.0.0.1` only. The app reaches them over the compose network.
+
+### Public deployment
+
+Set these in `.env` on the server:
+
+- `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`: LiveKit and the app both use this pair. Use a long random secret; the `devkey`/`secret` defaults are public.
+- `LIVEKIT_NODE_IP`: the server's public IP. Audio goes straight there (UDP 7882, TCP 7881); it never passes through the Cloudflare tunnel.
+- `NEXT_PUBLIC_LIVEKIT_URL`: the LiveKit websocket URL browsers use (`scripts/cloudflare-tunnel.sh` writes it). The server reads it at runtime, so changing it needs a restart, not a rebuild.
+- TURN (coturn): `TURN_USER`, `TURN_PASSWORD`, `TURN_REALM`, and optionally `TURN_HOST` / `TURN_EXTERNAL_IP` (both default to `LIVEKIT_NODE_IP`). LiveKit offers this relay to every participant, for networks that block direct UDP. Open UDP/TCP 3478 and UDP 49152-49251. TURN over TLS (5349) isn't configured; it needs a certificate.
+
+  > Because coturn and LiveKit run on the same host, coturn must be allowed to relay to the host's own IP (`--allowed-peer-ip`, already set). Relayed calls were verified up to the relay allocation, but not end to end on Docker Desktop: its port forwarding rewrites the source address of packets that loop back to the same host. On a Linux server, confirm one relayed call works, e.g. with a browser forced to `iceTransportPolicy: "relay"`.
+
+### Scaling and Redis
+
+Locks, cooldowns and the participant-poll cache are kept in Redis (`REDIS_URL`), so several app containers can run behind one proxy. LiveKit also registers its nodes there. Without Redis, or while it's down, the app keeps working with per-process state, which is correct for a single instance.
+
+### Installing as an app (PWA)
+
+The production build is installable from Chrome, Edge and Safari ("Install app" / "Add to Home Screen"). Its service worker (`public/sw.js`) caches the build's hashed assets and the RNNoise model, so reopening the app doesn't download them again. Pages and API calls always go to the network; when the server can't be reached, an offline page is shown. The service worker isn't registered under `next dev`.
+
 ## Project Structure
 
 - `/src/app` - Next.js App Router pages and layouts.
