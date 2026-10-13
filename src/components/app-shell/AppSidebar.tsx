@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Clock3, LayoutGrid, LogOut, UserRound } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { ThemeSwitch } from "./ThemeSwitch";
+import styles from "./AppSidebar.module.css";
 
 export type AppSidebarSection = "dashboard" | "history" | "profile";
 
@@ -20,11 +22,47 @@ const NAV_ITEMS = [
   { section: "history", label: "ประวัติการประชุม", href: "/history", Icon: Clock3 },
 ] as const;
 
+const SIDEBAR_STORAGE_KEY = "meetsync-sidebar-collapsed";
+const SIDEBAR_CHANGE_EVENT = "meetsync-sidebar-change";
+let sidebarFallbackCollapsed = false;
+
+function getSidebarSnapshot() {
+  try {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+  } catch {
+    return sidebarFallbackCollapsed;
+  }
+}
+
+function subscribeToSidebar(onStoreChange: () => void) {
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === SIDEBAR_STORAGE_KEY) onStoreChange();
+  };
+
+  window.addEventListener(SIDEBAR_CHANGE_EVENT, onStoreChange);
+  window.addEventListener("storage", handleStorage);
+  return () => {
+    window.removeEventListener(SIDEBAR_CHANGE_EVENT, onStoreChange);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
 export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
   const { user, logout } = useAuthStore();
+  const isCollapsed = useSyncExternalStore(subscribeToSidebar, getSidebarSnapshot, () => false);
+
+  const toggleSidebar = () => {
+    sidebarFallbackCollapsed = !isCollapsed;
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarFallbackCollapsed));
+    } catch {
+      // The sidebar can still update for this page if storage is unavailable.
+    }
+    window.dispatchEvent(new Event(SIDEBAR_CHANGE_EVENT));
+  };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isCollapsed ? " sidebar--collapsed" : ""}`}>
       <div className="sidebar__inner">
         <div className="sidebar__header">
           <Link href="/dashboard" className="sidebar__brand focus-ring-night">
@@ -36,6 +74,24 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               <span className="sidebar__brand-tagline">Meeting rooms</span>
             </span>
           </Link>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={isCollapsed ? "ขยายแถบเมนู" : "ย่อแถบเมนู"}
+            aria-expanded={!isCollapsed}
+            title={isCollapsed ? "ขยายเมนู" : "ย่อเมนู"}
+            data-tooltip={isCollapsed ? "ขยายเมนู" : "ย่อเมนู"}
+            className={`sidebar__collapse-toggle ${styles.collapseToggle} focus-ring-night`}
+          >
+            <Image
+              aria-hidden="true"
+              className={styles.collapseToggleIcon}
+              src="/brand/sidebar.png"
+              alt=""
+              width={512}
+              height={512}
+            />
+          </button>
           {user && (
             <button
               type="button"
@@ -61,7 +117,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               const content = (
                 <>
                   <Icon aria-hidden="true" className="icon-20" strokeWidth={1.8} />
-                  {label}
+                  <span className="sidebar__nav-label">{label}</span>
                 </>
               );
               return (
@@ -71,12 +127,20 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
                       type="button"
                       onClick={() => onNavigate(section)}
                       aria-current={isActive ? "page" : undefined}
+                      aria-label={label}
+                      data-tooltip={label}
                       className={className}
                     >
                       {content}
                     </button>
                   ) : (
-                    <Link href={href} aria-current={isActive ? "page" : undefined} className={className}>
+                    <Link
+                      href={href}
+                      aria-current={isActive ? "page" : undefined}
+                      aria-label={label}
+                      data-tooltip={label}
+                      className={className}
+                    >
                       {content}
                     </Link>
                   )}
@@ -91,6 +155,8 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
             <Link
               href="/account/edit"
               aria-current={active === "profile" ? "page" : undefined}
+              aria-label="แก้ไขโปรไฟล์"
+              data-tooltip="แก้ไขโปรไฟล์"
               className={`${active === "profile" ? "sidebar__user-link--active" : "sidebar__user-link"} focus-ring-night`}
             >
               <span className="sidebar__avatar">
@@ -111,6 +177,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
               onClick={() => logout()}
               aria-label="ออกจากระบบ"
               title="ออกจากระบบ"
+              data-tooltip="ออกจากระบบ"
               className="sidebar__logout-desktop focus-ring-night"
             >
               <LogOut aria-hidden="true" className="icon-18" strokeWidth={1.8} />

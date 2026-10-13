@@ -52,39 +52,25 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
 
   // Without preloaded meetings, the server searches and pages the history.
   useEffect(() => {
-    if (initialMeetings) return;
-    requestRef.current?.abort();
-    const request = new AbortController();
-    requestRef.current = request;
-    fetchMeetingPage(appliedFilters, null, request.signal)
-      .then((data) => {
-        setMeetings(data.meetings);
-        setNextCursor(data.nextCursor ?? null);
-      })
-      .catch((err: Error) => {
-        if (!request.signal.aborted) setError(err.message);
-      })
-      .finally(() => {
-        if (requestRef.current === request) setIsLoading(false);
-      });
-    return () => request.abort();
-  }, [initialMeetings, appliedFilters]);
+    if (!initialMeetings) {
+      const controller = new AbortController();
 
-  function loadMore() {
-    if (!nextCursor || isLoadingMore) return;
-    const request = new AbortController();
-    requestRef.current = request;
-    setIsLoadingMore(true);
-    fetchMeetingPage(appliedFilters, nextCursor, request.signal)
-      .then((data) => {
-        setMeetings((current) => [...current, ...data.meetings]);
-        setNextCursor(data.nextCursor ?? null);
-      })
-      .catch((err: Error) => {
-        if (!request.signal.aborted) setError(err.message);
-      })
-      .finally(() => setIsLoadingMore(false));
-  }
+      fetch('/api/meetings', { signal: controller.signal })
+        .then((res) => {
+          if (!res.ok) throw new Error("โหลดประวัติการประชุมไม่สำเร็จ");
+          return res.json() as Promise<MeetingHistoryResponse>;
+        })
+        .then((data) => setMeetings(data.meetings))
+        .catch((err: Error) => {
+          if (err.name !== "AbortError") setError(err.message);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setIsLoading(false);
+        });
+
+      return () => controller.abort();
+    }
+  }, [initialMeetings]);
 
   const filteredMeetings = useMemo(
     () => (initialMeetings ? filterMeetingHistory(meetings, appliedFilters) : meetings),
