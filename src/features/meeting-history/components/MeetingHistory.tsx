@@ -36,16 +36,22 @@ export function MeetingHistory({ meetings: initialMeetings }: MeetingHistoryProp
 
   useEffect(() => {
     if (!initialMeetings) {
-      setIsLoading(true);
-      setError("");
-      fetch('/api/meetings')
+      const controller = new AbortController();
+
+      fetch('/api/meetings', { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error("โหลดประวัติการประชุมไม่สำเร็จ");
           return res.json() as Promise<MeetingHistoryResponse>;
         })
         .then((data) => setMeetings(data.meetings))
-        .catch((err: Error) => setError(err.message))
-        .finally(() => setIsLoading(false));
+        .catch((err: Error) => {
+          if (err.name !== "AbortError") setError(err.message);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setIsLoading(false);
+        });
+
+      return () => controller.abort();
     }
   }, [initialMeetings]);
 

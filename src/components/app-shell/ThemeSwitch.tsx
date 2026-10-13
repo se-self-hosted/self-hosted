@@ -60,24 +60,37 @@ export function ThemeSwitch({ iconOnly = false }: { iconOnly?: boolean }) {
 
   return (
     <div className="theme-switch">
-      <span className="theme-switch__indicator" aria-hidden="true">
-        {isNight ? <Moon className="icon-16" strokeWidth={2} /> : <Sun className="icon-16" strokeWidth={2} />}
-      </span>
-      <div className="theme-switch__control">
-        <input
-          id="app-theme-switch"
-          type="checkbox"
-          className="theme-switch__input"
-          checked={isNight}
-          onChange={(event) => handleThemeChange(event.target.checked ? "dark" : "light")}
-          aria-label="เปลี่ยนโหมดสี"
-        />
-        <label className="theme-switch__track" htmlFor="app-theme-switch">
-          <span className="theme-switch__label">Day</span>
-          <span className="theme-switch__label">Night</span>
-          <span className="theme-switch__thumb" aria-hidden="true" />
-        </label>
+      <div className="theme-switch__expanded-control">
+        <span className="theme-switch__indicator" aria-hidden="true">
+          {isNight ? <Moon className="icon-16" strokeWidth={2} /> : <Sun className="icon-16" strokeWidth={2} />}
+        </span>
+        <div className="theme-switch__control">
+          <input
+            id="app-theme-switch"
+            type="checkbox"
+            className="theme-switch__input"
+            checked={isNight}
+            onChange={(event) => handleThemeChange(event.target.checked ? "dark" : "light")}
+            aria-label="เปลี่ยนโหมดสี"
+          />
+          <label className="theme-switch__track" htmlFor="app-theme-switch">
+            <span className="theme-switch__label">Day</span>
+            <span className="theme-switch__label">Night</span>
+            <span className="theme-switch__thumb" aria-hidden="true" />
+          </label>
+        </div>
       </div>
+      <button
+        type="button"
+        onClick={() => handleThemeChange(isNight ? "light" : "dark")}
+        aria-label={isNight ? "เปลี่ยนเป็นโหมดกลางวัน" : "เปลี่ยนเป็นโหมดกลางคืน"}
+        data-tooltip={isNight ? "Day" : "Night"}
+        className="theme-switch__compact-toggle focus-ring-night"
+      >
+        {isNight
+          ? <Moon aria-hidden="true" className="icon-18" strokeWidth={2} />
+          : <Sun aria-hidden="true" className="icon-18" strokeWidth={2} />}
+      </button>
     </div>
   );
 }
