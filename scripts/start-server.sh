@@ -1,16 +1,14 @@
 #!/bin/bash
+# Development stack: next dev with hot reload, plus Prisma Studio.
+# (Production: scripts/start-production.sh)
+set -euo pipefail
+cd "$(dirname "$0")/.."
 
-echo "🚀 Starting Docker containers..."
-docker compose up -d
-
-echo "⏳ Waiting for PostgreSQL and App containers to be ready..."
-sleep 5
-
-echo "🛠️ Pushing database schema..."
-docker compose exec -T app npx -y prisma db push
-
-echo "🌱 Seeding default user..."
-docker compose exec -T app npx -y prisma db seed
+# --renew-anon-volumes: the container's node_modules lives in an anonymous
+# volume, which would otherwise keep old packages after a dependency change.
+# The migrate service pushes the schema and seeds the default user first.
+echo "🚀 Building and starting the development stack..."
+docker compose up -d --build --renew-anon-volumes --wait
 
 echo "✅ Server is fully running!"
 echo "👉 App: http://localhost:3000"

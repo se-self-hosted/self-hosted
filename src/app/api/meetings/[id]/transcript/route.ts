@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { LEAVE_GRACE_MS, resolveMeetingAccess } from "@/lib/meeting-access";
 import { resolveSegmentSpokenAt } from "@/features/meeting-room/lib/meeting-clock";
+import { buildFullTranscript } from "@/lib/transcript-text";
 
 const segmentSchema = z.object({
   id: z.string().min(1).optional(),
@@ -46,57 +47,51 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const meeting = await prisma.meeting.findUnique({
-      where: { id: meetingId },
-      include: {
-        participants: true,
-        transcript: {
-          include: {
-            segments: {
-              orderBy: [
-                { startTime: "asc" },
-                { spokenAt: "asc" },
-              ],
-              include: {
-                participant: true,
-              },
-            },
+    const transcript = await prisma.transcript.findUnique({
+      where: { meetingId },
+      select: {
+        id: true,
+        meetingId: true,
+        language: true,
+        createdAt: true,
+        segments: {
+          orderBy: [
+            { startTime: "asc" },
+            { spokenAt: "asc" },
+          ],
+          select: {
+            id: true,
+            participantId: true,
+            startTime: true,
+            endTime: true,
+            spokenAt: true,
+            text: true,
+            confidence: true,
+            participant: { select: { displayName: true } },
           },
         },
       },
     });
 
-    if (!meeting) {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
-    }
-
-    if (!meeting.transcript) {
+    if (!transcript) {
       return NextResponse.json({
         transcript: null,
         segments: [],
       });
     }
 
-    // Ensure segments are sorted chronologically
-    const sortedSegments = [...meeting.transcript.segments].sort((a, b) => {
-      if (a.startTime !== b.startTime) {
-        return a.startTime - b.startTime;
-      }
-      return new Date(a.spokenAt).getTime() - new Date(b.spokenAt).getTime();
-    });
-
     return NextResponse.json({
       transcript: {
-        id: meeting.transcript.id,
-        meetingId: meeting.transcript.meetingId,
-        fullTranscript: meeting.transcript.fullTranscript,
-        language: meeting.transcript.language,
-        createdAt: meeting.transcript.createdAt,
+        id: transcript.id,
+        meetingId: transcript.meetingId,
+        fullTranscript: buildFullTranscript(transcript.segments),
+        language: transcript.language,
+        createdAt: transcript.createdAt,
       },
-      segments: sortedSegments.map((s) => ({
+      segments: transcript.segments.map((s) => ({
         id: s.id,
         participantId: s.participantId,
-        speakerName: s.participant?.displayName || "Unknown",
+        speakerName: s.participant.displayName || "Unknown",
         startTime: s.startTime,
         endTime: s.endTime,
         spokenAt: s.spokenAt,
@@ -139,7 +134,7 @@ export async function POST(
 
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
-      include: { participants: true },
+      select: { startedAt: true },
     });
 
     if (!meeting) {
@@ -187,17 +182,36 @@ export async function POST(
       }
     }
 
-    // Resolve participant for each segment. Kept in sync as segments create
-    // new participants so a batch introducing several new speakers reuses
-    // each one instead of creating a duplicate row per subsequent segment.
-    const participants = [...meeting.participants];
+    // Resolve participant for each segment. Loaded only when a segment lacks
+    // a participantId (live saves always carry one), and kept in sync as
+    // segments create new participants so a batch introducing several new
+    // speakers reuses each one instead of creating a duplicate row per
+    // subsequent segment.
+    let participants: { id: string; displayName: string }[] | null = null;
+    const loadParticipants = async () =>
+      (participants ??= await prisma.participant.findMany({
+        where: { meetingId },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, displayName: true },
+      }));
+    const segmentSelect = {
+      id: true,
+      transcriptId: true,
+      participantId: true,
+      startTime: true,
+      endTime: true,
+      spokenAt: true,
+      text: true,
+      confidence: true,
+      participant: { select: { displayName: true } },
+    } as const;
     const createdSegments = [];
     for (const seg of rawSegments) {
       // Clients retry a failed save with the same id; answer a retry of a
       // segment already stored with that row instead of a duplicate-key 500.
       const findExisting = () =>
         seg.id
-          ? prisma.transcriptSegment.findUnique({ where: { id: seg.id }, include: { participant: true } })
+          ? prisma.transcriptSegment.findUnique({ where: { id: seg.id }, select: segmentSelect })
           : null;
       const existing = await findExisting();
       if (existing) {
@@ -211,6 +225,7 @@ export async function POST(
       let participantId = seg.participantId;
 
       if (!participantId && seg.speakerName) {
+        const participants = await loadParticipants();
         const found = participants.find(
           (p) => p.displayName.toLowerCase() === seg.speakerName!.toLowerCase(),
         );
@@ -229,6 +244,7 @@ export async function POST(
         }
       } else if (!participantId) {
         // Fallback to first participant or create a guest participant
+        const participants = await loadParticipants();
         if (participants.length > 0) {
           participantId = participants[0].id;
         } else {
@@ -259,9 +275,7 @@ export async function POST(
           text: seg.text.trim(),
           confidence: seg.confidence ?? 1.0,
         },
-        include: {
-          participant: true,
-        },
+        select: segmentSelect,
       }).catch(async (error) => {
         // A concurrent retry of the same segment won the insert.
         const raced = isUniqueViolation(error) ? await findExisting() : null;
@@ -272,25 +286,10 @@ export async function POST(
       createdSegments.push(createdSegment);
     }
 
-    // Update fullTranscript chronologically
-    const allSegments = await prisma.transcriptSegment.findMany({
-      where: { transcriptId: transcript.id },
-      orderBy: [
-        { startTime: "asc" },
-        { spokenAt: "asc" },
-      ],
-      include: { participant: true },
-    });
-
-    const fullTranscript = allSegments
-      .map((s) => `${s.participant.displayName}: ${s.text}`)
-      .join("\n");
-
-    await prisma.transcript.update({
-      where: { id: transcript.id },
-      data: { fullTranscript },
-    });
-
+    // fullTranscript is built on read (buildFullTranscript), not rewritten
+    // here: that made every saved line re-read and re-store the whole
+    // transcript, and concurrent saves could each store a copy missing the
+    // other's line.
     return NextResponse.json(
       {
         success: true,

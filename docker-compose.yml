@@ -1,55 +1,109 @@
+# Production stack: `docker compose -f docker-compose.yml up -d --build --wait`
+# (or scripts/start-production.sh).
+#
+# A plain `docker compose up` also merges docker-compose.override.yml, which
+# turns `app` and `migrate` into the hot-reloading dev setup instead.
+
 services:
+  # One-shot: syncs the database schema and creates the default host
+  # account, then exits; the app starts only after it succeeds.
+  migrate:
+    build:
+      context: .
+      target: builder
+    image: meetsync-builder
+    command: ["sh", "-c", "npx prisma db push && npx prisma db seed"]
+    env_file:
+      - path: .env
+        required: false
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   app:
     build:
       context: .
-    image: nextjs-dev
+      target: runner
+    image: meetsync-app
+    restart: unless-stopped
     ports:
       - "3000:3000"
-      - "5555:5556"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+    env_file:
+      - path: .env
+        required: false
     environment:
-      NODE_ENV: development
       # Server-side LiveKit API calls stay on the compose network, so they keep
       # working when NEXT_PUBLIC_LIVEKIT_URL points at a public tunnel.
       LIVEKIT_URL: ${LIVEKIT_URL:-http://livekit:7880}
-      # Uncomment the following line if hot-reloading doesn't work (e.g., on Windows/WSL)
-      # WATCHPACK_POLLING: "true"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     depends_on:
-      - postgres
-      - redis
-      - minio
-      - livekit
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      livekit:
+        condition: service_started
 
   postgres:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: meeting_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d meeting_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # The app reaches services over the compose network; host ports are only
+    # for local tools, so they don't listen on the LAN with default passwords.
     ports:
-      - "5432:5432"
+      # Set POSTGRES_HOST_PORT in .env if another Postgres already uses 5432.
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Shared state for every app instance (locks, cooldowns, poll cache) and
+  # LiveKit's node registry, so either can run more than one copy.
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
 
   minio:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"
+    restart: unless-stopped
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
 
@@ -58,12 +112,38 @@ services:
     # Live audio must win the CPU over uploads, encodes and dev rebuilds;
     # on a small host, equal shares let a recording upload stall the room.
     cpu_shares: 4096
+    restart: unless-stopped
+    environment:
+      # The same key pair the app signs tokens with. Without it, --dev falls back
+      # to the public devkey/secret pair, so anyone who can reach LiveKit through
+      # the tunnel could mint their own room tokens. Set a long random
+      # LIVEKIT_API_SECRET in .env.
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-secret}"
+      REDIS_HOST: redis:6379
+      # Every participant is offered coturn as a relay, for networks that
+      # block direct UDP to the SFU.
+      LIVEKIT_CONFIG: |
+        rtc:
+          turn_servers:
+            - host: ${TURN_HOST:-${LIVEKIT_NODE_IP:-127.0.0.1}}
+              port: 3478
+              protocol: udp
+              username: ${TURN_USER:-meetuser}
+              credential: ${TURN_PASSWORD:-meetsync-turn-secret}
+            - host: ${TURN_HOST:-${LIVEKIT_NODE_IP:-127.0.0.1}}
+              port: 3478
+              protocol: tcp
+              username: ${TURN_USER:-meetuser}
+              credential: ${TURN_PASSWORD:-meetsync-turn-secret}
     # Same-machine development default; set LIVEKIT_NODE_IP to a reachable server IP for remote clients.
     command: --dev --bind 0.0.0.0 --node-ip ${LIVEKIT_NODE_IP:-127.0.0.1}
     ports:
       - "7880:7880"
       - "7881:7881"
       - "7882:7882/udp"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   coturn:
     image: coturn/coturn:latest
@@ -72,16 +152,20 @@ services:
     ports:
       - "3478:3478"
       - "3478:3478/udp"
-      - "5349:5349"
-      - "5349:5349/udp"
-      - "49152-49200:49152-49200/udp"
+      # Must match min-port/max-port in coturn/turnserver.conf.
+      - "49152-49251:49152-49251/udp"
     volumes:
       - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
-    environment:
-      TURN_USER: ${TURN_USER:-meetuser}
-      TURN_PASSWORD: ${TURN_PASSWORD:-meetsync-turn-secret}
-      TURN_REALM: ${TURN_REALM:-turn.meetsync.local}
-    command: ["-c", "/etc/coturn/turnserver.conf"]
+    command:
+      - "-c"
+      - "/etc/coturn/turnserver.conf"
+      - "--realm=${TURN_REALM:-turn.meetsync.local}"
+      - "--user=${TURN_USER:-meetuser}:${TURN_PASSWORD:-meetsync-turn-secret}"
+      # The address relayed media is advertised on; the same public IP as LiveKit.
+      - "--external-ip=${TURN_EXTERNAL_IP:-${LIVEKIT_NODE_IP:-127.0.0.1}}"
+      # coturn refuses to relay to its own address, which on a single server is
+      # also where LiveKit listens; without this, relayed calls never connect.
+      - "--allowed-peer-ip=${LIVEKIT_NODE_IP:-127.0.0.1}"
 
 volumes:
   postgres_data:

@@ -8,6 +8,7 @@ import {
   httpStatusForSummaryAIError,
 } from "@/features/ai-summary/lib/openai-summary";
 import { normalizeEditedSummary } from "@/features/ai-summary/lib/summary-output";
+import { remainingMs, setFlag, tryLock, unlock } from "@/lib/shared-state";
 
 // Long transcripts are summarized in several sequential model calls.
 export const maxDuration = 300;
@@ -56,20 +57,14 @@ async function readJsonBody(req: Request): Promise<{ ok: true; json: unknown } |
   }
 }
 
-// One generation per meeting at a time in this process, so a double click or
-// a second tab doesn't pay for the same summary twice, and a pause between
-// generations so a looping client can't run up the OpenAI bill.
-const inFlight = new Set<string>();
-const lastFinishedAt = new Map<string, number>();
+// One generation per meeting at a time, across every app instance, so a
+// double click or a second tab doesn't pay for the same summary twice, and a
+// pause between generations so a looping client can't run up the OpenAI bill.
 const COOLDOWN_MS = 15_000;
-
-function startCooldown(meetingId: string) {
-  const now = Date.now();
-  for (const [id, finishedAt] of lastFinishedAt) {
-    if (now - finishedAt >= COOLDOWN_MS) lastFinishedAt.delete(id);
-  }
-  lastFinishedAt.set(meetingId, now);
-}
+// Outlives the longest request (maxDuration), so a crashed one frees it too.
+const IN_FLIGHT_TTL_MS = (maxDuration + 60) * 1000;
+const inFlightLock = (meetingId: string) => `summary:in-flight:${meetingId}`;
+const cooldownFlag = (meetingId: string) => `summary:cooldown:${meetingId}`;
 
 export async function POST(
   req: Request,
@@ -95,23 +90,23 @@ export async function POST(
       return NextResponse.json({ error: body.error.issues[0].message }, { status: 400 });
     }
 
-    if (inFlight.has(meetingId)) {
+    const lockToken = await tryLock(inFlightLock(meetingId), IN_FLIGHT_TTL_MS);
+    if (!lockToken) {
       return NextResponse.json(
         { error: "A summary is already being generated for this meeting", code: "SUMMARY_IN_PROGRESS" },
         { status: 409 },
       );
     }
-    const sinceLast = Date.now() - (lastFinishedAt.get(meetingId) ?? 0);
-    if (sinceLast < COOLDOWN_MS) {
-      const retryAfter = Math.ceil((COOLDOWN_MS - sinceLast) / 1000);
-      return NextResponse.json(
-        { error: "A summary was generated moments ago; try again shortly", code: "SUMMARY_COOLDOWN" },
-        { status: 429, headers: { "Retry-After": String(retryAfter) } },
-      );
-    }
-    inFlight.add(meetingId);
 
     try {
+      const cooldownLeft = await remainingMs(cooldownFlag(meetingId));
+      if (cooldownLeft > 0) {
+        return NextResponse.json(
+          { error: "A summary was generated moments ago; try again shortly", code: "SUMMARY_COOLDOWN" },
+          { status: 429, headers: { "Retry-After": String(Math.ceil(cooldownLeft / 1000)) } },
+        );
+      }
+
       const generate = createOpenAISummaryGenerator({
         apiKey: process.env.OPENAI_API_KEY,
         model: process.env.OPENAI_SUMMARY_MODEL || DEFAULT_SUMMARY_MODEL,
@@ -120,7 +115,7 @@ export async function POST(
       const result = await summarizeMeeting(meetingId, generate, { discardEdits: body.data.discardEdits });
       // Only a completed model answer costs tokens; failures stay retryable at once.
       if (result.status === "saved" || result.status === "invalid_output") {
-        startCooldown(meetingId);
+        await setFlag(cooldownFlag(meetingId), COOLDOWN_MS);
       }
 
       switch (result.status) {
@@ -144,7 +139,7 @@ export async function POST(
           );
       }
     } finally {
-      inFlight.delete(meetingId);
+      await unlock(inFlightLock(meetingId), lockToken);
     }
   } catch (error) {
     console.error("Meeting Summary POST Error:", error);

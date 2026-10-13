@@ -7,7 +7,7 @@ import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-
 import { saveTranscriptSegment } from "@/features/meeting-room/lib/transcript-save";
 import { createRecordingBus, type RecordingBus } from "@/features/meeting-room/lib/recording-bus";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -24,7 +24,6 @@ import {
   Square,
   Users,
   Video,
-  VolumeX,
   X,
 } from "lucide-react";
 import {
@@ -39,11 +38,21 @@ import {
   RemoteTrack,
   LocalAudioTrack,
   TrackEvent,
+  AudioPresets,
   type LocalTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
 import { ThemeSwitch } from "@/components/app-shell/ThemeSwitch";
+import {
+  InterimTranscript,
+  ParticipantRow,
+  ParticipantTile,
+  RecordingTimer,
+  TranscriptLines,
+  createTextStore,
+  type SpeakerStyle,
+} from "./MeetingRoomParts";
 
 // Our token route writes this metadata and grants no canUpdateOwnMetadata,
 // so a participant can't claim to be the host by rewriting their own.
@@ -67,13 +76,62 @@ function isHostParticipant(participant?: Participant) {
   return participantMetadata(participant).isHost;
 }
 
-/** Profile photo when the participant has one, initials otherwise (or if it fails to load). */
-function ParticipantAvatar({ avatarUrl, initials }: { avatarUrl: string | null; initials: string }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  if (!avatarUrl || failedUrl === avatarUrl) return <>{initials}</>;
-  // eslint-disable-next-line @next/next/no-img-element -- a small same-origin avatar; next/image adds nothing here
-  return <img src={avatarUrl} alt="" className="participant-avatar__image" onError={() => setFailedUrl(avatarUrl)} />;
+type RemoteParticipantState = {
+  identity: string;
+  name: string;
+  isHost: boolean;
+  avatarUrl: string | null;
+  isMuted: boolean;
+  isSpeaking: boolean;
+  quality: string;
+};
+
+function formatQuality(quality: ConnectionQuality): string {
+  switch (quality) {
+    case ConnectionQuality.Excellent:
+      return "ดีเยี่ยม";
+    case ConnectionQuality.Good:
+      return "ดี";
+    case ConnectionQuality.Poor:
+      return "สัญญาณอ่อน";
+    default:
+      return "ปกติ";
+  }
 }
+
+function remoteParticipantState(participant: RemoteParticipant): RemoteParticipantState {
+  const { isHost, avatarUrl } = participantMetadata(participant);
+  return {
+    identity: participant.identity,
+    name: participant.name || participant.identity,
+    isHost,
+    avatarUrl,
+    isMuted: !participant.isMicrophoneEnabled,
+    isSpeaking: participant.isSpeaking,
+    quality: formatQuality(participant.connectionQuality),
+  };
+}
+
+function sameRemoteParticipantState(a: RemoteParticipantState | undefined, b: RemoteParticipantState) {
+  return Boolean(a) && a!.name === b.name && a!.isHost === b.isHost && a!.avatarUrl === b.avatarUrl &&
+    a!.isMuted === b.isMuted && a!.isSpeaking === b.isSpeaking && a!.quality === b.quality;
+}
+
+function sameSet(a: ReadonlySet<string>, b: ReadonlySet<string>) {
+  if (a.size !== b.size) return false;
+  for (const value of a) if (!b.has(value)) return false;
+  return true;
+}
+
+const toneFor = (index: number) => `tone-${(index % 6) + 1}`;
+const roleFor = (participant: UiParticipant) =>
+  participant.isLocal ? (participant.isHost ? "คุณ · host" : "คุณ") : participant.isHost ? "host" : "ผู้เข้าร่วม";
+
+// The DB list only fills in people who joined but haven't connected to
+// LiveKit yet; everyone connected is tracked live from LiveKit events. It
+// also notices a room the host has closed.
+const PARTICIPANT_POLL_MS = 10_000;
+const PING_POLL_MS = 5_000;
 
 type MeetingRoomProps = {
   room: {
@@ -142,20 +200,15 @@ export function MeetingRoomView({
 
   // 4. Active speakers & participants tracking
   const [activeSpeakerIdentities, setActiveSpeakerIdentities] = useState<Set<string>>(new Set());
-  const [remoteParticipantsMap, setRemoteParticipantsMap] = useState<
-    Map<string, {
-      identity: string;
-      name: string;
-      isHost: boolean;
-      avatarUrl: string | null;
-      isMuted: boolean;
-      isSpeaking: boolean;
-      quality: string;
-    }>
-  >(new Map());
+  const [remoteParticipantsMap, setRemoteParticipantsMap] = useState<Map<string, RemoteParticipantState>>(new Map());
 
   // Toast / notification message (e.g. Host muted your mic)
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // One AudioContext for noise suppression per joined session, closed on
+  // leave. Creating one per mic toggle leaked an audio thread each time.
+  const noiseContextRef = useRef<AudioContext | null>(null);
 
   // Session & database presence tracking
   const joiningRef = useRef(false);
@@ -177,6 +230,9 @@ export function MeetingRoomView({
       keepalive: true,
     });
     await Promise.all([session.room?.disconnect(), leaving]);
+    const noiseContext = noiseContextRef.current;
+    noiseContextRef.current = null;
+    if (noiseContext && noiseContext.state !== "closed") await noiseContext.close().catch(() => {});
   }, []);
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [meetingId, setMeetingId] = useState<string | null>(null);
@@ -187,14 +243,14 @@ export function MeetingRoomView({
 
   // 5. Audio Recording State
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordingStartedAt, setRecordingStartedAt] = useState<number | null>(null);
+  const recordingStartedAtRef = useRef<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   // Set while startRecording awaits the audio graph, before mediaRecorderRef
   // exists; a stop in that window cancels the start instead of missing it.
   const recordingStartRef = useRef<{ cancelled: boolean } | null>(null);
   const recordingBusRef = useRef<RecordingBus | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartOffsetRef = useRef<number | null>(null);
   // Host "start" requests received vs. acted on: a late joiner can receive one
   // mid-join, before its room and mic are ready, so starting waits for the join.
@@ -210,10 +266,16 @@ export function MeetingRoomView({
   // Follow new lines only while the reader is at the bottom, so scrolling up
   // to read earlier lines isn't yanked back by every interim update.
   const followTranscriptRef = useRef(true);
-  const [interimTranscript, setInterimTranscript] = useState("");
+  // Interim text changes several times a second while someone speaks; only
+  // the bubble showing it subscribes, not the whole room.
+  const [interimStore] = useState(createTextStore);
 
   // Container ref for attaching remote audio elements
   const audioContainerRef = useRef<HTMLDivElement>(null);
+  // The element attached for each remote track. LiveKit has already
+  // detached the track by the time TrackUnsubscribed fires, so the element
+  // can't be recovered from the track then.
+  const remoteAudioElementsRef = useRef(new Map<RemoteTrack, HTMLMediaElement>());
 
   // 1. Check / Request Microphone Permission
   async function requestMicrophonePermission(): Promise<boolean> {
@@ -238,8 +300,10 @@ export function MeetingRoomView({
       if (!audioTrack.getProcessor()) {
         const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (AudioCtx) {
-          const ctx = new AudioCtx({ sampleRate: 48000 });
-          audioTrack.setAudioContext(ctx);
+          if (!noiseContextRef.current || noiseContextRef.current.state === "closed") {
+            noiseContextRef.current = new AudioCtx({ sampleRate: 48000 });
+          }
+          audioTrack.setAudioContext(noiseContextRef.current);
         }
         await audioTrack.setProcessor(new RNNoiseProcessor());
       }
@@ -321,8 +385,10 @@ export function MeetingRoomView({
         adaptiveStream: true,
         webAudioMix: true,
         publishDefaults: {
-          audioPreset: { maxBitrate: 64000 },
-          dtx: false,
+          // Speech at 24 kbps with DTX: a silent mic sends almost nothing,
+          // which matters when every client downloads up to 39 other mics.
+          audioPreset: AudioPresets.speech,
+          dtx: true,
           red: true,
         },
         audioCaptureDefaults: {
@@ -343,9 +409,9 @@ export function MeetingRoomView({
         await lkRoom.connect(tokenData.wsUrl, tokenData.token, { autoSubscribe: true });
         if (!mountedRef.current || activeSessionRef.current !== session) return;
         // Populate remote participants already in the room upon connection
-        lkRoom.remoteParticipants.forEach((participant) => {
-          updateRemoteParticipant(participant);
-        });
+        setRemoteParticipantsMap(new Map(
+          Array.from(lkRoom.remoteParticipants.values(), (participant) => [participant.identity, remoteParticipantState(participant)]),
+        ));
         // Publish local audio track if mic not muted
         if (!shouldMute) {
           await lkRoom.localParticipant.setMicrophoneEnabled(true);
@@ -403,6 +469,8 @@ export function MeetingRoomView({
       if (activeSessionRef.current?.room !== lkRoom) return;
       stopRecording();
       void releaseSession().catch((error) => console.error("Release session error:", error));
+      audioContainerRef.current?.replaceChildren();
+      remoteAudioElementsRef.current.clear();
       setHasJoined(false);
       setLivekitRoom(null);
       setRemoteParticipantsMap(new Map());
@@ -428,9 +496,8 @@ export function MeetingRoomView({
 
     // Active Speakers Event
     lkRoom.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
-      const activeIds = new Set<string>();
-      speakers.forEach((s) => activeIds.add(s.identity));
-      setActiveSpeakerIdentities(activeIds);
+      const activeIds = new Set(speakers.map((s) => s.identity));
+      setActiveSpeakerIdentities((prev) => (sameSet(prev, activeIds) ? prev : activeIds));
     });
 
     // Participant Connected
@@ -478,6 +545,7 @@ export function MeetingRoomView({
       (track: RemoteTrack, publication: RemoteTrackPublication, participant: RemoteParticipant) => {
         if (track.kind === Track.Kind.Audio) {
           const audioElement = track.attach();
+          remoteAudioElementsRef.current.set(track, audioElement);
           if (audioContainerRef.current) {
             audioContainerRef.current.appendChild(audioElement);
           }
@@ -485,6 +553,16 @@ export function MeetingRoomView({
         updateRemoteParticipant(participant);
       },
     );
+
+    // Remove the element attach() created, or every departed participant
+    // leaves an <audio> element behind. Out of the DOM, LiveKit reuses it
+    // for the next track it attaches.
+    lkRoom.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+      const element = remoteAudioElementsRef.current.get(track);
+      remoteAudioElementsRef.current.delete(track);
+      track.detach();
+      element?.remove();
+    });
 
     // Track Muted / Unmuted
     lkRoom.on(RoomEvent.TrackMuted, (pub, participant) => {
@@ -531,44 +609,27 @@ export function MeetingRoomView({
   }
 
   function updateRemoteParticipant(participant: RemoteParticipant) {
+    const state = remoteParticipantState(participant);
+    // Skip the update (and the room re-render) when nothing shown changed.
     setRemoteParticipantsMap((prev) => {
+      if (sameRemoteParticipantState(prev.get(participant.identity), state)) return prev;
       const next = new Map(prev);
-      const { isHost: participantIsHost, avatarUrl } = participantMetadata(participant);
-      next.set(participant.identity, {
-        identity: participant.identity,
-        name: participant.name || participant.identity,
-        isHost: participantIsHost,
-        avatarUrl,
-        isMuted: !participant.isMicrophoneEnabled,
-        isSpeaking: participant.isSpeaking,
-        quality: formatQuality(participant.connectionQuality),
-      });
+      next.set(participant.identity, state);
       return next;
     });
   }
 
-  function formatQuality(quality: ConnectionQuality): string {
-    switch (quality) {
-      case ConnectionQuality.Excellent:
-        return "ดีเยี่ยม";
-      case ConnectionQuality.Good:
-        return "ดี";
-      case ConnectionQuality.Poor:
-        return "สัญญาณอ่อน";
-      default:
-        return "ปกติ";
-    }
-  }
-
-  // Simulated / calculated ping periodic update
+  // Round-trip time of LiveKit's signaling connection, measured by its pings.
   useEffect(() => {
-    if (connectionStatus !== "connected") return;
-    const interval = setInterval(() => {
-      const simulatedPing = Math.floor(14 + Math.random() * 12);
-      setPingMs(simulatedPing);
-    }, 2000);
+    if (connectionStatus !== "connected" || !livekitRoom) return;
+    const readPing = () => {
+      const rtt = livekitRoom.engine.client.rtt;
+      setPingMs(rtt > 0 ? Math.round(rtt) : null);
+    };
+    readPing();
+    const interval = setInterval(readPing, PING_POLL_MS);
     return () => clearInterval(interval);
-  }, [connectionStatus]);
+  }, [connectionStatus, livekitRoom]);
 
   // Poll database active participants
   useEffect(() => {
@@ -577,6 +638,7 @@ export function MeetingRoomView({
     let isMounted = true;
 
     async function fetchParticipants() {
+      if (document.hidden) return;
       try {
         const response = await fetch(`/api/rooms/${room!.roomHash}/participants`, {
           cache: "no-store",
@@ -599,7 +661,7 @@ export function MeetingRoomView({
     }
 
     void fetchParticipants();
-    const interval = setInterval(fetchParticipants, 3000);
+    const interval = setInterval(fetchParticipants, PARTICIPANT_POLL_MS);
 
     return () => {
       isMounted = false;
@@ -657,10 +719,8 @@ export function MeetingRoomView({
       } else {
         resolve();
       }
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
+      recordingStartedAtRef.current = null;
+      setRecordingStartedAt(null);
       setIsRecording(false);
     });
   }, []);
@@ -697,16 +757,17 @@ export function MeetingRoomView({
     if (showTranscriptPanel) followTranscriptRef.current = true;
   }, [showTranscriptPanel]);
 
-  // Keep the newest segment and the growing interim draft in view. Scroll the
-  // list itself — scrollIntoView would also scroll the page behind the panel.
-  // Jump rather than animate: a smooth scroll's intermediate positions would
-  // read as the reader scrolling away and stop the follow.
+  // Keep the newest segment in view (InterimTranscript does the same for the
+  // growing interim draft). Scroll the list itself — scrollIntoView would
+  // also scroll the page behind the panel. Jump rather than animate: a smooth
+  // scroll's intermediate positions would read as the reader scrolling away
+  // and stop the follow.
   useEffect(() => {
     const list = transcriptListRef.current;
     if (showTranscriptPanel && list && followTranscriptRef.current) {
       list.scrollTo({ top: list.scrollHeight });
     }
-  }, [transcriptSegments, interimTranscript, showTranscriptPanel]);
+  }, [transcriptSegments, showTranscriptPanel]);
 
   // 5. Start / Stop Audio Recording — each client records only its own mic,
   // so every speaker's words end up in their own separate file.
@@ -757,7 +818,9 @@ export function MeetingRoomView({
         try {
           if (audioChunksRef.current.length === 0) return;
           const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-          const duration = recordingDurationOverrideRef.current ?? Math.max(1, recordingSeconds);
+          const startedAt = recordingStartedAtRef.current;
+          const duration = recordingDurationOverrideRef.current ??
+            Math.max(1, startedAt === null ? 1 : Math.round((Date.now() - startedAt) / 1000));
           recordingDurationOverrideRef.current = null;
 
           const formData = new FormData();
@@ -794,12 +857,10 @@ export function MeetingRoomView({
       recorder.start(1000);
       mediaRecorderRef.current = recorder;
       recordingBusRef.current = recordingBus;
+      const startedAt = Date.now();
+      recordingStartedAtRef.current = startedAt;
+      setRecordingStartedAt(startedAt);
       setIsRecording(true);
-      setRecordingSeconds(0);
-
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingSeconds((prev) => prev + 1);
-      }, 1000);
 
       showToast("เริ่มบันทึกเสียงการประชุมแล้ว");
     } catch (err) {
@@ -877,13 +938,18 @@ export function MeetingRoomView({
     return () => {
       window.removeEventListener("beforeunload", notifyLeave);
       notifyLeave();
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [releaseSession, stopRecording]);
 
-  // Show Toast notification popup
+  // Show Toast notification popup; a newer toast gets its own full 4 seconds.
   function showToast(msg: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
+    toastTimerRef.current = setTimeout(() => {
+      toastTimerRef.current = null;
+      setToastMessage(null);
+    }, 4000);
   }
 
   // Add and broadcast transcript segment with start and end time
@@ -965,13 +1031,13 @@ export function MeetingRoomView({
       onFinal: (text, start, duration, confidence) => {
         void addTranscriptSegment(text, start, duration, confidence);
       },
-      onInterim: setInterimTranscript,
+      onInterim: interimStore.set,
       onStatus: (message, isError) => {
         console.debug("Live transcription:", message);
         if (isError) showToast(message);
       },
     });
-  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment]);
+  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment, interimStore]);
 
   // 3. Toggle local Microphone
   const toggleMicrophone = async () => {
@@ -994,8 +1060,9 @@ export function MeetingRoomView({
     }
   };
 
-  // 8. Host Mute Remote Participant
-  const hostMuteParticipant = async (targetIdentity: string) => {
+  // 8. Host Mute Remote Participant. Stable, so memoized tiles and rows
+  // don't re-render just because the room did.
+  const hostMuteParticipant = useCallback(async (targetIdentity: string) => {
     if (!isHost || !livekitRoom) return;
 
     try {
@@ -1008,7 +1075,7 @@ export function MeetingRoomView({
     } catch (err) {
       console.error("Host mute participant error:", err);
     }
-  };
+  }, [isHost, livekitRoom]);
 
   const handleHostEndRoom = async () => {
     if (!isHost || !room) return;
@@ -1041,11 +1108,75 @@ export function MeetingRoomView({
     }
   };
 
-  const formatSeconds = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
+  // Construct UI Participants list
+  const allUiParticipants = useMemo<UiParticipant[]>(() => {
+    const localUiParticipant: UiParticipant = {
+      id: participantId || "local",
+      name: displayName,
+      initials: displayName.slice(0, 2).toUpperCase(),
+      avatarUrl: participantMetadata(livekitRoom?.localParticipant).avatarUrl,
+      isHost,
+      isLocal: true,
+      isSpeaking: !isMicrophoneMuted && activeSpeakerIdentities.has(participantId || ""),
+      isMuted: isMicrophoneMuted,
+      connectionQuality: "ดีเยี่ยม",
+    };
+
+    const remoteParticipantsList: UiParticipant[] = [];
+    const processedIds = new Set<string>([participantId || "local"]);
+
+    // Add LiveKit remote participants first
+    remoteParticipantsMap.forEach((rp) => {
+      processedIds.add(rp.identity);
+      remoteParticipantsList.push({
+        id: rp.identity,
+        name: rp.name,
+        initials: rp.name.slice(0, 2).toUpperCase(),
+        avatarUrl: rp.avatarUrl,
+        isHost: rp.isHost,
+        isLocal: false,
+        isSpeaking: rp.isSpeaking || activeSpeakerIdentities.has(rp.identity),
+        isMuted: rp.isMuted,
+        connectionQuality: rp.quality,
+      });
+    });
+
+    // Add DB active participants if not already added by LiveKit
+    dbParticipants.forEach((dbp) => {
+      if (!processedIds.has(dbp.id)) {
+        processedIds.add(dbp.id);
+        remoteParticipantsList.push({
+          id: dbp.id,
+          name: dbp.displayName,
+          initials: dbp.displayName.slice(0, 2).toUpperCase(),
+          avatarUrl: null,
+          isHost: false,
+          isLocal: false,
+          isSpeaking: activeSpeakerIdentities.has(dbp.id),
+          isMuted: false,
+          connectionQuality: "ปกติ",
+        });
+      }
+    });
+
+    return [localUiParticipant, ...remoteParticipantsList];
+  }, [
+    participantId, displayName, livekitRoom, isHost, isMicrophoneMuted,
+    activeSpeakerIdentities, remoteParticipantsMap, dbParticipants,
+  ]);
+
+  // Transcript avatars and tones depend only on who is in the room and in what
+  // order, not on who is speaking, so the transcript doesn't re-render on
+  // every speaker change.
+  const speakerKey = allUiParticipants.map((p) => `${p.id}\u0000${p.avatarUrl ?? ""}`).join("\u0001");
+  const speakerStyles = useMemo(() => {
+    const styles = new Map<string, SpeakerStyle>();
+    speakerKey.split("\u0001").forEach((entry, index) => {
+      const [id, avatarUrl] = entry.split("\u0000");
+      styles.set(id, { tone: toneFor(index), avatarUrl: avatarUrl || null });
+    });
+    return styles;
+  }, [speakerKey]);
 
   if (!room || roomStatusState !== "active") {
     return (
@@ -1243,68 +1374,6 @@ export function MeetingRoomView({
     );
   }
 
-  // Construct UI Participants list
-  const localUiParticipant: UiParticipant = {
-    id: participantId || "local",
-    name: displayName,
-    initials: displayName.slice(0, 2).toUpperCase(),
-    avatarUrl: participantMetadata(livekitRoom?.localParticipant).avatarUrl,
-    isHost,
-    isLocal: true,
-    isSpeaking: !isMicrophoneMuted && (activeSpeakerIdentities.has(participantId || "") || false),
-    isMuted: isMicrophoneMuted,
-    connectionQuality: "ดีเยี่ยม",
-  };
-
-  const remoteParticipantsList: UiParticipant[] = [];
-  const processedIds = new Set<string>([participantId || "local"]);
-
-  // Add LiveKit remote participants first
-  remoteParticipantsMap.forEach((rp) => {
-    processedIds.add(rp.identity);
-    remoteParticipantsList.push({
-      id: rp.identity,
-      name: rp.name,
-      initials: rp.name.slice(0, 2).toUpperCase(),
-      avatarUrl: rp.avatarUrl,
-      isHost: rp.isHost,
-      isLocal: false,
-      isSpeaking: rp.isSpeaking || activeSpeakerIdentities.has(rp.identity),
-      isMuted: rp.isMuted,
-      connectionQuality: rp.quality,
-    });
-  });
-
-  // Add DB active participants if not already added by LiveKit
-  dbParticipants.forEach((dbp) => {
-    if (!processedIds.has(dbp.id)) {
-      processedIds.add(dbp.id);
-      remoteParticipantsList.push({
-        id: dbp.id,
-        name: dbp.displayName,
-        initials: dbp.displayName.slice(0, 2).toUpperCase(),
-        avatarUrl: null,
-        isHost: false,
-        isLocal: false,
-        isSpeaking: activeSpeakerIdentities.has(dbp.id),
-        isMuted: false,
-        connectionQuality: "ปกติ",
-      });
-    }
-  });
-
-  const allUiParticipants: UiParticipant[] = [localUiParticipant, ...remoteParticipantsList];
-
-  const toneFor = (index: number) => `tone-${(index % 6) + 1}`;
-  const roleFor = (participant: UiParticipant) =>
-    participant.isLocal ? (participant.isHost ? "คุณ · host" : "คุณ") : participant.isHost ? "host" : "ผู้เข้าร่วม";
-  const isOwnSegment = (seg: LiveTranscriptSegment) =>
-    seg.participantId ? seg.participantId === participantId : seg.speakerName === displayName;
-  const segmentTone = (seg: LiveTranscriptSegment) => {
-    const index = allUiParticipants.findIndex((p) => p.id === seg.participantId);
-    return index === -1 ? "tone-6" : toneFor(index);
-  };
-
   return (
     <main className="meeting-room">
       {/* Hidden audio container for LiveKit remote tracks */}
@@ -1329,10 +1398,10 @@ export function MeetingRoomView({
         <div className="meeting-room__heading">
           <div className="meeting-room__title-row">
             <h1 className="meeting-room__title">{room.roomName}</h1>
-            {isRecording && (
+            {isRecording && recordingStartedAt !== null && (
               <span className="meeting-room__recording">
                 <span aria-hidden="true" className="meeting-room__recording-dot" />
-                REC {formatSeconds(recordingSeconds)}
+                <RecordingTimer key={recordingStartedAt} startedAt={recordingStartedAt} />
               </span>
             )}
           </div>
@@ -1388,47 +1457,20 @@ export function MeetingRoomView({
       <div className="meeting-room__layout">
         <section aria-label="ผู้เข้าร่วมประชุม" className="meeting-room__stage">
           <div className="meeting-room__tiles">
-            {allUiParticipants.map((participant, index) => {
-              const isSpeaking = participant.isSpeaking && !participant.isMuted;
-              return (
-                <article
-                  key={`${participant.id}-${index}`}
-                  className={`meeting-participant${isSpeaking ? " meeting-participant--speaking" : ""}`}
-                >
-                  {/* Active Speaker Indicator Badge */}
-                  {isSpeaking && <span className="meeting-participant__speaking">กำลังพูด</span>}
-
-                  <div className="meeting-participant__corner">
-                    {/* Host Mute Remote Participant Button */}
-                    {isHost && !participant.isLocal && (
-                      <button
-                        type="button"
-                        onClick={() => hostMuteParticipant(participant.id)}
-                        title="ปิดไมโครโฟนผู้เข้าร่วมนี้"
-                        aria-label={`ปิดไมโครโฟนของ ${participant.name}`}
-                        className="meeting-participant__mute-btn focus-ring"
-                      >
-                        <VolumeX aria-hidden="true" className="icon-16" strokeWidth={1.8} />
-                      </button>
-                    )}
-                    {participant.isMuted && (
-                      <span title="ปิดไมโครโฟน" className="meeting-participant__muted">
-                        <MicOff aria-label="ปิดไมโครโฟน" className="icon-16" strokeWidth={1.8} />
-                      </span>
-                    )}
-                  </div>
-
-                  <span className={`meeting-participant__avatar ${toneFor(index)}`}>
-                    <ParticipantAvatar avatarUrl={participant.avatarUrl} initials={participant.initials} />
-                  </span>
-
-                  <div className="meeting-participant__identity">
-                    <h2 className="meeting-participant__name">{participant.name}</h2>
-                    <p className="meeting-participant__role">{roleFor(participant)}</p>
-                  </div>
-                </article>
-              );
-            })}
+            {allUiParticipants.map((participant, index) => (
+              <ParticipantTile
+                key={participant.id}
+                id={participant.id}
+                name={participant.name}
+                initials={participant.initials}
+                avatarUrl={participant.avatarUrl}
+                role={roleFor(participant)}
+                tone={toneFor(index)}
+                isSpeaking={participant.isSpeaking}
+                isMuted={participant.isMuted}
+                onMute={isHost && !participant.isLocal ? hostMuteParticipant : undefined}
+              />
+            ))}
           </div>
         </section>
 
@@ -1439,42 +1481,18 @@ export function MeetingRoomView({
           </h2>
           <ul className="meeting-room__participants-list">
             {allUiParticipants.map((participant, index) => (
-              <li
-                key={`${participant.id}-list-${index}`}
-                className="meeting-room__participant-row"
-              >
-                <span aria-hidden="true" className={`meeting-room__row-avatar ${toneFor(index)}`}>
-                  <ParticipantAvatar avatarUrl={participant.avatarUrl} initials={participant.initials} />
-                </span>
-                <div className="meeting-room__row-info">
-                  <span className="meeting-room__row-name">{participant.name}</span>
-                  <span className="meeting-room__row-role">{roleFor(participant)}</span>
-                </div>
-
-                <div className="meeting-room__row-icons">
-                  {/* Host Mute button in participant list */}
-                  {isHost && !participant.isLocal && (
-                    <button
-                      type="button"
-                      onClick={() => hostMuteParticipant(participant.id)}
-                      title="ปิดไมค์"
-                      aria-label={`ปิดไมค์ของ ${participant.name}`}
-                      className="meeting-room__row-mute-btn focus-ring"
-                    >
-                      <VolumeX aria-hidden="true" className="icon-16" strokeWidth={1.8} />
-                    </button>
-                  )}
-                  {participant.isMuted ? (
-                    <MicOff aria-label="ปิดไมโครโฟน" className="icon-18 text-bad" strokeWidth={1.8} />
-                  ) : (
-                    <Mic
-                      aria-label="เปิดไมโครโฟน"
-                      className={participant.isSpeaking ? "icon-18 text-ok-dot" : "icon-18"}
-                      strokeWidth={1.8}
-                    />
-                  )}
-                </div>
-              </li>
+              <ParticipantRow
+                key={participant.id}
+                id={participant.id}
+                name={participant.name}
+                initials={participant.initials}
+                avatarUrl={participant.avatarUrl}
+                role={roleFor(participant)}
+                tone={toneFor(index)}
+                isSpeaking={participant.isSpeaking}
+                isMuted={participant.isMuted}
+                onMute={isHost && !participant.isLocal ? hostMuteParticipant : undefined}
+              />
             ))}
           </ul>
         </aside>
@@ -1510,40 +1528,19 @@ export function MeetingRoomView({
             aria-live="polite"
             className="live-transcript__list"
           >
-            {transcriptSegments.length === 0 && !(interimTranscript && !isMicrophoneMuted) && (
-              <p className="live-transcript__empty">ยังไม่มีข้อความ เมื่อมีคนพูด ข้อความจะแสดงที่นี่</p>
-            )}
-            {transcriptSegments.map((seg) =>
-              isOwnSegment(seg) ? (
-                <div key={seg.id} className="bubble-row--mine">
-                  <p className="bubble--mine">{seg.text}</p>
-                  <span className="bubble-row__time">
-                    คุณ · {formatSeconds(seg.startTime)} – {formatSeconds(seg.endTime)}
-                  </span>
-                </div>
-              ) : (
-                <div key={seg.id} className="bubble-row--theirs">
-                  <span aria-hidden="true" className={`bubble-row__avatar ${segmentTone(seg)}`}>
-                    <ParticipantAvatar
-                      avatarUrl={allUiParticipants.find((p) => p.id === seg.participantId)?.avatarUrl ?? null}
-                      initials={seg.speakerName.slice(0, 2).toUpperCase()}
-                    />
-                  </span>
-                  <div className="bubble-row__body">
-                    <span className="bubble-row__who">{seg.speakerName}</span>
-                    <p className="bubble--theirs">{seg.text}</p>
-                    <span className="bubble-row__time">
-                      {formatSeconds(seg.startTime)} – {formatSeconds(seg.endTime)}
-                    </span>
-                  </div>
-                </div>
-              ),
-            )}
-            {interimTranscript && !isMicrophoneMuted && (
-              <div aria-label="ข้อความถอดเสียงที่ยังไม่ยืนยัน" className="bubble-row--mine">
-                <p className="bubble--interim">{interimTranscript}</p>
-              </div>
-            )}
+            <TranscriptLines
+              segments={transcriptSegments}
+              participantId={participantId}
+              displayName={displayName}
+              speakers={speakerStyles}
+            />
+            <InterimTranscript
+              store={interimStore}
+              isMuted={isMicrophoneMuted}
+              hasSegments={transcriptSegments.length > 0}
+              listRef={transcriptListRef}
+              followRef={followTranscriptRef}
+            />
           </div>
 
           <div className="live-transcript__footer">

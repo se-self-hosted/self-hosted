@@ -14,6 +14,11 @@ function getMinioEndpoint(): string {
 
 export const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "recordings";
 
+/** A Buffer over the same memory, without copying a possibly large upload. */
+function asBuffer(data: Buffer | Uint8Array): Buffer {
+  return Buffer.isBuffer(data) ? data : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+}
+
 function sha256(data: string | Buffer | Uint8Array): string {
   return crypto.createHash("sha256").update(data).digest("hex");
 }
@@ -47,7 +52,7 @@ async function sendS3Request(
   const host = url.port ? `${url.hostname}:${url.port}` : url.hostname;
   const canonicalUri = path.startsWith("/") ? path : `/${path}`;
 
-  const payload = body ? Buffer.from(body) : Buffer.alloc(0);
+  const payload = body ? asBuffer(body) : Buffer.alloc(0);
   const payloadHash = sha256(payload);
 
   const requestHeaders: Record<string, string> = {
@@ -129,7 +134,7 @@ export async function uploadRecording(
   await ensureBucketExists();
 
   const cleanKey = key.startsWith("/") ? key.slice(1) : key;
-  const payload = Buffer.from(buffer);
+  const payload = asBuffer(buffer);
   const size = payload.length;
 
   const res = await sendS3Request("PUT", `/${BUCKET_NAME}/${cleanKey}`, payload, mimeType);

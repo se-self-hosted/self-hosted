@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { RoomServiceClient, ServerError } from "livekit-server-sdk";
 import { prisma } from "@/lib/db";
+import { publicLivekitUrl } from "@/lib/livekit-url";
 import { activeSessionWhereClause, isSessionActive } from "@/lib/presence";
 
 export class AdmissionError extends Error {
@@ -12,7 +13,7 @@ export class AdmissionError extends Error {
 
 // A background tab can miss heartbeats while its audio connection is still alive.
 export async function isConnected(roomHash: string, participantId: string) {
-  const publicUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880";
+  const publicUrl = publicLivekitUrl();
   const useDockerHost = fs.existsSync("/.dockerenv") &&
     ["localhost", "127.0.0.1", "[::1]"].includes(new URL(publicUrl).hostname);
   const url = process.env.LIVEKIT_URL || process.env.LIVEKIT_HOST ||

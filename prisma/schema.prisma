@@ -35,6 +35,8 @@ model MeetingRoom {
 
   host             User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
   meetings         Meeting[]
+
+  @@index([hostId, createdAt(sort: Desc)])
 }
 
 model Meeting {
@@ -54,6 +56,8 @@ model Meeting {
   summary           MeetingSummary?
   recordings        Recording[]
   exports           Export[]
+
+  @@index([roomId, endedAt, startedAt(sort: Desc)])
 }
 
 model Participant {
@@ -72,6 +76,7 @@ model Participant {
   recordings   Recording[]
 
   @@index([userId])
+  @@index([meetingId, userId])
 }
 
 model ParticipantSession {
@@ -85,6 +90,10 @@ model ParticipantSession {
   connectionId      String
 
   participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  // Heartbeat, leave, token and access checks all look sessions up by connectionId.
+  @@index([connectionId])
+  @@index([participantId, leftAt, lastSeenAt])
 }
 
 model Transcript {
@@ -114,6 +123,9 @@ model TranscriptSegment {
 
   transcript     Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
   participant    Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([transcriptId, startTime, spokenAt])
+  @@index([participantId])
 }
 
 model MeetingSummary {
@@ -149,6 +161,7 @@ model Recording {
   participant Participant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
 
   @@index([participantId])
+  @@index([meetingId, createdAt])
 }
 
 model Export {
@@ -161,4 +174,6 @@ model Export {
   exportedAt    DateTime
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId])
 }

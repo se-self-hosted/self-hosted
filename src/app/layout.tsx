@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, IBM_Plex_Mono, IBM_Plex_Sans_Thai } from "next/font/google";
 import Script from "next/script";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import "./globals.css";
 
 const themeInitScript = `
@@ -33,6 +34,16 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Voice Meeting Platform",
   description: "Web-based Real-time Voice Meeting Platform",
+  applicationName: "MeetSync",
+  appleWebApp: { capable: true, title: "MeetSync", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f2ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#141614" },
+  ],
 };
 
 export default function RootLayout({
@@ -52,7 +63,10 @@ export default function RootLayout({
           {themeInitScript}
         </Script>
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ServiceWorkerRegistrar />
+      </body>
     </html>
   );
 }
