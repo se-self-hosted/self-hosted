@@ -2,6 +2,7 @@
 # Starts Cloudflare quick tunnels for the app (3000) and LiveKit (7880),
 # prints the public URLs, and patches .env's NEXT_PUBLIC_LIVEKIT_URL so
 # remote browsers can reach LiveKit's signaling websocket through the tunnel.
+# For the production stack run it as: ENV_FILE=.env.production ./scripts/cloudflare-tunnel.sh
 #
 # Quick tunnels (`cloudflared tunnel --url ...`) need no login and get a
 # random *.trycloudflare.com hostname every run -- fine for dev/demo, not
@@ -12,7 +13,7 @@ cd "$(dirname "$0")/.."
 
 APP_PORT="${APP_PORT:-3000}"
 LIVEKIT_PORT="${LIVEKIT_PORT:-7880}"
-ENV_FILE=".env"
+ENV_FILE="${ENV_FILE:-.env}"
 
 APP_LOG="$(mktemp)"
 LIVEKIT_LOG="$(mktemp)"
@@ -69,7 +70,8 @@ Tunnels up:
   LiveKit:  $LIVEKIT_WS_URL   (written to $ENV_FILE as NEXT_PUBLIC_LIVEKIT_URL)
 
 Restart the app container to pick up the new env var:
-  docker compose restart app
+  dev:         docker compose restart app
+  production:  docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d app
 
 Press Ctrl+C to stop both tunnels.
 EOF
