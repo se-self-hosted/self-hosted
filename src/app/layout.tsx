@@ -31,7 +31,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Voice Meeting Platform",
+  title: "MeetSync",
   description: "Web-based Real-time Voice Meeting Platform",
 };
 
