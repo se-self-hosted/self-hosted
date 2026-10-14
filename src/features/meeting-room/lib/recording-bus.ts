@@ -12,6 +12,7 @@ export function createRecordingBus(context: AudioContext = new AudioContext({ sa
   let current: MediaStreamTrack | undefined;
 
   return {
+    context,
     stream: destination.stream,
     resume: () => context.resume(),
     /** Point the bus at `track`; a missing or ended track records silence. */

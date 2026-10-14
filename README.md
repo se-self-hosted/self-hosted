@@ -85,6 +85,14 @@ Set these in `.env` on the server:
 
   > Because coturn and LiveKit run on the same host, coturn must be allowed to relay to the host's own IP (`--allowed-peer-ip`, already set). Relayed calls were verified up to the relay allocation, but not end to end on Docker Desktop: its port forwarding rewrites the source address of packets that loop back to the same host. On a Linux server, confirm one relayed call works, e.g. with a browser forced to `iceTransportPolicy: "relay"`.
 
+### Live transcript (speech-to-text)
+
+Each participant's browser cuts its own mic audio into utterances at pauses and sends them to `POST /api/meetings/:id/transcribe`, which forwards them to an OpenAI-compatible `/audio/transcriptions` endpoint. This works in every browser, phones included. With nothing configured, the app falls back to the browser's own recognizer (Google Chrome only).
+
+- `OPENAI_API_KEY`: the same key as the AI summary; enough on its own to use `gpt-4o-mini-transcribe`.
+- `STT_BASE_URL` / `STT_API_KEY` / `STT_MODEL`: point at another provider or a self-hosted Whisper server (e.g. speaches at `http://stt:8000/v1`, which needs no key).
+- `STT_PROMPT`: vocabulary hint, so English terms in Thai speech keep their spelling. Defaults to a short Thai prompt naming common meeting terms.
+
 ### Scaling and Redis
 
 Locks, cooldowns and the participant-poll cache are kept in Redis (`REDIS_URL`), so several app containers can run behind one proxy. LiveKit also registers its nodes there. Without Redis, or while it's down, the app keeps working with per-process state, which is correct for a single instance.

@@ -37,6 +37,10 @@ const nextConfig: NextConfig = {
         source: "/rnnoise-worklet-:version.js",
         headers: immutable,
       },
+      {
+        source: "/pcm-capture-worklet-:version.js",
+        headers: immutable,
+      },
     ];
   },
 };

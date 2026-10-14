@@ -6,6 +6,8 @@ import { RNNoiseProcessor } from "@/features/meeting-room/lib/RNNoiseProcessor";
 import { mergeTranscriptSegments } from "@/features/meeting-room/lib/transcript-segments";
 import { saveTranscriptSegment } from "@/features/meeting-room/lib/transcript-save";
 import { createRecordingBus, type RecordingBus } from "@/features/meeting-room/lib/recording-bus";
+import { followLocalMicrophone } from "@/features/meeting-room/lib/local-microphone";
+import { startServerTranscription } from "@/features/meeting-room/lib/server-transcription";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -37,9 +39,7 @@ import {
   RemoteTrackPublication,
   RemoteTrack,
   LocalAudioTrack,
-  TrackEvent,
   AudioPresets,
-  type LocalTrack,
 } from "livekit-client";
 import { HEARTBEAT_INTERVAL_MS } from "@/lib/presence";
 import { TypewriterLoader } from "@/components/TypewriterLoader";
@@ -269,6 +269,8 @@ export function MeetingRoomView({
   // Interim text changes several times a second while someone speaks; only
   // the bubble showing it subscribes, not the whole room.
   const [interimStore] = useState(createTextStore);
+  // Set once the server answers that it has no speech-to-text configured.
+  const [serverSttUnavailable, setServerSttUnavailable] = useState(false);
 
   // Container ref for attaching remote audio elements
   const audioContainerRef = useRef<HTMLDivElement>(null);
@@ -878,23 +880,7 @@ export function MeetingRoomView({
   useEffect(() => {
     const bus = recordingBusRef.current;
     if (!isRecording || !livekitRoom || !bus) return;
-    const localParticipant = livekitRoom.localParticipant;
-    let micTrack: LocalTrack | undefined;
-    const sync = () => {
-      const next = localParticipant.getTrackPublication(Track.Source.Microphone)?.track;
-      if (next !== micTrack) {
-        micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
-        micTrack = next;
-        micTrack?.on(TrackEvent.Restarted, sync).on(TrackEvent.TrackProcessorUpdate, sync);
-      }
-      bus.setTrack(micTrack?.mediaStreamTrack);
-    };
-    sync();
-    livekitRoom.on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync);
-    return () => {
-      livekitRoom.off(RoomEvent.LocalTrackPublished, sync).off(RoomEvent.LocalTrackUnpublished, sync);
-      micTrack?.off(TrackEvent.Restarted, sync).off(TrackEvent.TrackProcessorUpdate, sync);
-    };
+    return followLocalMicrophone(livekitRoom, bus.setTrack);
   }, [isRecording, livekitRoom]);
 
   // Host-triggered: every participant's client records only its own mic,
@@ -963,7 +949,12 @@ export function MeetingRoomView({
     if (!text.trim() || !clock) return;
     const { elapsedSeconds: elapsedSec, spokenAt } = clock();
     const segStartTime = startTimeOffset !== undefined ? startTimeOffset : Math.max(0, elapsedSec - (durationSec || 2));
-    const segEndTime = Math.max(segStartTime + 0.5, elapsedSec);
+    // Server transcription returns a line seconds after it was spoken, so
+    // the end comes from the audio's own length, not from arrival time.
+    const segEndTime = Math.max(
+      segStartTime + 0.5,
+      startTimeOffset !== undefined && durationSec !== undefined ? segStartTime + durationSec : elapsedSec,
+    );
 
     const newSegment: LiveTranscriptSegment = {
       id: `seg-${crypto.randomUUID()}`,
@@ -1010,10 +1001,44 @@ export function MeetingRoomView({
   }, [participantId, displayName, livekitRoom, meetingId, room]);
 
   // Recognition consumes the same cleaned local audio used in the meeting.
+  // Server-side speech-to-text works in every browser; the browser's own
+  // recognizer (Chrome only) is the fallback when the server has none set up.
   useEffect(() => {
     if (!hasJoined || isMicrophoneMuted || !livekitRoom) return;
     const clock = meetingClockRef.current;
     if (!clock) return;
+    const onStatus = (message: string, isError?: boolean) => {
+      console.debug("Live transcription:", message);
+      if (isError) showToast(message);
+    };
+    if (meetingId && !serverSttUnavailable) {
+      const bus = createRecordingBus();
+      const stopFollowing = followLocalMicrophone(livekitRoom, bus.setTrack);
+      const stop = startServerTranscription(bus, {
+        elapsedSeconds: () => clock().elapsedSeconds,
+        transcribe: (wav) => {
+          const form = new FormData();
+          form.append("audio", wav, "speech.wav");
+          form.append("participantId", participantId ?? "");
+          return fetch(`/api/meetings/${meetingId}/transcribe`, {
+            method: "POST",
+            headers: { "x-connection-id": connectionIdRef.current ?? "" },
+            body: form,
+          });
+        },
+        onFinal: (text, start, duration) => {
+          void addTranscriptSegment(text, start, duration);
+        },
+        onPending: (pending) => interimStore.set(pending ? "กำลังถอดเสียง…" : ""),
+        onStatus,
+        onUnavailable: () => setServerSttUnavailable(true),
+      });
+      return () => {
+        stop();
+        stopFollowing();
+        bus.close();
+      };
+    }
     const speechWindow = window as unknown as {
       SpeechRecognition?: new () => SpeechRecognizer;
       webkitSpeechRecognition?: new () => SpeechRecognizer;
@@ -1032,12 +1057,9 @@ export function MeetingRoomView({
         void addTranscriptSegment(text, start, duration, confidence);
       },
       onInterim: interimStore.set,
-      onStatus: (message, isError) => {
-        console.debug("Live transcription:", message);
-        if (isError) showToast(message);
-      },
+      onStatus,
     });
-  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment, interimStore]);
+  }, [hasJoined, isMicrophoneMuted, livekitRoom, addTranscriptSegment, interimStore, meetingId, participantId, serverSttUnavailable]);
 
   // 3. Toggle local Microphone
   const toggleMicrophone = async () => {
