@@ -5,18 +5,17 @@ import {
   Camera,
   Check,
   CircleAlert,
-  Eye,
-  EyeOff,
   KeyRound,
   Mail,
   Upload,
   UserRound,
   X,
 } from "lucide-react";
-import { ChangeEvent, FormEvent, InputHTMLAttributes, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { AVATAR_ERROR_PREFIX, AVATAR_MAX_DIMENSION, avatarSizeError, checkAvatar } from "@/lib/avatar";
 import { AppSidebar } from "@/components/app-shell/AppSidebar";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export default function EditProfilePage() {
   const { user, checkAuth, setUser } = useAuthStore();
@@ -221,24 +220,6 @@ export default function EditProfilePage() {
           </form>
         </div>
       </main>
-    </div>
-  );
-}
-
-/** Password box with its own show/hide toggle, so revealing one field never reveals the others. */
-function PasswordInput({ invalid, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className"> & { invalid?: boolean }) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="profile-input-wrap">
-      <input
-        {...props}
-        type={visible ? "text" : "password"}
-        aria-invalid={invalid || undefined}
-        className={`profile-input pr-12 ${invalid ? "profile-input--mismatch" : ""}`}
-      />
-      <button type="button" onClick={() => setVisible((shown) => !shown)} className="profile-input-eye-btn" aria-label={visible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}>
-        {visible ? <Eye size={17} /> : <EyeOff size={17} />}
-      </button>
     </div>
   );
 }

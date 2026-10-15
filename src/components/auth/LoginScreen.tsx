@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAuthStore } from "@/store/useAuthStore";
+import { PasswordInput } from "./PasswordInput";
 import { FileDown, Mic, Sparkles } from "lucide-react";
 
 type LoginScreenProps = {
@@ -141,13 +142,12 @@ export function LoginScreen({ checkAuthOnMount = true }: LoginScreenProps) {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="login-password" className="text-sm font-semibold">รหัสผ่าน</label>
-              <input
+              <PasswordInput
                 id="login-password"
-                type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="field-input"
                 placeholder="••••••••"
               />
             </div>
